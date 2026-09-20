@@ -40,6 +40,10 @@
       var target = event.target.closest("[data-a11y-action]");
       if (!target) return;
       var action = target.getAttribute("data-a11y-action");
+      if (action === "print-page") {
+        window.print();
+        return;
+      }
       if (action === "toggle-dark") prefs.dark = !prefs.dark;
       else if (action === "toggle-text") prefs.text = (prefs.text + 1) % 3;
       else if (action === "toggle-motion") prefs.motion = !prefs.motion;

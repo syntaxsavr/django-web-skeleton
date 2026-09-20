@@ -78,6 +78,16 @@ class PageSmokeTests(TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn("Nothing at this address", response.content.decode())
 
+    def test_demo_places_scroll_reveal_after_other_mechanisms(self):
+        html = self.client.get("/demo/").content.decode()
+        self.assertLess(html.index('id="demo-hero-entrance"'), html.index('id="demo-reveal"'))
+        self.assertLess(html.index('id="demo-lottie"'), html.index('id="demo-reveal"'))
+
+    def test_print_control_uses_csp_safe_handler(self):
+        html = self.client.get("/").content.decode()
+        self.assertIn('data-a11y-action="print-page"', html)
+        self.assertNotIn("onclick=", html)
+
 
 class ConsentAndTrackingTests(ConfigIsolatedTestCase):
     def test_consent_assets_present_when_enabled(self):
