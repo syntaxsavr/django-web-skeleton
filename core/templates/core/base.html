@@ -53,15 +53,30 @@
 </head>
 <body class="{% block body_class %}{% endblock %}"{% block body_attributes %}{% endblock %}>
 <a class="skip-link" href="#main-content">Skip to content</a>
+{% if site_config.enable_announcement and site_config.announcement_text %}
+<div class="announcement-bar" role="region" aria-label="Announcement">
+  <div class="shell announcement-inner">
+    <p>{{ site_config.announcement_text }}</p>
+    {% if site_config.announcement_url %}<a href="{{ site_config.announcement_url }}">Open<span aria-hidden="true">&nbsp;&rarr;</span></a>{% endif %}
+  </div>
+</div>
+{% endif %}
 <header class="site-header" data-site-header>
   <div class="shell header-inner">
     <a class="brand{% if site_config.enable_header_logo and site_config.header_logo %} brand-image{% endif %}" href="{% url 'home' %}" aria-label="{{ site_name }} home">
       {% if site_config.enable_header_logo and site_config.header_logo %}<img src="{{ site_config.header_logo.url }}" alt="{{ site_config.header_logo_alt }}">{% else %}{{ site_name|lower }}<span aria-hidden="true">_</span>{% endif %}
     </a>
-    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" data-nav-toggle>
-      <span class="nav-toggle-label">{{ site_config.navigation_menu_label }}</span>
-      <span class="nav-toggle-icon" aria-hidden="true"><span></span><span></span><span></span></span>
-    </button>
+    <div class="header-actions">
+      {% if site_config.enable_accessibility_panel %}
+      <button class="a11y-button" type="button" aria-haspopup="dialog" aria-label="Accessibility options" data-modal-open="a11y-modal">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10.6" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="6.2" r="1.8" fill="currentColor"/><path d="M6.9 9.4c3.4 1 6.8 1 10.2 0M12 10.8v3.4m0 0-2.2 4.9m2.2-4.9 2.2 4.9M8.3 12.4l-2 3.1m11.4-3.1 2 3.1" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      {% endif %}
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" data-nav-toggle>
+        <span class="nav-toggle-label">{{ site_config.navigation_menu_label }}</span>
+        <span class="nav-toggle-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+      </button>
+    </div>
     <nav id="site-navigation" class="site-navigation{% if site_config.enable_megamenu %} has-megamenu{% endif %}" aria-label="Main" data-site-navigation{% if site_config.enable_megamenu %} data-mega-menu{% endif %} hidden>
       {% if site_config.enable_megamenu %}
       <div class="shell megamenu-grid">
@@ -136,6 +151,9 @@
     {% if site_config.footer_bottom_right %}<span>{{ site_config.footer_bottom_right }}</span>{% endif %}
   </div>
 </footer>
+{% endif %}
+{% if site_config.enable_accessibility_panel %}
+{% include "core/includes/a11y-panel.html" %}
 {% endif %}
 {% if enable_external_link_modal %}
 <div id="external-modal" class="modal" hidden data-external-modal{% if turnstile_site_key %} data-turnstile-sitekey="{{ turnstile_site_key }}"{% endif %}>

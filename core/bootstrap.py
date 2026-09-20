@@ -118,16 +118,6 @@ def ensure_starter_content():
                 (FooterItem.KIND_LINK, "humans.txt", FooterItem.PAGE_HUMANS, "", 60),
             ),
         ),
-        (
-            "Display",
-            40,
-            (
-                (FooterItem.KIND_ACTION, "Dark mode", "", FooterItem.ACTION_DARK, 10),
-                (FooterItem.KIND_ACTION, "Larger text", "", FooterItem.ACTION_TEXT, 20),
-                (FooterItem.KIND_ACTION, "Reduce motion", "", FooterItem.ACTION_MOTION, 30),
-                (FooterItem.KIND_ACTION, "Print page", "", FooterItem.ACTION_PRINT, 40),
-            ),
-        ),
     )
     for title, section_order, items in footer_defaults:
         section, _created = FooterSection.objects.get_or_create(

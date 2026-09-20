@@ -1,0 +1,33 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Two-factor authentication</h1>
+    {% if messages %}
+    <div role="alert">
+      {% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    {% if device %}
+    <p class="section-lead">An authenticator app is paired with this account{% if device.name %} as <strong>{{ device.name }}</strong>{% endif %}. Sign-in to protected areas requires a current code.</p>
+    <dl class="account-meta">
+      <dt>Status</dt><dd>Active</dd>
+      <dt>Method</dt><dd>TOTP (time-based codes)</dd>
+    </dl>
+    <form method="post" action="{% url 'two_factor_remove' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-ghost btn-block">Remove two-factor</button>
+    </form>
+    {% if enforced %}<p class="auth-note" style="margin-top:16px">Staff accounts cannot open the control panel without an active second factor. Removing it locks /admin/ until you enroll again.</p>{% endif %}
+    {% else %}
+    <p class="section-lead">No authenticator is paired yet{% if enforced %}. Staff accounts need one before the control panel opens{% endif %}.</p>
+    <a class="btn btn-block" href="{% url 'two_factor_setup' %}">Set up two-factor</a>
+    {% endif %}
+    <p class="auth-links"><a href="{% url 'account_dashboard' %}">Back to your account</a></p>
+  </div>
+</section>
+{% endblock %}

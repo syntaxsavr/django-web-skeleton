@@ -64,6 +64,21 @@ class SiteConfiguration(models.Model):
         help_text="Use the grouped megamenu. When off, the compact default navigation is shown.",
     )
     navigation_menu_label = models.CharField(max_length=40, default="Menu")
+    enable_accessibility_panel = models.BooleanField(
+        default=True,
+        help_text="Show the accessibility button in the header. It opens display options: dark mode, contrast, text size, reduced motion, print.",
+    )
+
+    # --- Announcement ----------------------------------------------------------
+    enable_announcement = models.BooleanField(default=False)
+    announcement_text = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Short banner text shown above the header while enabled.",
+    )
+    announcement_url = models.CharField(
+        max_length=300, blank=True, help_text="Optional link target for the announcement banner."
+    )
 
     # --- Consent & tracking --------------------------------------------------
     enable_cookie_consent = models.BooleanField(

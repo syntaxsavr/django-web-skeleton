@@ -5,16 +5,28 @@ from django.contrib.auth import get_user_model
 from django.core import signing
 from django.core.cache import cache
 from django.test import TestCase, override_settings
+from django_otp.oath import TOTP as TotpGenerator
+from django_otp.plugins.otp_totp.models import TOTPDevice
+
+
+def device_token(device):
+    import time
+
+    generator = TotpGenerator(device.bin_key)
+    generator.time = time.time()
+    return generator.token()
 
 from core.models import (
     Article,
     CONFIG_CACHE_KEY,
     ContactMessage,
+    FooterItem,
     NavigationItem,
     ProtectedPage,
     RobotsRule,
     SiteConfiguration,
 )
+from core import bootstrap
 from core.views.contact import FORM_TS_SALT
 
 User = get_user_model()
@@ -449,3 +461,128 @@ class SeedCommandTests(TestCase):
         # Idempotent: second run must not explode or duplicate.
         call_command("seed", verbosity=0)
         self.assertEqual(User.objects.filter(username="admin").count(), 1)
+
+
+class AccessibilityPanelTests(ConfigIsolatedTestCase):
+    def test_a11y_button_and_panel_render_by_default(self):
+        html = self.client.get("/").content.decode()
+        self.assertIn('data-modal-open="a11y-modal"', html)
+        self.assertIn('id="a11y-modal"', html)
+        self.assertIn("toggle-contrast", html)
+
+    def test_a11y_button_can_be_disabled(self):
+        fresh_config(enable_accessibility_panel=False)
+        html = self.client.get("/").content.decode()
+        self.assertNotIn("a11y-button", html)
+        self.assertNotIn('id="a11y-modal"', html)
+
+    def test_footer_no_longer_seeds_display_items(self):
+        html = self.client.get("/").content.decode()
+        self.assertNotIn('<span class="mono-label">Display</span>', html)
+        bootstrap.ensure_starter_content()
+        self.assertFalse(FooterItem.objects.filter(action__in=["dark", "text_size", "motion", "print"]).exists())
+
+
+class AnnouncementBannerTests(ConfigIsolatedTestCase):
+    def test_announcement_off_by_default(self):
+        html = self.client.get("/").content.decode()
+        self.assertNotIn("announcement-bar", html)
+
+    def test_announcement_renders_when_enabled(self):
+        fresh_config(enable_announcement=True, announcement_text="Open house on Friday", announcement_url="/demo/")
+        html = self.client.get("/").content.decode()
+        self.assertIn("announcement-bar", html)
+        self.assertIn("Open house on Friday", html)
+        self.assertIn('href="/demo/"', html)
+
+    def test_announcement_without_text_stays_hidden(self):
+        fresh_config(enable_announcement=True)
+        self.assertNotIn("announcement-bar", self.client.get("/").content.decode())
+
+
+@override_settings(ENFORCE_STAFF_2FA=True)
+class Staff2FAEnforcementTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        SiteConfiguration.get_solo()
+        self.staff = User.objects.create_user("boss", "boss@example.com", "S3cure!pass", is_staff=True)
+
+    def login_staff(self):
+        self.assertTrue(self.client.login(username="boss", password="S3cure!pass"))
+
+    def test_admin_redirects_staff_without_verified_device(self):
+        self.login_staff()
+        response = self.client.get("/admin/")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/account/two-factor/setup/", response["Location"])
+
+    def test_public_pages_unaffected_for_staff_without_device(self):
+        self.login_staff()
+        self.assertEqual(self.client.get("/").status_code, 200)
+
+    def test_admin_logout_stays_reachable(self):
+        self.login_staff()
+        response = self.client.post("/admin/logout/")
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn("two-factor", response["Location"])
+
+    def test_setup_shows_qr_and_secret_and_activates_device(self):
+        import base64
+
+        self.login_staff()
+        response = self.client.get("/account/two-factor/setup/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("data:image/png;base64,", response.content.decode())
+        device = TOTPDevice.objects.get(user=self.staff)
+        secret = base64.b32encode(bytes.fromhex(device.key)).decode().rstrip("=")
+        self.assertIn(secret, response.content.decode())
+        token = device_token(device)
+        response = self.client.post("/account/two-factor/setup/", {"token": token})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/", response["Location"])
+        device.refresh_from_db()
+        self.assertTrue(device.confirmed)
+
+    def test_verified_staff_reaches_admin(self):
+        self.login_staff()
+        device = TOTPDevice.objects.create(user=self.staff, name="Authenticator", confirmed=True)
+        self.client.post("/account/two-factor/verify/", {"token": device_token(device)})
+        self.assertEqual(self.client.get("/admin/").status_code, 200)
+
+    def test_verify_with_wrong_code_stays_locked(self):
+        self.login_staff()
+        TOTPDevice.objects.create(user=self.staff, name="Authenticator", confirmed=True)
+        response = self.client.post("/account/two-factor/verify/", {"token": "000000"}, follow=True)
+        self.assertContains(response, "did not match")
+        self.assertEqual(self.client.get("/admin/").status_code, 302)
+
+    def test_removal_relocks_admin(self):
+        self.login_staff()
+        TOTPDevice.objects.create(user=self.staff, name="Authenticator", confirmed=True)
+        self.client.post("/account/two-factor/verify/", {"token": device_token(TOTPDevice.objects.get())})
+        self.assertEqual(self.client.get("/admin/").status_code, 200)
+        self.client.post("/account/two-factor/remove/")
+        response = self.client.get("/admin/")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/account/two-factor/setup/", response["Location"])
+
+
+class Staff2FAOffInDebugTests(ConfigIsolatedTestCase):
+    def test_admin_reachable_without_second_factor_when_not_enforced(self):
+        staff = User.objects.create_user("relax", "relax@example.com", "S3cure!pass", is_staff=True)
+        self.client.force_login(staff)
+        self.assertEqual(self.client.get("/admin/").status_code, 200)
+
+
+class TwoFactorOptionalForNonStaffTests(ConfigIsolatedTestCase):
+    def test_non_staff_can_browse_without_any_device(self):
+        User.objects.create_user("member", "member@example.com", "S3cure!pass")
+        self.assertTrue(self.client.login(username="member", password="S3cure!pass"))
+        self.assertEqual(self.client.get("/").status_code, 200)
+
+    def test_non_staff_can_voluntarily_manage(self):
+        member = User.objects.create_user("member", "member@example.com", "S3cure!pass")
+        self.client.force_login(member)
+        response = self.client.get("/account/two-factor/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Set up two-factor", response.content.decode())

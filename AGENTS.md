@@ -66,6 +66,27 @@ docs/NAVIGATION.md        header logo, megamenu and mobile navigation contract
 .agents/skills/           design, motion, copywriting skills (+ .claude mirror)
 ```
 
+## Two-factor enforcement
+
+`ENFORCE_STAFF_2FA` (settings, defaults to `not DEBUG`) forces every
+staff member through a TOTP second factor before `/admin/` opens.
+`core.middleware.Staff2FAMiddleware` redirects unverified staff to
+`/account/two-factor/setup/` (no device) or `.../verify/` (device
+exists); `/admin/logout/` stays reachable. Enrollment lives in
+`core/views/twofa.py` (django-otp TOTPDevice + qrcode QR). Non-staff
+enrollment is optional. The seeded admin therefore needs one extra
+step after the first production login; that is by design.
+
+## Autonomy levers (fast client changes without deploys)
+
+Everything below is editable in the admin while the site is live:
+- Navigation items (megamenu groups) and footer sections/entries
+- Announcement banner: Site configuration, "Announcement" fieldset
+- Header logo, menu label, accessibility panel on/off
+- Articles, contact form, consent, trackers, SEO routes
+Prefer extending these systems over new hardcoded templates when the
+change is content-shaped.
+
 ## Middleware ordering (why it matters)
 
 ```
@@ -102,6 +123,7 @@ its own trusted inline scripts).
 | `data-open-cookie-settings` | klaro-config.js | re-open the consent UI |
 | `data-a11y-action` | prefs.js | dark mode / text size / motion toggles |
 | `data-nav-toggle` + `data-site-navigation` | topbar.js | megamenu and mobile navigation state |
+| `data-modal-open="<element-id>"` | modal.js | opens any dialog by id (accessibility button uses it) |
 
 Event bus: `lazy-section-loaded`, `lottie:complete`,
 `skeleton:consent`, `skeleton:modal-open/close`.

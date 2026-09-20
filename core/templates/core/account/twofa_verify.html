@@ -1,0 +1,31 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Verify your code</h1>
+    {% if messages %}
+    <div role="alert">
+      {% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    <p class="section-lead">Enter the six-digit code from your authenticator app{% if device.name %} ({{ device.name }}){% endif %}.</p>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="form-field">
+        <label for="id_token">Six-digit code</label>
+        <input type="text" name="token" id="id_token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Verify</button>
+    </form>
+    <p class="auth-links">
+      <a href="{% url 'two_factor_manage' %}">Manage two-factor</a>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="link-button">Use another account</button></form>
+    </p>
+  </div>
+</section>
+{% endblock %}

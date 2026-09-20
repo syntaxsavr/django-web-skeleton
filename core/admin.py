@@ -51,7 +51,18 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
                     "header_logo_alt",
                     "enable_megamenu",
                     "navigation_menu_label",
+                    "enable_accessibility_panel",
                 ),
+            },
+        ),
+        (
+            "Announcement",
+            {
+                "fields": (
+                    "enable_announcement",
+                    "announcement_text",
+                    "announcement_url",
+                )
             },
         ),
         (

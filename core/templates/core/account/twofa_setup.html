@@ -1,0 +1,40 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Set up two-factor</h1>
+    {% if messages %}
+    <div role="alert">
+      {% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    <ol class="twofa-steps">
+      <li>Open an authenticator app (for example Aegis, 1Password, Google Authenticator or Keycloak).</li>
+      <li>Scan this code, or enter the secret by hand.</li>
+      <li>Confirm with the six-digit code the app shows right now.</li>
+    </ol>
+    <figure class="twofa-qr">
+      <img src="{{ qr_data_uri }}" width="200" height="200" alt="QR code with the two-factor secret for this site" decoding="sync">
+    </figure>
+    <div class="form-field">
+      <label for="twofa-secret">Secret (manual entry)</label>
+      <input type="text" id="twofa-secret" value="{{ secret }}" readonly aria-readonly="true" onclick="this.select()">
+    </div>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="form-field">
+        <label for="id_token">Six-digit code</label>
+        <input type="text" name="token" id="id_token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Confirm and activate</button>
+    </form>
+    {% if pending_admin %}<p class="auth-note" style="margin-top:16px">After confirming, the control panel opens.</p>{% endif %}
+    <p class="auth-links"><a href="{% url 'two_factor_manage' %}">Back</a></p>
+  </div>
+</section>
+{% endblock %}

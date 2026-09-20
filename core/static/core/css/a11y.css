@@ -31,3 +31,20 @@ html.a11y-text-110 {
 html.a11y-text-125 {
   font-size: 125%;
 }
+
+html.a11y-contrast {
+  --ink: #000000;
+  --ink-60: #2c2c28;
+  --ink-40: #47473f;
+  --rule: rgba(0, 0, 0, 0.5);
+  --rule-strong: #000000;
+  --wash: #eeeeE6;
+}
+html.theme-dark.a11y-contrast {
+  --ink: #ffffff;
+  --ink-60: #e9e9e2;
+  --ink-40: #c9c9c1;
+  --rule: rgba(255, 255, 255, 0.55);
+  --rule-strong: #ffffff;
+  --wash: #1f1f1c;
+}

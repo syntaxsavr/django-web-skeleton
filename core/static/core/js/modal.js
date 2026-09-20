@@ -59,6 +59,15 @@
   }
 
   document.addEventListener("click", function (event) {
+    var opener = event.target.closest("[data-modal-open]");
+    if (opener) {
+      var target = document.getElementById(opener.getAttribute("data-modal-open"));
+      if (target) {
+        event.preventDefault();
+        open(target);
+        return;
+      }
+    }
     var closer = event.target.closest("[data-modal-cancel]");
     if (closer) {
       close();

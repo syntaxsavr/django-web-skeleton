@@ -4,6 +4,7 @@ from django.urls import path, re_path
 
 from core.views import articles as article_views
 from core.views import auth as account_views
+from core.views import twofa as twofa_views
 from core.views import contact as contact_views
 from core.views import fragments as fragment_views
 from core.views import legal as legal_views
@@ -43,6 +44,10 @@ urlpatterns = [
         name="password_reset_complete",
     ),
     path("account/", account_views.account_dashboard, name="account_dashboard"),
+    path("account/two-factor/", twofa_views.two_factor_manage, name="two_factor_manage"),
+    path("account/two-factor/setup/", twofa_views.two_factor_setup, name="two_factor_setup"),
+    path("account/two-factor/verify/", twofa_views.two_factor_verify, name="two_factor_verify"),
+    path("account/two-factor/remove/", twofa_views.two_factor_remove, name="two_factor_remove"),
     # --- Legal ---
     path("privacy/", legal_views.privacy, name="privacy"),
     path("imprint/", legal_views.imprint, name="imprint"),

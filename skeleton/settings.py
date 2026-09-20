@@ -77,6 +77,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
     "core",
 ]
 
@@ -94,6 +96,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",
+    "core.middleware.Staff2FAMiddleware",
     "core.middleware.ProtectedPageMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -211,6 +215,14 @@ CSRF_COOKIE_HTTPONLY = False
 # Environment overrides for sensitive values; empty = use the admin panel.
 TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "")
 TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY", "")
+
+# Staff must verify a TOTP second factor before reaching /admin/. Defaults
+# to on whenever DEBUG is off; override explicitly for staging.
+ENFORCE_STAFF_2FA = os.environ.get("ENFORCE_STAFF_2FA", str(not DEBUG)).lower() in (
+    "1",
+    "true",
+    "yes",
+)
 
 # Signed time-trap: forms must take at least this many seconds to fill.
 CONTACT_MIN_SECONDS = int(os.environ.get("CONTACT_MIN_SECONDS", "3"))

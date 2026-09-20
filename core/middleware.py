@@ -264,6 +264,39 @@ class SearchIndexingMiddleware:
 PROTECTED_CACHE_KEY = "core:protected_pages:active"
 
 
+class Staff2FAMiddleware:
+    """Force a TOTP second factor before staff can reach /admin/.
+
+    Active only when settings.ENFORCE_STAFF_2FA is on (default: whenever
+    DEBUG is off). Staff who authenticated with just a password are bounced
+    to the enrollment or verification flow under /account/two-factor/;
+    admin logout stays reachable so nobody is trapped. Non-staff users and
+    public pages are untouched.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        return response
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        if not getattr(settings, "ENFORCE_STAFF_2FA", False):
+            return None
+        user = getattr(request, "user", None)
+        if not (user is not None and user.is_authenticated and user.is_staff):
+            return None
+        path = request.path
+        if not path.startswith(ADMIN_PREFIXES) or path == "/admin/logout/":
+            return None
+        if getattr(user, "otp_device", None) is not None:
+            return None
+        from core.views.twofa import pending_redirect
+
+        return pending_redirect(request)
+
+
 class ProtectedPageMiddleware:
     """Login wall. Rules come from the ProtectedPage table (admin-managed)."""
 
