@@ -1,11 +1,9 @@
-/* Fragment: cta-band */
+/* Fragment: cta-band. Black band, paper text, inverted buttons. */
 
 .cta-band {
-  background:
-    radial-gradient(60% 90% at 85% 10%, rgba(77, 127, 255, 0.16), transparent 70%),
-    var(--surface-2);
-  border-block: 1px solid var(--border);
-  padding-block: clamp(44px, 6vw, 72px);
+  background: var(--ink, #0a0a0a);
+  color: var(--paper, #fcfcfa);
+  border-top: 1px solid var(--ink, #0a0a0a);
 }
 .cta-inner {
   display: flex;
@@ -13,18 +11,43 @@
   justify-content: space-between;
   gap: 28px;
   flex-wrap: wrap;
+  padding-block: clamp(52px, 7vw, 96px);
 }
 .cta-inner h2 {
-  margin-bottom: 0.35em;
+  margin-bottom: 0.3em;
+  max-width: 16ch;
 }
 .cta-inner p {
-  color: var(--text-secondary);
   margin: 0;
+  opacity: 0.65;
+  max-width: 44ch;
 }
 .cta-actions {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
+}
+.cta-band .btn {
+  background: var(--paper, #fcfcfa);
+  color: var(--ink, #0a0a0a);
+  border-color: var(--paper, #fcfcfa);
+}
+.cta-band .btn:hover {
+  background: transparent;
+  color: var(--paper, #fcfcfa);
+}
+.cta-band .btn-ghost {
+  background: transparent;
+  color: var(--paper, #fcfcfa);
+}
+.cta-band .btn-ghost:hover {
+  background: var(--paper, #fcfcfa);
+  color: var(--ink, #0a0a0a);
+}
+.cta-band .mono-label {
+  color: rgba(252, 252, 250, 0.55);
+  display: block;
+  margin-bottom: 16px;
 }
 @media (max-width: 720px) {
   .cta-inner {

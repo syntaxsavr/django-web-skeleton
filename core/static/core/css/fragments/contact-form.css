@@ -3,7 +3,7 @@
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 18px;
+  gap: 0 20px;
 }
 @media (max-width: 640px) {
   .form-grid {
@@ -11,8 +11,8 @@
   }
 }
 .contact-form .cf-submit {
-  margin-top: 6px;
+  margin-top: 8px;
 }
 .contact-form .cf-turnstile {
-  margin: 18px 0;
+  margin: 20px 0;
 }

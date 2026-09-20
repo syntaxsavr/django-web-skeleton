@@ -1,27 +1,33 @@
 {% load static %}<link rel="stylesheet" href="{% static 'core/css/fragments/home-features.css' %}">
-<div class="feature-grid">
-  <article class="feature-card">
-    <h3>Consent-first tracking</h3>
-    <p>Klaro! gates every tracker. GA4, GTM, Meta Pixel, LinkedIn, UET, Clarity, Hotjar, TikTok, Pinterest, X and self-hosted Matomo load only after consent, and only when their ID is set in the admin.</p>
+<div class="rule-rows feature-rows">
+  <article class="rule-row">
+    <span class="row-index">01</span>
+    <h3>Consent-first tracking <span class="serif-em">every loader waits for yes</span></h3>
+    <p>Klaro! gates all of it: GA4, GTM, Ads, Meta, LinkedIn, UET, Clarity, Hotjar, TikTok, Pinterest, X and self-hosted Matomo load only after consent, and only when their ID is set in the admin.</p>
   </article>
-  <article class="feature-card">
-    <h3>SEO suite</h3>
-    <p>Sitemap, robots.txt, canonical URLs, OpenGraph, JSON-LD organization and breadcrumb schema, llms.txt for AI crawlers, security.txt, humans.txt and an IndexNow command with its key proof route.</p>
+  <article class="rule-row">
+    <span class="row-index">02</span>
+    <h3>SEO suite <span class="serif-em">the boring parts, finished</span></h3>
+    <p>Sitemap, robots.txt, canonical URLs, OpenGraph, JSON-LD, llms.txt for AI crawlers, security.txt, humans.txt and an IndexNow command with its key proof route.</p>
   </article>
-  <article class="feature-card">
-    <h3>Middleware that works</h3>
-    <p>Dynamic CSP built from the trackers you enable, scraper blocking on legal pages, X-Robots-Tag control, protected pages behind login and the outbound link snatcher. Each one has its own switch.</p>
+  <article class="rule-row">
+    <span class="row-index">03</span>
+    <h3>Middleware with switches <span class="serif-em">each layer, one boolean</span></h3>
+    <p>A CSP built from the trackers you enable, scraper blocking on legal pages, X-Robots-Tag control, protected pages behind login and the outbound link snatcher.</p>
   </article>
-  <article class="feature-card">
-    <h3>Lazy sections</h3>
-    <p>Sections declare <code>data-lazy-section</code> and a fragment URL. The loader fetches on approach, re-executes fragment scripts and fires <code>lazy-section-loaded</code> for Lottie and reveal to pick up.</p>
+  <article class="rule-row">
+    <span class="row-index">04</span>
+    <h3>Lazy sections <span class="serif-em">fetch on approach</span></h3>
+    <p>Sections declare <code>data-lazy-section</code> and a fragment URL. The loader fetches, re-executes fragment scripts and fires <code>lazy-section-loaded</code> for Lottie and reveal to pick up.</p>
   </article>
-  <article class="feature-card">
-    <h3>Lottie motion</h3>
-    <p>Declarative <code>data-lottie</code> mounts: aspect-ratio boxes for zero layout shift, pausing offscreen, static frame fallback for reduced motion. The demo animation is authored by a Python build script.</p>
+  <article class="rule-row">
+    <span class="row-index">05</span>
+    <h3>Lottie motion <span class="serif-em">authored in Python</span></h3>
+    <p>Declarative <code>data-lottie</code> mounts: ratio boxes for zero layout shift, pausing offscreen, static frame under reduced motion. The generator lives in <code>tools/lottie/</code>.</p>
   </article>
-  <article class="feature-card">
-    <h3>Forms that fight back</h3>
-    <p>Honeypot, signed time-trap, Turnstile, per-session rate limiting and PRG flow with one-shot conversion events. Bots see a success page and nothing else.</p>
+  <article class="rule-row">
+    <span class="row-index">06</span>
+    <h3>Forms that fight back <span class="serif-em">bots get a polite nothing</span></h3>
+    <p>Honeypot, signed time-trap, Turnstile, per-session cooldowns and PRG flow. Spam sees a success page and nothing else.</p>
   </article>
 </div>

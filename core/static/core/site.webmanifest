@@ -1,0 +1,20 @@
+{
+  "name": "Skeleton",
+  "short_name": "Skeleton",
+  "icons": [
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/static/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#fcfcfa",
+  "background_color": "#fcfcfa",
+  "display": "minimal-ui",
+  "lang": "en"
+}

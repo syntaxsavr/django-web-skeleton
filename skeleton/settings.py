@@ -227,22 +227,14 @@ SEED_ADMIN_PASSWORD = os.environ.get("SEED_ADMIN_PASSWORD", "b_4sIcPW007")
 SEED_ADMIN_EMAIL = os.environ.get("SEED_ADMIN_EMAIL", "admin@example.com")
 
 # --- django-unfold admin theme ---------------------------------------------
-
+# Light theme, brand-matched. Input contrast is enforced in core/css/admin.css
+# (loaded only inside the admin via UNFOLD STYLES).
 UNFOLD = {
     "SITE_TITLE": "Skeleton Admin",
     "SITE_HEADER": "django-web-skeleton",
-    "SITE_SYMBOL": "speed",
-    "THEME": "dark",
-    "DARK_MODE": {
-        "background": "#0b0d10",
-        "surface": "#14171c",
-        "primary": "#4d7fff",
-        "sidebar": {
-            "background": "#0b0d10",
-            "menu": "#a8b0bd",
-        },
-    },
-    "TABULATOR": False,
+    "SITE_SYMBOL": "page",
+    "THEME": "light",
+    "STYLES": ["/static/core/css/admin.css"],
 }
 
 # --- Logging ----------------------------------------------------------------

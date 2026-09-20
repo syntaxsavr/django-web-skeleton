@@ -1,132 +1,156 @@
-/* Components: buttons, cards, forms, messages, modals, and the scroll
-   reveal system. Every element here is composable from any page. */
+/* Components: buttons, ruled rows, forms, messages, modals, reveal and
+   the Lottie figure contract. Sharp corners everywhere; ink on paper. */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 44px;
-  padding: 10px 22px;
-  border-radius: var(--radius-s);
-  border: 1px solid transparent;
-  font: inherit;
-  font-weight: 600;
-  font-size: 0.95rem;
+  min-height: 46px;
+  padding: 11px 24px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
   cursor: pointer;
-  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease, color 0.16s ease;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.btn:hover {
+  background: transparent;
+  color: var(--ink);
   text-decoration: none;
 }
 .btn:active {
-  transform: translateY(1px);
+  translate: 0 1px;
 }
 .btn:disabled {
-  opacity: 0.55;
+  opacity: 0.4;
   cursor: not-allowed;
-  transform: none;
-}
-.btn-primary {
-  background: var(--accent);
-  color: #fff;
-}
-.btn-primary:hover {
-  background: var(--accent-strong);
-  text-decoration: none;
 }
 .btn-ghost {
   background: transparent;
-  color: var(--text-primary);
-  border-color: var(--border-strong);
+  color: var(--ink);
 }
 .btn-ghost:hover {
-  background: var(--surface-2);
-  text-decoration: none;
+  background: var(--ink);
+  color: var(--paper);
 }
 .btn-block {
   width: 100%;
 }
 
-.feature-card,
-.pattern-card {
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-m);
-  padding: 26px 24px;
-  box-shadow: var(--shadow-card);
+/* Ruled index rows: the default way to list things. */
+.rule-rows {
+  border-bottom: 1px solid var(--rule-strong);
 }
-.feature-card h3,
-.pattern-card h3 {
-  margin-bottom: 0.5em;
+.rule-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(14px, 2vw, 32px);
+  padding-block: clamp(20px, 3vw, 34px);
+  border-top: 1px solid var(--rule-strong);
 }
-.feature-card p,
-.pattern-card p {
-  color: var(--text-secondary);
+.rule-row .row-index {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-40);
+  padding-top: 0.45em;
+}
+.rule-row h3 {
   margin: 0;
+}
+.rule-row p {
+  margin: 0;
+  color: var(--ink-60);
   font-size: 0.95rem;
 }
-
-.form-field {
-  margin-bottom: 18px;
+@media (max-width: 760px) {
+  .rule-row {
+    grid-template-columns: 44px 1fr;
+  }
+  .rule-row p {
+    grid-column: 2;
+  }
 }
-.form-field label {
+
+/* Forms: ink borders on paper. Impossible to miss. */
+.form-field {
+  margin-bottom: 20px;
+}
+.form-field > label {
   display: block;
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-bottom: 6px;
-  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-60);
+  margin-bottom: 8px;
 }
 input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="tel"],
+input[type="url"],
+input[type="number"],
 select,
 textarea {
   width: 100%;
-  background: var(--surface-2);
-  border: 1px solid var(--border-strong);
-  color: var(--text-primary);
-  border-radius: var(--radius-s);
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  color: var(--ink);
   padding: 12px 14px;
   font: inherit;
-  transition: border-color 0.16s ease, background 0.16s ease;
+  transition: box-shadow 0.15s ease;
 }
 input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--accent);
-  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--ink), var(--focus-ring);
 }
 input::placeholder,
 textarea::placeholder {
-  color: var(--text-faint);
+  color: var(--ink-40);
 }
 textarea {
   resize: vertical;
-  min-height: 130px;
+  min-height: 132px;
+}
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 40px;
 }
 .errorlist,
 .errorlist li {
   list-style: none;
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   padding: 0;
-  color: var(--danger);
+  color: #a02121;
   font-size: 0.85rem;
 }
 .checkbox-label {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
-  font-weight: 400;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
+  font-size: 0.92rem;
+  color: var(--ink-60);
 }
 .checkbox-label input {
   width: 18px;
   height: 18px;
-  min-height: 0;
   margin-top: 2px;
-  accent-color: var(--accent);
+  accent-color: var(--ink);
 }
 .hp-field {
   position: absolute;
@@ -137,64 +161,56 @@ textarea {
 }
 
 .message {
-  border-radius: var(--radius-s);
+  border: 1px solid var(--ink);
   padding: 12px 16px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
   font-size: 0.92rem;
+  background: var(--wash);
 }
 .message-error {
-  background: rgba(214, 69, 69, 0.12);
-  border: 1px solid rgba(214, 69, 69, 0.4);
-  color: #f0a2a2;
-}
-.message-info,
-.message-success {
-  background: var(--accent-soft);
-  border: 1px solid rgba(77, 127, 255, 0.35);
-  color: var(--accent-strong);
+  border-color: #a02121;
+  color: #a02121;
+  background: #fbf1f0;
 }
 
+/* Modal */
 .modal {
   position: fixed;
   inset: 0;
   z-index: 90;
   display: grid;
   place-items: center;
-  background: rgba(5, 6, 8, 0.72);
-  backdrop-filter: blur(4px);
+  background: rgba(10, 10, 10, 0.55);
 }
 .modal[hidden] {
   display: none;
 }
 .modal-card {
-  background: var(--surface-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-m);
-  padding: 28px;
-  width: min(440px, calc(100vw - 40px));
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  padding: clamp(24px, 4vw, 36px);
+  width: min(460px, calc(100vw - 40px));
 }
 .modal-card h2 {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
 }
 .modal-destination span {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   word-break: break-all;
-  color: var(--accent-strong);
 }
 .modal-note {
-  color: var(--text-faint);
+  color: var(--ink-60);
   font-size: 0.88rem;
 }
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 22px;
+  margin-top: 24px;
 }
 .modal-actions .is-locked {
-  opacity: 0.5;
+  opacity: 0.4;
   pointer-events: none;
 }
 .modal-turnstile {
@@ -202,8 +218,7 @@ textarea {
   min-height: 65px;
 }
 
-/* Scroll reveal system -------------------------------------------------- */
-
+/* Scroll reveal system */
 .reveal-pending {
   opacity: 0;
 }
@@ -211,7 +226,7 @@ textarea {
   clip-path: inset(0 0 100% 0);
 }
 .reveal-pending.reveal-scale {
-  scale: 0.94;
+  scale: 0.96;
 }
 .reveal-pending.reveal-left {
   opacity: 0;
@@ -253,7 +268,7 @@ textarea {
 @keyframes site-reveal-scale {
   from {
     opacity: 0;
-    scale: 0.94;
+    scale: 0.96;
   }
   to {
     opacity: 1;
@@ -270,9 +285,8 @@ textarea {
     translate: 0 0;
   }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  html:not(.a11y-motion) .reveal-pending {
+  .reveal-pending {
     opacity: 1;
     clip-path: none;
     scale: none;
@@ -283,18 +297,14 @@ textarea {
   }
 }
 
-/* Lottie figure contract -------------------------------------------------- */
-
+/* Lottie figure: hairline box, ink strokes on paper. */
 .lottie-figure {
   margin: 0;
   aspect-ratio: var(--lot-ar, 1 / 1);
   width: 100%;
-  max-width: 480px;
-  border-radius: var(--radius-l);
-  background:
-    radial-gradient(60% 55% at 50% 42%, rgba(77, 127, 255, 0.12), transparent 70%),
-    var(--surface-1);
-  border: 1px solid var(--border);
+  max-width: 460px;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
   overflow: hidden;
 }
 .lottie-figure svg {

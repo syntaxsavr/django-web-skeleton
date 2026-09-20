@@ -13,9 +13,8 @@
   position: relative;
   min-height: 220px;
   margin-top: 24px;
-  border-radius: var(--radius-m);
-  border: 1px dashed var(--border-strong);
-  background: var(--surface-2);
+  border: 1px dashed var(--ink-40);
+  background: var(--wash);
   opacity: 0;
   transition: opacity 0.3s ease;
   overflow: hidden;
@@ -24,12 +23,12 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%);
+  background: linear-gradient(100deg, transparent 30%, rgba(10, 10, 10, 0.05) 50%, transparent 70%);
   animation: lazy-shimmer 1.6s linear infinite;
 }
 [data-lazy-section].lazy-error .lazy-placeholder {
   border-style: solid;
-  border-color: rgba(214, 69, 69, 0.5);
+  border-color: #a02121;
 }
 [data-lazy-section].lazy-error .lazy-placeholder::before {
   content: "This section failed to load.";
@@ -37,7 +36,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  color: var(--text-secondary);
+  color: var(--ink-60);
   font-size: 0.92rem;
 }
 @keyframes lazy-shimmer {

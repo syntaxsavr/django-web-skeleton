@@ -3,21 +3,24 @@
 {% block body_class %}page-demo{% endblock %}
 {% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/demo.css' %}">{% endblock %}
 {% block content %}
-<section class="section demo-hero">
+<section class="demo-hero">
   <div class="shell">
     <header class="section-head">
-      <p class="hero-kicker">Pattern showcase</p>
-      <h1>How this skeleton works</h1>
-      <p class="section-lead">Each block below demonstrates one mechanism. Open the page source: the markup is the documentation.</p>
+      <span class="mono-label">The tour</span>
+      <h1>Seven mechanisms, one page.</h1>
+      <p class="section-lead">Every block below demonstrates one system. Open the page source: the markup is the documentation.</p>
     </header>
   </div>
 </section>
 
-<section class="section" id="demo-reveal" aria-labelledby="demo-reveal-heading">
+<section class="demo-block section-rule" id="demo-reveal" aria-labelledby="demo-reveal-heading">
   <div class="shell">
-    <header class="section-head">
-      <h2 id="demo-reveal-heading">1 · Scroll reveal</h2>
-      <p class="section-lead">Elements below the fold fade and rise in as they enter the viewport, staggered by 45ms. Any element with <code>data-reveal</code> joins the system. It turns itself off for reduced motion and print.</p>
+    <header class="demo-block-head">
+      <span class="demo-no">01</span>
+      <div>
+        <h2 id="demo-reveal-heading">Scroll reveal</h2>
+        <p class="section-lead">Elements below the fold rise in as they enter the viewport, staggered by 45ms. Any element with <code>data-reveal</code> joins the system. It switches itself off for reduced motion and print.</p>
+      </div>
     </header>
     <div class="demo-grid">
       <div class="demo-box" data-reveal>data-reveal</div>
@@ -30,84 +33,102 @@
   </div>
 </section>
 
-<section class="section section-alt" id="demo-hero-entrance" aria-labelledby="demo-hero-heading">
+<section class="demo-block section-rule" id="demo-hero-entrance" aria-labelledby="demo-hero-heading">
   <div class="shell">
-    <header class="section-head">
-      <h2 id="demo-hero-heading">2 · Hero entrance</h2>
-      <p class="section-lead">A section marked <code>data-hero-entrance</code> sequences its <code>data-hero-item</code> children on load. The home page hero uses it with a Lottie stage.</p>
+    <header class="demo-block-head">
+      <span class="demo-no">02</span>
+      <div>
+        <h2 id="demo-hero-heading">Hero entrance</h2>
+        <p class="section-lead">A section marked <code>data-hero-entrance</code> sequences its <code>data-hero-item</code> children on load. The index page hero uses it with the giant letter.</p>
+      </div>
     </header>
-    <div class="demo-hero demo-hero-sample" data-hero-entrance>
-      <p data-hero-item>First: the kicker line.</p>
+    <div class="demo-hero-sample" data-hero-entrance>
+      <p data-hero-item>First: the heading arrives.</p>
       <p data-hero-item>Second: the supporting copy.</p>
-      <p data-hero-item>Third: the actions arrive.</p>
+      <p data-hero-item>Third: the actions.</p>
     </div>
   </div>
 </section>
 
-<section class="section" id="demo-lottie" aria-labelledby="demo-lottie-heading">
+<section class="demo-block section-rule" id="demo-lottie" aria-labelledby="demo-lottie-heading">
   <div class="shell">
-    <header class="section-head">
-      <h2 id="demo-lottie-heading">3 · Lottie mounts</h2>
-      <p class="section-lead">One declarative attribute per animation. The ratio box reserves space before the JSON loads, offscreen animations pause, and reduced motion parks on a static frame.</p>
+    <header class="demo-block-head">
+      <span class="demo-no">03</span>
+      <div>
+        <h2 id="demo-lottie-heading">Lottie mounts</h2>
+        <p class="section-lead">One declarative attribute per animation. The ratio box reserves space before the JSON loads, offscreen animations pause, and reduced motion parks on a static frame.</p>
+      </div>
     </header>
     <div class="demo-lottie-grid">
       <figure class="demo-lottie-card">
         <div class="lottie-figure" data-lottie="{% static 'core/lottie/hero-orbit.json' %}" data-lottie-loop="true" data-lottie-ratio="1/1" aria-hidden="true"></div>
-        <figcaption>Loop: data-lottie-loop="true"</figcaption>
+        <figcaption>loop · data-lottie-loop="true"</figcaption>
       </figure>
       <figure class="demo-lottie-card">
         <div class="lottie-figure" data-lottie="{% static 'core/lottie/hero-orbit.json' %}" data-lottie-scroll="true" data-lottie-ratio="1/1" aria-hidden="true"></div>
-        <figcaption>Scrub: tied to scroll position</figcaption>
+        <figcaption>scrub · tied to scroll position</figcaption>
       </figure>
       <figure class="demo-lottie-card">
         <div class="lottie-figure" data-lottie="{% static 'core/lottie/hero-orbit.json' %}" data-lottie-loop="true" data-lottie-speed="0.5" data-lottie-ratio="1/1" aria-hidden="true"></div>
-        <figcaption>Half speed: data-lottie-speed="0.5"</figcaption>
+        <figcaption>half speed · data-lottie-speed="0.5"</figcaption>
       </figure>
     </div>
-    <p class="demo-note">This animation is generated by <code>tools/lottie/build_demo.py</code>: shape layers only, no external assets.</p>
+    <p class="demo-note">The animation is generated by <code>tools/lottie/build_demo.py</code>: shape layers only, no external assets.</p>
   </div>
 </section>
 
-<section class="section section-alt" id="demo-lazy" aria-labelledby="demo-lazy-heading" data-lazy-section data-lazy-url="{% url 'lazy_section' 'demo-lazy-panel' %}">
+<section class="demo-block section-rule" id="demo-lazy" aria-labelledby="demo-lazy-heading" data-lazy-section data-lazy-url="{% url 'lazy_section' 'demo-lazy-panel' %}">
   <div class="shell">
-    <header class="section-head">
-      <h2 id="demo-lazy-heading">4 · Network-lazy section</h2>
-      <p class="section-lead">Everything under this heading was fetched when you approached it. View source now and it is already swapped in; reload with the network tab open to watch it happen.</p>
+    <header class="demo-block-head">
+      <span class="demo-no">04</span>
+      <div>
+        <h2 id="demo-lazy-heading">Network-lazy section</h2>
+        <p class="section-lead">Everything under this heading was fetched when you approached it. View source now and it is already swapped in; reload with the network tab open to watch it happen.</p>
+      </div>
     </header>
   </div>
 </section>
 
-<section class="section" id="demo-track" aria-labelledby="demo-track-heading">
+<section class="demo-block section-rule" id="demo-track" aria-labelledby="demo-track-heading">
   <div class="shell">
-    <header class="section-head">
-      <h2 id="demo-track-heading">5 · Tracking hooks</h2>
-      <p class="section-lead">Every interactive element can carry <code>data-track</code>. Events only push to the dataLayer when analytics consent exists. Watch window.dataLayer in the console.</p>
+    <header class="demo-block-head">
+      <span class="demo-no">05</span>
+      <div>
+        <h2 id="demo-track-heading">Tracking hooks</h2>
+        <p class="section-lead">Every interactive element can carry <code>data-track</code>. Events only reach the dataLayer when analytics consent exists. Watch <code>window.dataLayer</code> in the console.</p>
+      </div>
     </header>
     <div class="demo-actions">
-      <button type="button" class="btn btn-primary" data-track="demo_primary">Primary action</button>
+      <button type="button" class="btn" data-track="demo_primary">Primary action</button>
       <button type="button" class="btn btn-ghost" data-track="demo_secondary">Secondary action</button>
       <a class="btn btn-ghost" href="https://www.djangoproject.com/" data-track="demo_outbound">Outbound link (snatched by middleware)</a>
     </div>
   </div>
 </section>
 
-<section class="section section-alt" id="demo-consent" aria-labelledby="demo-consent-heading">
+<section class="demo-block section-rule" id="demo-consent" aria-labelledby="demo-consent-heading">
   <div class="shell">
-    <header class="section-head">
-      <h2 id="demo-consent-heading">6 · Consent manager</h2>
-      <p class="section-lead">Klaro! renders the banner only when the master switch is on. The footer holds a Cookie settings button, and legal pages never auto-open it.</p>
+    <header class="demo-block-head">
+      <span class="demo-no">06</span>
+      <div>
+        <h2 id="demo-consent-heading">Consent manager</h2>
+        <p class="section-lead">Klaro! renders the banner only when the master switch is on. The footer holds a cookie settings button, and legal pages never auto-open it.</p>
+      </div>
     </header>
     <div class="demo-actions">
-      <button type="button" class="btn btn-primary" data-open-cookie-settings>Open cookie settings</button>
+      <button type="button" class="btn" data-open-cookie-settings>Open cookie settings</button>
     </div>
   </div>
 </section>
 
-<section class="section" id="demo-form" aria-labelledby="demo-form-heading">
+<section class="demo-block section-rule" id="demo-form" aria-labelledby="demo-form-heading">
   <div class="shell">
-    <header class="section-head">
-      <h2 id="demo-form-heading">7 · The contact form</h2>
-      <p class="section-lead">Honeypot, signed time-trap, Turnstile (when keys are configured) and rate limiting. Submit once and try again immediately to see the cooldown.</p>
+    <header class="demo-block-head">
+      <span class="demo-no">07</span>
+      <div>
+        <h2 id="demo-form-heading">The contact form</h2>
+        <p class="section-lead">Honeypot, signed time-trap, Turnstile when keys are configured, and a cooldown. Submit once and try again immediately to meet the rate limiter.</p>
+      </div>
     </header>
     {% include "core/fragments/contact-form.html" %}
   </div>

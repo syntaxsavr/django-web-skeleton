@@ -1,74 +1,77 @@
-/* Klaro! consent UI themed to the skeleton tokens. Klaro renders its own
-   DOM into #klaro; these rules restyle both current (cm-*) class names. */
+/* Klaro! consent UI themed to the paper system: white panels, ink text,
+   black primary buttons. Klaro renders its own DOM into #klaro. */
 
 #klaro {
-  --cm-bg: var(--surface-2, #171b21);
-  --cm-text: var(--text-primary, #f2f4f8);
   font-family: var(--font-sans, system-ui, sans-serif);
 }
 .klaro .cm-modal,
 .klaro .cm-notice {
-  background: var(--cm-bg) !important;
-  color: var(--cm-text) !important;
-  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
-  border-radius: 14px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  background: var(--paper, #fcfcfa) !important;
+  color: var(--ink, #0a0a0a) !important;
+  border: 1px solid var(--ink, #0a0a0a) !important;
+  box-shadow: none;
 }
 .klaro .cm-title {
-  color: var(--cm-text) !important;
-  font-weight: 700;
+  color: var(--ink, #0a0a0a) !important;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 .klaro .cm-description,
 .klaro .cm-services .cm-service-description,
 .klaro .cm-list-stacked .cm-service-description {
-  color: var(--text-secondary, #a8b0bd) !important;
+  color: var(--ink-60, #575752) !important;
 }
 .klaro .cm-link {
-  color: var(--accent-strong, #7aa0ff) !important;
+  color: var(--ink, #0a0a0a) !important;
 }
 .klaro .cm-btn {
-  border-radius: 8px !important;
-  font-weight: 600 !important;
+  border: 1px solid var(--ink, #0a0a0a) !important;
+  font-weight: 500 !important;
   min-height: 44px;
-  border: 1px solid transparent !important;
   cursor: pointer;
-  font-family: inherit;
+  font-family: var(--font-mono, monospace) !important;
+  font-size: 0.74rem !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase;
 }
 .klaro .cm-btn-success,
 .klaro .cm-btn-accept {
-  background: var(--accent, #4d7fff) !important;
-  color: #fff !important;
+  background: var(--ink, #0a0a0a) !important;
+  color: var(--paper, #fcfcfa) !important;
 }
 .klaro .cm-btn-danger,
 .klaro .cm-btn-decline {
   background: transparent !important;
-  color: var(--text-primary, #f2f4f8) !important;
-  border-color: var(--border-strong, rgba(255, 255, 255, 0.16)) !important;
+  color: var(--ink, #0a0a0a) !important;
 }
 .klaro .cm-btn-info {
   background: transparent !important;
-  color: var(--accent-strong, #7aa0ff) !important;
-  border-color: var(--border-strong, rgba(255, 255, 255, 0.16)) !important;
+  color: var(--ink, #0a0a0a) !important;
 }
 .klaro .cm-toggle,
 .klaro .cm-toggle-switch {
-  background: var(--surface-3, #1e232b) !important;
+  background: var(--wash, #f3f3ee) !important;
+  border: 1px solid var(--ink, #0a0a0a);
 }
 .klaro .cm-toggle.cm-toggle-on,
 .klaro .cm-toggle-switch.cm-toggle-on {
-  background: var(--accent, #4d7fff) !important;
+  background: var(--ink, #0a0a0a) !important;
+}
+.klaro .cm-toggle .knob,
+.klaro .cm-toggle-switch .knob {
+  background: var(--ink, #0a0a0a) !important;
 }
 .klaro .cm-toggle.cm-toggle-on .knob,
 .klaro .cm-toggle-switch.cm-toggle-on .knob {
-  background: #fff !important;
+  background: var(--paper, #fcfcfa) !important;
 }
 .klaro .cm-service,
 .klaro .cm-list-item {
-  border-color: var(--border, rgba(255, 255, 255, 0.08)) !important;
+  border-color: var(--rule, rgba(10, 10, 10, 0.16)) !important;
 }
 .klaro .cm-service .cm-service-title,
 .klaro .cm-list-item .cm-service-title {
-  color: var(--cm-text) !important;
+  color: var(--ink, #0a0a0a) !important;
 }
 html.klaro-open,
 body.klaro-open {

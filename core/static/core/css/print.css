@@ -1,14 +1,11 @@
-/* Print edition: the dark site becomes clean paper. */
+/* Print edition: the site is already paper; keep it cheap and readable. */
 
 @media print {
   @page {
     size: A4;
     margin: 18mm;
   }
-  html,
   body {
-    background: #fff !important;
-    color: #000 !important;
     font-size: 11pt;
   }
   .site-header,
@@ -18,18 +15,16 @@
   #klaro,
   .modal,
   [data-lottie],
-  [data-lazy-section] .lazy-placeholder {
+  [data-lazy-section] .lazy-placeholder,
+  .btn {
     display: none !important;
   }
-  .section {
+  .section,
+  .demo-block {
     padding-block: 12pt;
   }
   a {
-    color: #000 !important;
     text-decoration: underline;
-  }
-  .btn {
-    display: none !important;
   }
   h1,
   h2,
@@ -41,13 +36,12 @@
     orphans: 3;
     widows: 3;
   }
-  .section,
-  .feature-card,
-  .pattern-card {
+  .rule-row,
+  .demo-block,
+  .lazy-panel {
     break-inside: avoid;
   }
   * {
-    box-shadow: none !important;
     animation: none !important;
     transition: none !important;
   }

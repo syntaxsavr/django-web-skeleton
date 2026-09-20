@@ -39,7 +39,7 @@ class SiteConfiguration(models.Model):
         blank=True,
         default="A production-shaped Django skeleton: consent-first tracking, SEO suite, lazy sections, Lottie.",
     )
-    theme_color = models.CharField(max_length=9, default="#0b0d10")
+    theme_color = models.CharField(max_length=9, default="#fcfcfa")
 
     # --- Consent & tracking --------------------------------------------------
     enable_cookie_consent = models.BooleanField(

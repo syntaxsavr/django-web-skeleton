@@ -1,57 +1,103 @@
-/* Demo page: showcase grids. */
+/* Demo: a numbered index of mechanisms. The markup is the documentation. */
 
 .demo-hero {
-  padding-block: clamp(56px, 8vw, 96px) 0;
+  padding-block: clamp(40px, 6vw, 88px) clamp(32px, 5vw, 64px);
 }
+.demo-hero h1 {
+  max-width: 14ch;
+}
+.demo-hero .section-lead {
+  max-width: 52ch;
+}
+
+.demo-block {
+  padding-block: clamp(40px, 6vw, 88px);
+}
+.demo-block-head {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: clamp(14px, 2vw, 32px);
+  margin-bottom: clamp(26px, 4vw, 48px);
+}
+.demo-block-head .demo-no {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-40);
+  padding-top: 0.8em;
+}
+.demo-block-head h2 {
+  max-width: 18ch;
+}
+.demo-block-head .section-lead {
+  margin-top: 12px;
+}
+@media (max-width: 700px) {
+  .demo-block-head {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
 .demo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  border: 1px solid var(--ink);
 }
 .demo-box {
   display: grid;
   place-items: center;
-  min-height: 130px;
-  border-radius: var(--radius-m);
-  border: 1px dashed var(--border-strong);
-  background: var(--surface-2);
+  min-height: 120px;
+  border: 1px solid var(--rule);
+  margin: -1px 0 0 -1px;
   font-family: var(--font-mono);
-  font-size: 0.82rem;
-  color: var(--text-secondary);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-60);
+  background: var(--paper);
 }
+
 .demo-hero-sample {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-m);
-  background: var(--surface-2);
+  border: 1px solid var(--ink);
   padding: clamp(24px, 4vw, 44px);
   display: grid;
   gap: 12px;
 }
 .demo-hero-sample p {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--ink-60);
 }
+.demo-hero-sample p:first-child {
+  color: var(--ink);
+  font-size: 1.4rem;
+  letter-spacing: -0.02em;
+}
+
 .demo-lottie-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: clamp(18px, 3vw, 32px);
 }
 .demo-lottie-card {
   margin: 0;
 }
+.demo-lottie-card .lottie-figure {
+  max-width: none;
+}
 .demo-lottie-card figcaption {
   margin-top: 10px;
   font-family: var(--font-mono);
-  font-size: 0.82rem;
-  color: var(--text-faint);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-40);
 }
 .demo-note {
-  margin-top: 22px;
-  color: var(--text-faint);
-  font-size: 0.9rem;
+  margin-top: 24px;
+  color: var(--ink-40);
+  font-size: 0.88rem;
 }
 .demo-actions {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
 }

@@ -1,16 +1,7 @@
-/* Fragment: home-patterns (loaded over the network via lazy-section) */
+/* Fragment: home-patterns (fetched over the network by lazy-section) */
 
-.pattern-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 18px;
-}
-.pattern-card h3::before {
-  content: "";
-  display: block;
-  width: 34px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--accent);
-  margin-bottom: 14px;
+.pattern-note {
+  margin-top: 26px;
+  color: var(--ink-40);
+  font-size: 0.88rem;
 }

@@ -1,47 +1,47 @@
 /* Auth pages and account dashboard. */
 
 .auth-section {
-  display: grid;
-  place-items: start center;
-  padding-block: clamp(56px, 8vw, 110px);
+  padding-block: clamp(48px, 7vw, 104px);
 }
 .auth-card {
-  width: 100%;
-  max-width: 420px;
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-l);
-  padding: clamp(26px, 4vw, 40px);
-  box-shadow: var(--shadow-card);
+  max-width: 460px;
+  border: 1px solid var(--ink);
+  padding: clamp(26px, 4vw, 44px);
+  background: var(--paper);
 }
 .auth-card h1 {
-  font-size: 1.6rem;
+  font-size: 2rem;
 }
 .auth-note {
-  background: var(--accent-soft);
-  border: 1px solid rgba(77, 127, 255, 0.35);
-  border-radius: var(--radius-s);
-  padding: 10px 14px;
-  font-size: 0.88rem;
-  color: var(--text-secondary);
+  border: 1px solid var(--rule);
+  background: var(--wash);
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  color: var(--ink-60);
+  margin-bottom: 24px;
 }
 .auth-links {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin: 18px 0 0;
+  margin: 20px 0 0;
   font-size: 0.9rem;
 }
 .account-meta {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 8px 20px;
-  margin: 20px 0;
+  gap: 10px 24px;
+  margin: 24px 0;
+  border-top: 1px solid var(--rule);
+  padding-top: 20px;
 }
 .account-meta dt {
-  color: var(--text-faint);
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-40);
   align-self: baseline;
 }
 .account-meta dd {

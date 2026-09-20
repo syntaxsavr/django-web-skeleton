@@ -1,15 +1,16 @@
-/* Display preferences and perf tiering. Runs before other UI scripts. */
+/* Display preferences and perf tiering. Runs before other UI scripts.
+   Footer controls: dark mode, larger text, reduced motion. */
 (function () {
   "use strict";
 
   var STORE_KEY = "skeleton.a11y";
-  var prefs = { light: false, text: 0, motion: false };
+  var prefs = { dark: false, text: 0, motion: false };
   try {
     var raw = window.localStorage.getItem(STORE_KEY);
     if (raw) {
       var saved = JSON.parse(raw);
       if (saved && typeof saved === "object") {
-        prefs.light = !!saved.light;
+        prefs.dark = !!saved.dark || !!saved.light;
         prefs.text = saved.text === 1 || saved.text === 2 ? saved.text : 0;
         prefs.motion = !!saved.motion;
       }
@@ -28,11 +29,10 @@
 
   function apply() {
     var root = document.documentElement;
-    root.classList.toggle("a11y-light", prefs.light);
+    root.classList.toggle("theme-dark", prefs.dark);
     root.classList.toggle("a11y-text-110", prefs.text === 1);
     root.classList.toggle("a11y-text-125", prefs.text === 2);
     root.classList.toggle("a11y-reduce-motion", prefs.motion);
-    root.classList.toggle("a11y-motion", !prefs.motion);
   }
 
   function bind() {
@@ -40,7 +40,7 @@
       var target = event.target.closest("[data-a11y-action]");
       if (!target) return;
       var action = target.getAttribute("data-a11y-action");
-      if (action === "toggle-light") prefs.light = !prefs.light;
+      if (action === "toggle-dark") prefs.dark = !prefs.dark;
       else if (action === "toggle-text") prefs.text = (prefs.text + 1) % 3;
       else if (action === "toggle-motion") prefs.motion = !prefs.motion;
       else return;
@@ -53,22 +53,6 @@
     var root = document.documentElement;
     var cores = navigator.hardwareConcurrency || 4;
     if (cores <= 2) root.classList.add("perf-lite");
-    var frames = [];
-    var start = performance.now();
-    function tick(now) {
-      frames.push(now - start);
-      start = now;
-      if (frames.length < 40) {
-        requestAnimationFrame(tick);
-        return;
-      }
-      frames.sort(function (a, b) {
-        return a - b;
-      });
-      var median = frames[Math.floor(frames.length / 2)];
-      if (median > 22) root.classList.add("perf-lite");
-    }
-    requestAnimationFrame(tick);
   }
 
   apply();

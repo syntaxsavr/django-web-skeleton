@@ -13,23 +13,23 @@
 <main class="error-stage">
   <p class="error-code" aria-hidden="true">{{ error_code|default:404 }}</p>
   {% if error_code|default:404 == 404 %}
-  <h1>Nothing at this address</h1>
+  <h1>Nothing at this address.</h1>
   <p>The page moved, never existed, or the link has a typo.</p>
   {% elif error_code|default:404 == 403 %}
-  <h1>Not allowed</h1>
+  <h1>Not allowed.</h1>
   <p>You do not have permission to view this page.</p>
   {% elif error_code|default:404 == 429 %}
-  <h1>Too many requests</h1>
+  <h1>Too many requests.</h1>
   <p>Slow down and try again in a minute.</p>
   {% elif error_code|default:404 == 400 %}
-  <h1>Bad request</h1>
+  <h1>Bad request.</h1>
   <p>The server could not understand the request.</p>
   {% else %}
-  <h1>System error</h1>
+  <h1>System error.</h1>
   <p>Something failed on our side. Try again in a moment.</p>
   {% endif %}
   <p class="error-actions">
-    <a class="btn btn-primary" href="/">Back to the start page</a>
+    <a class="btn" href="/">Back to the index</a>
     <a class="btn btn-ghost" href="/demo/">Show me the demo</a>
   </p>
 </main>

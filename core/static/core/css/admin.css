@@ -1,0 +1,63 @@
+/* Admin overrides: guarantee readable inputs and controls on the light
+   theme. Loaded only inside the Django admin (UNFOLD STYLES). */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="url"],
+input[type="tel"],
+input[type="date"],
+input[type="datetime-local"],
+select,
+textarea {
+  background: #ffffff !important;
+  color: #0a0a0a !important;
+  border: 1px solid #0a0a0a !important;
+  border-radius: 0 !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #0a0a0a !important;
+  outline-offset: 1px;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #0a0a0a;
+  width: 16px;
+  height: 16px;
+}
+
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #0a0a0a 50%),
+    linear-gradient(135deg, #0a0a0a 50%, transparent 50%) !important;
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50% !important;
+  background-size: 6px 6px !important;
+  background-repeat: no-repeat !important;
+  padding-right: 34px;
+}
+
+.button, /* stock admin buttons */
+button[type="submit"],
+input[type="submit"],
+.button-default {
+  background: #0a0a0a !important;
+  color: #fcfcfa !important;
+  border: 1px solid #0a0a0a !important;
+  border-radius: 0 !important;
+}
+.button:hover,
+button[type="submit"]:hover {
+  background: #333330 !important;
+}
+a.button:active,
+button:active {
+  translate: 0 1px;
+}

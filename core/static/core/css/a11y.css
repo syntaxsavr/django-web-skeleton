@@ -1,5 +1,20 @@
-/* Accessibility overrides applied by the prefs script (localStorage
-   persisted) and by native media queries. */
+/* Display overrides driven by the footer controls (localStorage persisted)
+   and by native media queries. Light is the default; dark inverts tokens. */
+
+html.theme-dark {
+  --paper: #111110;
+  --ink: #f4f4f0;
+  --ink-60: #b3b3ac;
+  --ink-40: #7d7d76;
+  --rule: rgba(244, 244, 240, 0.22);
+  --rule-strong: #f4f4f0;
+  --wash: #1b1b19;
+  color-scheme: dark;
+}
+html.theme-dark ::selection {
+  background: var(--paper);
+  color: var(--ink);
+}
 
 html.a11y-reduce-motion *,
 html.a11y-reduce-motion *::before,
@@ -8,47 +23,6 @@ html.a11y-reduce-motion *::after {
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
-}
-
-html.a11y-light {
-  --bg-page: #ffffff;
-  --surface-0: #ffffff;
-  --surface-1: #f5f6f8;
-  --surface-2: #eceef2;
-  --surface-3: #e2e5ea;
-  --surface-card: #f8f9fb;
-  --text-primary: #14171c;
-  --text-secondary: #454c58;
-  --text-faint: #6f7787;
-  --accent: #2f5fe0;
-  --accent-strong: #1f47b8;
-  --accent-soft: rgba(47, 95, 224, 0.1);
-  --border: rgba(0, 0, 0, 0.12);
-  --border-strong: rgba(0, 0, 0, 0.22);
-  color-scheme: light;
-}
-html.a11y-light meta[name="color-scheme"] {
-  content: light;
-}
-
-html.a11y-contrast {
-  --text-primary: #ffffff;
-  --text-secondary: #e6e9ef;
-  --text-faint: #c7ccd6;
-  --border: rgba(255, 255, 255, 0.35);
-  --border-strong: rgba(255, 255, 255, 0.55);
-  --accent: #9db8ff;
-  --accent-strong: #c0d1ff;
-  --accent-soft: rgba(157, 184, 255, 0.22);
-}
-html.a11y-light.a11y-contrast {
-  --text-primary: #000000;
-  --text-secondary: #1c1f25;
-  --text-faint: #333842;
-  --accent: #0b2f9e;
-  --accent-strong: #08236f;
-  --border: rgba(0, 0, 0, 0.4);
-  --border-strong: rgba(0, 0, 0, 0.6);
 }
 
 html.a11y-text-110 {

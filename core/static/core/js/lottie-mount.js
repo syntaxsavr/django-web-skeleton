@@ -55,8 +55,7 @@
   function reducedMotion() {
     return (
       window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-      document.documentElement.classList.contains("a11y-reduce-motion") ||
-      document.documentElement.classList.contains("perf-lite")
+      document.documentElement.classList.contains("a11y-reduce-motion")
     );
   }
 
@@ -86,8 +85,9 @@
       });
       var speed = parseFloat(el.getAttribute("data-lottie-speed"));
       if (speed > 0) anim.setSpeed(speed);
+      var isScrub = el.getAttribute("data-lottie-scroll") === "true";
       el._lottie = anim;
-      mounted.push({ el: el, anim: anim, scrub: el.getAttribute("data-lottie-scroll") === "true" });
+      mounted.push({ el: el, anim: anim, scrub: isScrub });
 
       var poster = el.querySelector("[data-lottie-poster]");
       if (poster) poster.hidden = true;
@@ -96,7 +96,7 @@
         anim.goToAndStop(anim.totalFrames - 1, true);
         return;
       }
-      if (el.getAttribute("data-lottie-scroll") === "true") {
+      if (isScrub) {
         scrubAll();
         return;
       }
@@ -152,12 +152,15 @@
       visibilityObserver = new IntersectionObserver(
         function (entries) {
           entries.forEach(function (entry) {
-            var anim = entry.target._lottie;
-            if (!anim || typeof anim === "string" || anim.scrub) return;
+            var wrapper = null;
+            for (var i = 0; i < mounted.length; i++) {
+              if (mounted[i].el === entry.target) wrapper = mounted[i];
+            }
+            if (!wrapper || typeof wrapper.anim === "string") return;
             if (entry.isIntersecting) {
-              if (!reducedMotion()) anim.play();
+              if (!reducedMotion() && !wrapper.scrub) wrapper.anim.play();
             } else {
-              anim.pause();
+              wrapper.anim.pause();
             }
           });
         },

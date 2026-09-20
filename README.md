@@ -72,15 +72,17 @@ Environment variables override sensitive DB values (`TURNSTILE_SITE_KEY`,
 | Minifying static storage | `core/storage.py` |
 | Base template shell | `core/templates/core/base.html` |
 | Section fragments | `core/templates/core/fragments/` |
-| Design tokens + pages CSS | `core/static/core/css/` |
+| Design tokens (paper/ink) + pages CSS | `core/static/core/css/` |
 | Vanilla JS modules | `core/static/core/js/` |
+| Display fonts (OFL) | `core/static/core/font/` (Space Grotesk, Instrument Serif) |
 | Lottie runtime + demo | `core/static/core/js/lottie-mount.js`, `core/lottie/` |
 | Lottie authoring script | `tools/lottie/build_demo.py` |
 | Brand asset generator | `tools/generate_brand_assets.py` |
 | Management commands | `core/management/commands/` (`seed`, `indexnow`) |
 | Agent skills | `.agents/skills/` (+ `.claude/skills/`, `skills-lock.json`) |
 
-Read `AGENTS.md` before changing anything: it documents the architecture,
+The visual language is paper and ink with typography as the design; read
+`docs/DESIGN-SYSTEM.md` and `AGENTS.md` before changing anything: it documents the architecture,
 the data-attribute contracts, and step-by-step recipes for adding pages,
 sections, trackers and legal pages.
 

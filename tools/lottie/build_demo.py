@@ -2,8 +2,10 @@
 """Author the demo Lottie animation in pure Python.
 
 Constraints (same discipline as the gritsec lottiekit): shape layers only,
-no expressions, no effects, no text layers, no image assets. Anything this
-script emits is safe for the light SVG renderer.
+no expressions, no effects, no text layers, no image assets. The output
+uses only constructs the light SVG renderer handles identically to full
+lottie-web: static ellipse shapes, layer rotation/opacity/scale keyframes
+with three-component scale values, easing on every keyframe except the last.
 
 Run from the repo root:
     python tools/lottie/build_demo.py
@@ -16,25 +18,25 @@ from pathlib import Path
 
 W = H = 600
 FPS = 30
-DURATION = 3.0
+DURATION = 4.0
 FRAMES = int(FPS * DURATION)
 
-ACCENT = [0.302, 0.498, 1.0]      # #4d7fff
-ACCENT_SOFT = [0.302, 0.498, 1.0]
-WHITE = [0.95, 0.96, 0.98]
+INK = [0.06, 0.06, 0.06]
+PAPER = [1.0, 1.0, 1.0]
 
-EASE_OUT = {"i": {"x": [0.35], "y": [1]}, "o": {"x": [0.55], "y": [0]}}
-EASE_IN_OUT = {"i": {"x": [0.42], "y": [0]}, "o": {"x": [0.58], "y": [1]}}
+EASE = {"i": {"x": [0.42], "y": [0]}, "o": {"x": [0.58], "y": [1]}}
 
 
-def keyframes(pairs, ease=EASE_OUT):
-    """pairs: [(frame, value), ...] -> animated property"""
+def keyframes(pairs):
+    """pairs: [(frame, value), ...]. The value must already be the final
+    "s" payload (list for scale/position, single-element list for scalars).
+    Every keyframe except the last carries easing for its outgoing segment."""
     keys = []
     for index, (frame, value) in enumerate(pairs):
-        key = {"t": frame, "s": [value] if isinstance(value, (int, float)) else value}
-        if 0 < index:
-            key["i"] = ease["i"]
-            key["o"] = ease["o"]
+        key = {"t": frame, "s": value}
+        if index < len(pairs) - 1:
+            key["i"] = EASE["i"]
+            key["o"] = EASE["o"]
         keys.append(key)
     return {"a": 1, "k": keys}
 
@@ -43,8 +45,8 @@ def static(value):
     return {"a": 0, "k": value}
 
 
-def stroke(color, width, opacity=100, dashed=False, offset=0):
-    item = {
+def stroke(color, width, opacity=100):
+    return {
         "ty": "st",
         "c": static(color + [1]),
         "o": static(opacity),
@@ -54,12 +56,6 @@ def stroke(color, width, opacity=100, dashed=False, offset=0):
         "bm": 0,
         "nm": "stroke",
     }
-    if dashed:
-        item["d"] = [
-            {"n": "d", "nm": "dash", "v": static(22)},
-            {"n": "g", "nm": "gap", "v": static(16 + offset)},
-        ]
-    return item
 
 
 def fill(color, opacity=100):
@@ -67,41 +63,41 @@ def fill(color, opacity=100):
 
 
 def ellipse(size, position=(0, 0)):
-    return {"ty": "el", "p": static(list(position)), "s": static(list(size)), "d": 1, "nm": "ellipse"}
+    return {"ty": "el", "p": static(list(position)), "s": static([size, size]), "d": 1, "nm": "ellipse"}
 
 
-def transform(position=(0, 0), scale=(100, 100), rotation=None, opacity=None):
-    tr = {
+def transform(position=(0, 0), scale=(100, 100), rotation=0, opacity=100):
+    return {
         "ty": "tr",
         "p": static(list(position) + [0]),
         "a": static([0, 0]),
-        "s": static(list(scale)),
-        "r": static(rotation or 0),
-        "o": static(opacity if opacity is not None else 100),
+        "s": static([scale[0], scale[1], 100]),
+        "r": static(rotation),
+        "o": static(opacity),
         "sk": static(0),
         "sa": static(0),
     }
-    return tr
 
 
 def group(items, name="group"):
     return {"ty": "gr", "it": items + [transform()], "nm": name, "bm": 0}
 
 
-def shape_layer(name, shapes, opacity=None, rotation=None, scale=None):
+def shape_layer(name, shapes, *, rotation=None, opacity=None, scale=None, ind=0):
+    ks = {
+        "o": opacity if opacity is not None else static(100),
+        "r": rotation if rotation is not None else static(0),
+        "p": static([W / 2, H / 2, 0]),
+        "a": static([0, 0, 0]),
+        "s": scale if scale is not None else static([100, 100, 100]),
+    }
     return {
         "ddd": 0,
-        "ind": 0,
+        "ind": ind,
         "ty": 4,
         "nm": name,
         "sr": 1,
-        "ks": {
-            "o": opacity or static(100),
-            "r": rotation or static(0),
-            "p": static([W / 2, H / 2, 0]),
-            "a": static([0, 0, 0]),
-            "s": scale or static([100, 100, 100]),
-        },
+        "ks": ks,
         "ao": 0,
         "shapes": shapes,
         "ip": 0,
@@ -111,83 +107,56 @@ def shape_layer(name, shapes, opacity=None, rotation=None, scale=None):
     }
 
 
-def pulse_ring(size, color, delay):
-    """A ring that expands from the core and fades out, staggered by delay."""
-    period = FRAMES / 2
-    start = delay
-    mid = start + period * 0.6
-    end = start + period
-    ring = group(
-        [
-            ellipse((size, size)),
-            stroke(color, 3, dashed=True),
-        ]
+def rotating_ring(size, width, opacity, start, end, ind):
+    return shape_layer(
+        "ring-%d" % ind,
+        [group([ellipse(size), stroke(INK, width, opacity=opacity)])],
+        rotation=keyframes([(0, [start]), (FRAMES, [end])]),
+        ind=ind,
     )
-    ring["it"][-1]["s"] = keyframes([(start, 18), (end, 100)], EASE_OUT)
-    layer = shape_layer("pulse-%d" % delay, [ring])
-    layer["ks"]["o"] = keyframes([(start, 0), (start + 2, 55), (mid, 30), (end, 0)], EASE_OUT)
-    layer["ip"] = 0
-    layer["op"] = FRAMES
-    return layer
+
+
+def orbiting_dot(radius, size, filled, start, end, ind):
+    dot = ellipse(size, position=(radius, 0))
+    shape = fill(INK) if filled else stroke(INK, 2)
+    return shape_layer(
+        "dot-%d" % ind,
+        [group([dot, shape])],
+        rotation=keyframes([(0, [start]), (FRAMES, [end])]),
+        ind=ind,
+    )
+
+
+def pulse_ring(delay, ind):
+    """Ring that grows from the core and fades: layer scale + opacity."""
+    return shape_layer(
+        "pulse-%d" % ind,
+        [group([ellipse(420), stroke(INK, 2, opacity=100)])],
+        scale=keyframes(
+            [(delay, [30, 30, 100]), (delay + FRAMES // 2, [115, 115, 100])],
+        ),
+        opacity=keyframes(
+            [(delay, [0]), (delay + 8, [45]), (delay + FRAMES // 2, [0])],
+        ),
+        ind=ind,
+    )
 
 
 def build():
-    layers = []
-
-    # Rotating dashed outer ring (the orbit path).
-    outer = shape_layer(
-        "outer-ring",
-        [group([ellipse((430, 430)), stroke(ACCENT, 4, opacity=45, dashed=True)])],
-    )
-    outer["ks"]["r"] = keyframes([(0, 0), (FRAMES, 360)], EASE_IN_OUT)
-    layers.append(outer)
-
-    # Second ring, thinner, slower, opposite direction.
-    inner = shape_layer(
-        "inner-ring",
-        [group([ellipse((300, 300)), stroke(ACCENT, 2, opacity=30)])],
-    )
-    inner["ks"]["r"] = keyframes([(0, 360), (FRAMES, 0)], EASE_IN_OUT)
-    layers.append(inner)
-
-    # Orbiting satellite: dot offset from center, layer rotation carries it.
-    satellite = shape_layer(
-        "satellite",
-        [group([ellipse((26, 26), position=(215, 0)), fill(ACCENT)])],
-    )
-    satellite["ks"]["r"] = keyframes([(0, 0), (FRAMES, 360)], EASE_IN_OUT)
-    layers.append(satellite)
-
-    # Counter satellite on the inner ring, smaller, white.
-    counter = shape_layer(
-        "counter-satellite",
-        [group([ellipse((14, 14), position=(150, 0)), fill(WHITE)])],
-    )
-    counter["ks"]["r"] = keyframes([(0, 360), (FRAMES, 0)], EASE_IN_OUT)
-    layers.append(counter)
-
-    # Expanding pulse rings, three of them, evenly staggered.
-    layers.append(pulse_ring(420, ACCENT_SOFT, 0))
-    layers.append(pulse_ring(420, ACCENT_SOFT, FRAMES / 3))
-    layers.append(pulse_ring(420, ACCENT_SOFT, 2 * FRAMES / 3))
-
-    # Core: filled dot with a breathing scale and a tight halo.
-    core = shape_layer(
-        "core",
-        [
-            group([ellipse((120, 120)), fill(ACCENT, opacity=12)]),
-            group([ellipse((56, 56)), fill(ACCENT)]),
-        ],
-    )
-    core["ks"]["s"] = keyframes(
-        [(0, [100, 100, 100]), (FRAMES / 2, [108, 108, 100]), (FRAMES, [100, 100, 100])],
-        EASE_IN_OUT,
-    )
-    layers.append(core)
-
-    for index, layer in enumerate(layers):
-        layer["ind"] = len(layers) - index
-
+    half = FRAMES // 2
+    layers = [
+        rotating_ring(430, 3, 100, 0, 360, 1),
+        rotating_ring(275, 1.5, 35, 360, 0, 2),
+        orbiting_dot(215, 24, True, 0, 360, 3),
+        orbiting_dot(137, 14, False, 360, 0, 4),
+        pulse_ring(0, 5),
+        pulse_ring(half, 6),
+        shape_layer(
+            "core",
+            [group([ellipse(54), fill(INK)])],
+            ind=7,
+        ),
+    ]
     return {
         "v": "5.7.4",
         "fr": FPS,

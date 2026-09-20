@@ -1,15 +1,19 @@
 {% load static %}<link rel="stylesheet" href="{% static 'core/css/fragments/home-patterns.css' %}">
-<div class="pattern-grid">
-  <article class="pattern-card">
+<div class="rule-rows">
+  <article class="rule-row">
+    <span class="row-index">a</span>
     <h3>One fragment per section</h3>
     <p>Pages are thin shells. Each section lives in <code>templates/core/fragments/</code> and links its own CSS, so a section ships with everything it needs.</p>
   </article>
-  <article class="pattern-card">
+  <article class="rule-row">
+    <span class="row-index">b</span>
     <h3>Deferred vanilla JS</h3>
-    <p>No bundler. Small IIFE modules talk through <code>data-*</code> attributes and CustomEvents. Production minifies and brotli-compresses everything at collectstatic.</p>
+    <p>No bundler. Small IIFE modules talk through <code>data-*</code> attributes and CustomEvents. Production minifies and compresses everything at collectstatic.</p>
   </article>
-  <article class="pattern-card">
+  <article class="rule-row">
+    <span class="row-index">c</span>
     <h3>Toggle, do not fork</h3>
-    <p>Registration, cookie consent, sitemap, Turnstile, scraper blocking: the control panel holds the runtime switches. Code stays identical between projects.</p>
+    <p>Registration, consent, sitemap, Turnstile, scraper blocking: the control panel holds the runtime switches. Code stays identical between projects.</p>
   </article>
 </div>
+<p class="pattern-note">This whole section arrived over the network: view source and it is already swapped in.</p>

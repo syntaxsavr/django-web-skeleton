@@ -1,16 +1,8 @@
-/* Fragment: home-features */
+/* Fragment: home-features (ruled index rows) */
 
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 18px;
-}
-.feature-card h3::before {
-  content: "";
+.feature-rows .rule-row h3 .serif-em {
   display: block;
-  width: 34px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--accent);
-  margin-bottom: 14px;
+  margin-top: 6px;
+  font-size: 1.05rem;
+  color: var(--ink-60);
 }

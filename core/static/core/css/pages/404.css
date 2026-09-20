@@ -1,4 +1,4 @@
-/* Error pages: standalone dark stage, works without JS. */
+/* Error pages: standalone paper stage, works without JS. */
 
 .page-error {
   min-height: 100svh;
@@ -7,61 +7,54 @@
   padding: 24px;
 }
 .error-stage {
-  text-align: center;
-  max-width: 520px;
+  max-width: 640px;
+  width: 100%;
 }
 .error-code {
-  font-family: var(--font-mono, monospace);
-  font-size: clamp(4.4rem, 14vw, 7.5rem);
-  font-weight: 700;
-  line-height: 1;
+  font-size: clamp(7rem, 26vw, 17rem);
+  font-weight: 500;
+  line-height: 0.75;
+  letter-spacing: -0.05em;
   margin: 0;
-  color: var(--accent, #4d7fff);
-  text-shadow: 0 0 44px rgba(77, 127, 255, 0.4);
-  animation: error-float 5s ease-in-out infinite;
+  color: var(--ink, #0a0a0a);
+  border-bottom: 2px solid currentColor;
+  padding-bottom: 0.06em;
 }
 .error-stage h1 {
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  margin-top: 14px;
+  font-family: var(--font-serif, Georgia, serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  letter-spacing: -0.01em;
+  margin: 28px 0 10px;
 }
 .error-stage p {
-  color: var(--text-secondary, #a8b0bd);
+  color: var(--ink-60, #575752);
 }
 .error-actions {
   display: flex;
-  justify-content: center;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-top: 30px;
-}
-@keyframes error-float {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  50% {
-    translate: 0 -10px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .error-code {
-    animation: none;
-  }
+  margin-top: 34px;
 }
 .btn {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  padding: 10px 22px;
-  border-radius: 8px;
-  font-weight: 600;
+  min-height: 46px;
+  padding: 11px 24px;
+  border: 1px solid var(--ink, #0a0a0a);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   text-decoration: none;
-}
-.btn-primary {
-  background: #4d7fff;
-  color: #fff;
+  background: var(--ink, #0a0a0a);
+  color: var(--paper, #fcfcfa);
 }
 .btn-ghost {
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #f2f4f8;
+  background: transparent;
+  color: var(--ink, #0a0a0a);
+}
+.btn:hover {
+  text-decoration: none;
 }
