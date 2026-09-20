@@ -8,6 +8,7 @@ from django.core.cache import cache
 from core.middleware import ProtectedPageMiddleware
 from core.models import (
     Article,
+    ArticleBlock,
     ArticleImage,
     ContactMessage,
     FooterItem,
@@ -16,6 +17,7 @@ from core.models import (
     ProtectedPage,
     RobotsRule,
     SiteConfiguration,
+    StripeButton,
 )
 
 
@@ -146,7 +148,6 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
                     "calcom_link",
                     "enable_stripe_buy_button",
                     "stripe_publishable_key",
-                    "stripe_buy_button_id",
                 )
             },
         ),
@@ -217,6 +218,25 @@ class ArticleImageInline(admin.StackedInline):
     fields = ("image", "alt_text", "caption", "credit", "sort_order")
 
 
+class ArticleBlockInline(admin.StackedInline):
+    model = ArticleBlock
+    extra = 1
+    classes = ("article-blocks",)
+    fieldsets = (
+        (None, {"fields": ("kind", "sort_order")}),
+        ("Content", {"fields": ("text", "heading_level", "quote_attribution")}),
+        ("Media", {"fields": ("image", "video_file", "video_url", "video_caption")}),
+        ("Commerce", {"fields": ("buy_button",)}),
+    )
+
+
+@admin.register(StripeButton)
+class StripeButtonAdmin(admin.ModelAdmin):
+    list_display = ("label", "buy_button_id", "active", "sort_order")
+    list_editable = ("active", "sort_order")
+    ordering = ("sort_order", "pk")
+
+
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
     list_display = ("title", "category", "author_name", "published_at", "is_featured", "published")
@@ -225,7 +245,7 @@ class ArticleAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
     list_editable = ("is_featured", "published")
     date_hierarchy = "published_at"
-    inlines = (ArticleImageInline,)
+    inlines = (ArticleImageInline, ArticleBlockInline)
     fieldsets = (
         ("Article", {"fields": ("title", "slug", "category", "author_name", "excerpt", "content")}),
         ("Lead image", {"fields": ("hero_image", "hero_image_alt", "hero_image_caption", "hero_image_credit")}),
@@ -237,7 +257,7 @@ class ArticleAdmin(admin.ModelAdmin):
     )
 
     class Media:
-        js = ("core/js/admin-image-drop.js",)
+        js = ("core/js/admin-image-drop.js", "core/js/admin/article-editor.js")
 
 
 @admin.register(RobotsRule)

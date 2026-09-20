@@ -1,6 +1,8 @@
 """Smoke tests: every mechanism in the skeleton has at least one assertion
 that proves its control-panel switch actually changes behavior."""
 
+import tempfile
+
 from django.contrib.auth import get_user_model
 from django.core import signing
 from django.core.cache import cache
@@ -586,3 +588,154 @@ class TwoFactorOptionalForNonStaffTests(ConfigIsolatedTestCase):
         response = self.client.get("/account/two-factor/")
         self.assertEqual(response.status_code, 200)
         self.assertIn("Set up two-factor", response.content.decode())
+
+
+class ArticleBlockTests(ConfigIsolatedTestCase):
+    def _article(self, **kwargs):
+        defaults = {"title": "Blocks article", "slug": "blocks-article", "excerpt": "About blocks.",
+                    "meta_description": "Blocks meta", "content": "Legacy fallback text.", "published": True}
+        defaults.update(kwargs)
+        return Article.objects.create(**defaults)
+
+    def test_blocks_render_in_order_and_legacy_fallback(self):
+        from core.models import ArticleBlock
+        article = self._article()
+        ArticleBlock.objects.create(article=article, kind="heading", text="First heading", heading_level="2", sort_order=10)
+        ArticleBlock.objects.create(article=article, kind="text", text="Block body text.", sort_order=20)
+        html = self.client.get("/articles/blocks-article/").content.decode()
+        self.assertIn("First heading", html)
+        self.assertIn("Block body text.", html)
+        self.assertNotIn("Legacy fallback text.", html)
+
+        from core.models import ArticleBlock as B
+        B.objects.all().delete()
+        html = self.client.get("/articles/blocks-article/").content.decode()
+        self.assertIn("Legacy fallback text.", html)
+
+    def test_preview_requires_staff(self):
+        response = self.client.post("/articles/preview/", {"title": "x"})
+        self.assertEqual(response.status_code, 302)  # redirected to admin login
+        staff = User.objects.get(username="admin")
+        self.client.force_login(staff)
+        response = self.client.post("/articles/preview/", {"title": "Preview me", "inline_prefix": "blocks", "blocks-TOTAL_FORMS": "0"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Preview me", response.content.decode())
+
+    def test_preview_renders_submitted_blocks(self):
+        staff = User.objects.get(username="admin")
+        self.client.force_login(staff)
+        payload = {
+            "title": "Preview blocks",
+            "inline_prefix": "blocks",
+            "blocks-TOTAL_FORMS": "2",
+            "blocks-INITIAL_FORMS": "0",
+            "blocks-0-kind": "heading",
+            "blocks-0-text": "Submitted heading",
+            "blocks-1-kind": "quote",
+            "blocks-1-text": "A wise quote",
+            "blocks-1-quote_attribution": "Someone",
+        }
+        response = self.client.post("/articles/preview/", payload)
+        html = response.content.decode()
+        self.assertIn("Preview blocks", html)
+        self.assertIn("Submitted heading", html)
+        self.assertIn("A wise quote", html)
+        self.assertIn("Someone", html)
+
+    def test_youtube_embed_url_parsing(self):
+        from core.models import ArticleBlock
+        article = self._article(slug="video-article")
+        block = ArticleBlock.objects.create(article=article, kind="video", video_url="https://youtu.be/dQw4w9WgXcQ?si=x")
+        self.assertEqual(block.video_provider, "youtube")
+        self.assertTrue(block.video_embed_url.startswith("https://www.youtube-nocookie.com/embed/"))
+        html = self.client.get("/articles/video-article/").content.decode()
+        self.assertIn("youtube-nocookie.com/embed", html)
+
+
+class ConsentMediaTests(ConfigIsolatedTestCase):
+    def _video_article(self):
+        from core.models import ArticleBlock
+        article = Article.objects.create(
+            title="Consent video", slug="consent-video", excerpt="e", meta_description="m",
+            content="c", published=True,
+        )
+        ArticleBlock.objects.create(article=article, kind="video", video_url="https://vimeo.com/76979871")
+        return article
+
+    def test_external_video_gated_when_consent_on(self):
+        self._video_article()
+        fresh_config(enable_cookie_consent=True)
+        html = self.client.get("/articles/consent-video/").content.decode()
+        self.assertIn('data-consent-embed="vimeo"', html)
+        self.assertIn("Load Vimeo video", html)
+        self.assertNotIn("<iframe", html)
+
+    def test_external_video_direct_when_consent_off(self):
+        self._video_article()
+        fresh_config(enable_cookie_consent=False)
+        html = self.client.get("/articles/consent-video/").content.decode()
+        self.assertIn("player.vimeo.com/video", html)
+        self.assertNotIn("Load Vimeo video", html)
+
+    def test_consent_media_script_present_for_articles(self):
+        self._video_article()
+        html = self.client.get("/articles/consent-video/").content.decode()
+        self.assertIn("consent-media.js", html)
+
+
+class WebpConversionTests(ConfigIsolatedTestCase):
+    def _upload(self):
+        import io
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        buffer = io.BytesIO()
+        Image.new("RGB", (40, 30), (200, 40, 40)).save(buffer, format="JPEG")
+        return SimpleUploadedFile("photo.jpg", buffer.getvalue(), content_type="image/jpeg")
+
+    @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+    def test_image_converts_to_webp_when_enabled(self):
+        from core.models import ArticleImage
+
+        fresh_config(enable_webp_conversion=True, webp_quality=70)
+        article = Article.objects.create(title="Webp", slug="webp", excerpt="e", meta_description="m", published=True)
+        entry = ArticleImage.objects.create(article=article, image=self._upload(), alt_text="red square")
+        self.assertTrue(entry.image.name.endswith(".webp"), entry.image.name)
+
+    @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+    def test_image_stays_jpeg_when_disabled(self):
+        from core.models import ArticleImage
+
+        fresh_config(enable_webp_conversion=False)
+        article = Article.objects.create(title="Jpg", slug="jpg", excerpt="e", meta_description="m", published=True)
+        entry = ArticleImage.objects.create(article=article, image=self._upload(), alt_text="red square")
+        self.assertTrue(entry.image.name.endswith(".jpg"), entry.image.name)
+
+
+class StripeMultiButtonTests(ConfigIsolatedTestCase):
+    def _article_with_button(self):
+        from core.models import ArticleBlock, StripeButton
+        button = StripeButton.objects.create(label="Audit", buy_button_id="buy_test_123", sort_order=10)
+        article = Article.objects.create(title="Buy", slug="buy-article", excerpt="e", meta_description="m", published=True)
+        ArticleBlock.objects.create(article=article, kind="buy", buy_button=button)
+        second = StripeButton.objects.create(label="Retainer", buy_button_id="buy_test_456", sort_order=20)
+        return article, button, second
+
+    def test_multiple_buttons_render_in_articles(self):
+        fresh_config(enable_stripe_buy_button=True, stripe_publishable_key="pk_test_123")
+        article, button, second = self._article_with_button()
+        html = self.client.get("/articles/buy-article/").content.decode()
+        self.assertIn('data-buy-button-id="buy_test_123"', html)
+
+    def test_master_switch_gates_buy_blocks(self):
+        button_config = fresh_config(enable_stripe_buy_button=False)
+        self._article_with_button()
+        html = self.client.get("/articles/buy-article/").content.decode()
+        self.assertNotIn("data-buy-button-id", html)
+
+    def test_csp_allows_video_frames_for_articles(self):
+        config = fresh_config(enable_articles=True)
+        policy = self.client.get("/")["Content-Security-Policy"]
+        self.assertIn("youtube-nocookie.com", policy)
+        self.assertIn("player.vimeo.com", policy)

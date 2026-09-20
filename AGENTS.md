@@ -190,6 +190,23 @@ Inline: `<section id="slug" aria-labelledby="...">` in the page. Reusable:
 resolves `core/fragments/<slug>.html` (hyphen/underscore tolerant) and is
 page-cached for 12 hours.
 
+### Article block editor
+
+Articles render `ArticleBlock` rows when they exist and fall back to the
+legacy plain-text `content` field otherwise. Block kinds: heading, text,
+quote, image (references an uploaded ArticleImage), video (internal file
+or external YouTube/Vimeo URL), Stripe buy button, divider. In the admin
+the blocks inline supports drag-and-drop plus move buttons
+(`core/js/admin/article-editor.js`), and the submit row has a Preview
+button that POSTs the current editor state to `/articles/preview/`
+(staff-only, noindex, nothing is saved). Newly uploaded article images
+become WebP automatically while `enable_webp_conversion` is on
+(quality: `webp_quality` field, `WEBP_QUALITY` env override). External
+videos and Stripe buttons render only after the visitor consents to the
+matching Klaro service (`youtube`, `vimeo`, `stripe`); with the consent
+manager switched off they embed directly. CSP frame hosts for those
+providers extend themselves while `enable_articles` is on.
+
 ### Add a tracker
 
 1. ID field on `SiteConfiguration` + admin fieldset entry.

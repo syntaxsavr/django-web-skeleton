@@ -238,6 +238,8 @@
   }
 
   var externalServices = [];
+  externalServices.push(service("youtube", ["external"], [/^VISITOR_INFO1_LIVE$/, /^YSC$/], "YouTube", "Embedded videos from YouTube."));
+  externalServices.push(service("vimeo", ["external"], [/^__utmz$/], "Vimeo", "Embedded videos from Vimeo."));
   if (server.calcom && server.calcom.enabled) {
     externalServices.push(service("calcom", ["external"], [], "Cal.com", "Booking calendar embed."));
   }
@@ -312,34 +314,46 @@
     }
   }
 
+  /* The public consent API is defined eagerly so other scripts (article
+     media, contact calendar, tracking) can call it at any time, even
+     before Klaro finishes booting. announce() only re-broadcasts. */
+  function currentManager() {
+    try {
+      return window.klaro ? window.klaro.getManager() : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  window.getConsentPrefs = function () {
+    var manager = currentManager();
+    return summarize(manager ? manager.consents : {}, window.klaro);
+  };
+  window.hasServiceConsent = function (name) {
+    var manager = currentManager();
+    return !!(manager && manager.consents && manager.consents[name]);
+  };
+  window.handleConsent = function (decision, options) {
+    var manager = currentManager();
+    if (!manager) return;
+    if (decision === "all") {
+      manager.acceptAll();
+    } else if (decision === "none") {
+      manager.declineAll();
+    } else if (decision === "merge") {
+      (options && options.services ? options.services : []).forEach(function (name) {
+        manager.consents[name] = true;
+      });
+      manager.saveAndApplyConsents();
+      announce();
+    }
+  };
+  window.openCookieModal = function () {
+    if (window.klaro && typeof window.klaro.show === "function") window.klaro.show();
+  };
+
   function announce() {
-    var klaro = window.klaro;
-    var manager = klaro && klaro.getManager();
-    var prefs = summarize(manager ? manager.consents : {}, klaro);
-    window.getConsentPrefs = function () {
-      return summarize(klaro ? klaro.getManager().consents : {}, klaro);
-    };
-    window.hasServiceConsent = function (name) {
-      if (!window.klaro) return false;
-      return !!window.klaro.getManager().consents[name];
-    };
-    window.handleConsent = function (decision, options) {
-      var manager = window.klaro && window.klaro.getManager();
-      if (!manager) return;
-      if (decision === "all") {
-        manager.acceptAll();
-      } else if (decision === "none") {
-        manager.declineAll();
-      } else if (decision === "merge") {
-        (options && options.services ? options.services : []).forEach(function (name) {
-          manager.consents[name] = true;
-        });
-        manager.saveAndApplyConsents();
-      }
-    };
-    window.openCookieModal = function () {
-      if (window.klaro && typeof window.klaro.show === "function") window.klaro.show();
-    };
+    var manager = currentManager();
+    var prefs = summarize(manager ? manager.consents : {}, window.klaro);
     document.dispatchEvent(new CustomEvent("skeleton:consent", { detail: prefs }));
   }
 

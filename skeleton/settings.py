@@ -224,6 +224,9 @@ ENFORCE_STAFF_2FA = os.environ.get("ENFORCE_STAFF_2FA", str(not DEBUG)).lower() 
     "yes",
 )
 
+# Article images upload as WebP when the control panel switch is on.
+WEBP_QUALITY = int(os.environ.get("WEBP_QUALITY", "82"))
+
 # Signed time-trap: forms must take at least this many seconds to fill.
 CONTACT_MIN_SECONDS = int(os.environ.get("CONTACT_MIN_SECONDS", "3"))
 CONTACT_RATE_LIMIT_SECONDS = int(os.environ.get("CONTACT_RATE_LIMIT_SECONDS", "300"))

@@ -82,3 +82,45 @@ button:active {
   color: #575752;
   font-size: 0.82rem;
 }
+
+/* Article content blocks: drag handles and ordering */
+.block-drag-handle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 8px;
+}
+.block-grip {
+  cursor: grab;
+  padding: 2px 8px;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-radius: 0 !important;
+  background: #f3f3ee;
+  font-size: 14px;
+  letter-spacing: -2px;
+  user-select: none;
+}
+.block-grip:active {
+  cursor: grabbing;
+}
+.block-move {
+  width: 30px;
+  height: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.4) !important;
+  background: #ffffff !important;
+  color: #0a0a0a !important;
+  border-radius: 0 !important;
+  cursor: pointer;
+  font-weight: 700;
+}
+.block-move:hover {
+  background: #0a0a0a !important;
+  color: #fcfcfa !important;
+}
+.inline-related.block-dragging {
+  opacity: 0.45;
+  outline: 2px dashed #0a0a0a;
+}
+.inline-related h3 {
+  scroll-margin-top: 70px;
+}

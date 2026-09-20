@@ -15,6 +15,7 @@ urlpatterns = [
     path("", page_views.home, name="home"),
     path("demo/", page_views.demo, name="demo"),
     path("articles/", article_views.articles, name="articles"),
+    path("articles/preview/", article_views.article_preview, name="article_preview"),
     path("articles/<slug:slug>/", article_views.article_detail, name="article_detail"),
     # --- Contact ---
     path("contact/", contact_views.contact, name="contact"),

@@ -172,6 +172,7 @@ def site_settings(request):
         "enable_registration": config.enable_public_registration,
         "enable_articles": config.enable_articles,
         "enable_contact": config.enable_contact_form,
+        "enable_stripe": config.enable_stripe_buy_button and bool(config.stripe_publishable_key),
         "enable_tracking": config.enable_tracking,
         "enable_consent": config.enable_cookie_consent,
         "enable_external_link_modal": config.enable_external_link_handling and config.external_link_modal,

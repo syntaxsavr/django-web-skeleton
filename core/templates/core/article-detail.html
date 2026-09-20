@@ -28,13 +28,54 @@
   {% endif %}
   <div class="section-rule">
     <div class="shell article-body">
-      {{ article.content|linebreaks }}
-      {% for image in article.images.all %}
-      <figure class="article-inline-image">
-        <img src="{{ image.image.url }}" alt="{{ image.alt_text }}" loading="lazy">
-        {% if image.caption or image.credit %}<figcaption>{{ image.caption }}{% if image.caption and image.credit %} · {% endif %}{{ image.credit }}</figcaption>{% endif %}
-      </figure>
-      {% endfor %}
+      {% if is_preview %}<p class="article-preview-flag">Preview: exactly what your editor shows right now. Nothing was saved.</p>{% endif %}
+      {% if blocks %}
+        {% for block in blocks %}
+          {% if block.kind == 'heading' %}<h{{ block.heading_level|default:'2' }} class="article-block-heading">{{ block.text }}</h{{ block.heading_level|default:'2' }}>
+          {% elif block.kind == 'quote' %}<blockquote class="article-quote"><p>{{ block.text }}</p>{% if block.quote_attribution %}<cite>{{ block.quote_attribution }}</cite>{% endif %}</blockquote>
+          {% elif block.kind == 'image' and block.image %}<figure class="article-inline-image"><img src="{{ block.image.image.url }}" alt="{{ block.image.alt_text }}" loading="lazy">{% if block.image.caption or block.image.credit %}<figcaption>{{ block.image.caption }}{% if block.image.caption and block.image.credit %} · {% endif %}{{ block.image.credit }}</figcaption>{% endif %}</figure>
+          {% elif block.kind == 'video' %}
+            {% if block.video_provider %}
+              {% if enable_consent %}
+              <figure class="article-video consent-media" data-consent-embed="{{ block.video_provider }}" data-embed-src="{{ block.video_embed_url }}">
+                <div class="consent-media-fallback">
+                  <p>{{ block.video_provider|capfirst }} video loads only after your consent. No data leaves your browser before that.</p>
+                  <button type="button" class="btn" data-consent-load="{{ block.video_provider }}">Load {{ block.video_provider|capfirst }} video</button>
+                </div>
+                {% if block.video_caption %}<figcaption>{{ block.video_caption }}</figcaption>{% endif %}
+              </figure>
+              {% else %}
+              <figure class="article-video"><iframe src="{{ block.video_embed_url }}" title="{{ block.video_caption|default:'Video' }}" loading="lazy" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>{% if block.video_caption %}<figcaption>{{ block.video_caption }}</figcaption>{% endif %}</figure>
+              {% endif %}
+            {% elif block.video_file %}
+              <figure class="article-video"><video controls preload="metadata" src="{{ block.video_file.url }}"></video>{% if block.video_caption %}<figcaption>{{ block.video_caption }}</figcaption>{% endif %}</figure>
+            {% elif is_preview and block.has_video_file %}
+              <figure class="article-video"><div class="consent-media-fallback"><p>Newly uploaded video appears here after saving.</p></div></figure>
+            {% endif %}
+          {% elif block.kind == 'buy' and block.buy_button %}
+            {% if enable_stripe %}
+            <div class="article-buy consent-media" data-consent-embed="stripe" data-buy-button-id="{{ block.buy_button.buy_button_id }}">
+              {% if enable_consent %}
+              <div class="consent-media-fallback">
+                <p>Payments run on Stripe. The button loads only after your consent.</p>
+                <button type="button" class="btn" data-consent-load="stripe">Load buy button</button>
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+          {% elif block.kind == 'divider' %}<hr class="article-divider">
+          {% elif block.kind == 'text' %}<p class="article-paragraph">{{ block.text|linebreaksbr }}</p>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        {{ article.content|linebreaks }}
+        {% for image in article.images.all %}
+        <figure class="article-inline-image">
+          <img src="{{ image.image.url }}" alt="{{ image.alt_text }}" loading="lazy">
+          {% if image.caption or image.credit %}<figcaption>{{ image.caption }}{% if image.caption and image.credit %} · {% endif %}{{ image.credit }}</figcaption>{% endif %}
+        </figure>
+        {% endfor %}
+      {% endif %}
       {% if article.show_disclaimer %}<aside class="article-disclosure"><h2>Editorial disclaimer</h2><p>This article is general information and is not legal, financial or security advice for a specific situation.</p></aside>{% endif %}
       {% if article.show_ai_disclosure %}<aside class="article-disclosure"><h2>AI disclosure</h2><p>AI tools supported the production of this article. A human editor reviewed the published text and images.</p></aside>{% endif %}
     </div>

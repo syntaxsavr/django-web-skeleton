@@ -52,6 +52,7 @@ NOINDEX_PATH_PREFIXES = (
     "/account/",
     "/accounts/",
     "/api/",
+    "/articles/preview/",
     "/lazy-section/",
     "/demo-api/",
 ) + ADMIN_PREFIXES + PERSONAL_DATA_PATH_PREFIXES
@@ -147,6 +148,8 @@ class ContentSecurityPolicyMiddleware:
         "x_pixel": ("analytics.twitter.com", "t.co"),
     }
     FRAME_HOSTS = {
+        "youtube": ("www.youtube.com", "www.youtube-nocookie.com"),
+        "vimeo": ("player.vimeo.com",),
         "turnstile": ("challenges.cloudflare.com",),
         "calcom": ("app.cal.com",),
         "stripe": ("js.stripe.com",),
@@ -197,6 +200,9 @@ class ContentSecurityPolicyMiddleware:
                 hosts.add(config.matomo_url.strip().rstrip("/"))
             return sorted(hosts)
 
+        if config.enable_articles:
+            # external article videos (consent-gated player embeds)
+            enabled.update(("youtube", "vimeo"))
         parts = [
             "default-src 'self'",
             f"script-src {' '.join(collect(cls.SCRIPT_HOSTS))}",

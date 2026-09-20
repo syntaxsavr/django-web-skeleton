@@ -178,6 +178,7 @@
 <script defer src="{% static 'core/js/modal.js' %}"></script>
 {% if enable_external_link_modal %}<script defer src="{% static 'core/js/external-link-modal.js' %}"></script>{% endif %}
 {% if enable_tracking %}<script defer src="{% static 'core/js/track.js' %}"></script>{% endif %}
+{% if enable_articles %}<script defer src="{% static 'core/js/consent-media.js' %}"></script>{% endif %}
 {% block extra_js %}{% endblock %}
 </body>
 </html>

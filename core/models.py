@@ -48,6 +48,13 @@ class SiteConfiguration(models.Model):
     )
     theme_color = models.CharField(max_length=9, default="#fcfcfa")
 
+    # --- Media -----------------------------------------------------------------
+    enable_webp_conversion = models.BooleanField(
+        default=True,
+        help_text="Newly uploaded article images are automatically stored as WebP.",
+    )
+    webp_quality = models.PositiveSmallIntegerField(default=82)
+
     # --- Header & navigation ------------------------------------------------
     enable_header_logo = models.BooleanField(
         default=True,
@@ -175,9 +182,11 @@ class SiteConfiguration(models.Model):
     # --- Embeds -------------------------------------------------------------------
     enable_calcom_embed = models.BooleanField(default=False)
     calcom_link = models.CharField(max_length=200, blank=True)
-    enable_stripe_buy_button = models.BooleanField(default=False)
+    enable_stripe_buy_button = models.BooleanField(
+        default=False,
+        help_text="Master switch. Buy buttons come from the Stripe buttons table; the publishable key below is shared.",
+    )
     stripe_publishable_key = models.CharField(max_length=128, blank=True)
-    stripe_buy_button_id = models.CharField(max_length=128, blank=True)
 
     # --- Middleware switches ---------------------------------------------------------
     enable_scraper_block = models.BooleanField(
@@ -262,7 +271,6 @@ class SiteConfiguration(models.Model):
             "stripe": {
                 "enabled": self.enable_stripe_buy_button,
                 "publishableKey": self.stripe_publishable_key.strip(),
-                "buyButtonId": self.stripe_buy_button_id.strip(),
             },
             "turnstileSiteKey": self.effective_turnstile_site_key if self.enable_turnstile else "",
         }
@@ -353,6 +361,13 @@ class Article(models.Model):
     def get_absolute_url(self):
         return reverse("article_detail", kwargs={"slug": self.slug})
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from core.mediatools import auto_webp
+
+        for field_name in ("hero_image", "og_image"):
+            auto_webp(self, field_name)
+
 
 class ArticleImage(models.Model):
     article = models.ForeignKey(Article, related_name="images", on_delete=models.CASCADE)
@@ -365,8 +380,112 @@ class ArticleImage(models.Model):
     class Meta:
         ordering = ["sort_order", "pk"]
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from core.mediatools import auto_webp
+
+        auto_webp(self, "image")
+
     def __str__(self) -> str:
         return self.alt_text
+
+
+class ArticleBlock(models.Model):
+    """Ordered content element inside an article. Drag to reorder in the
+    admin; the preview renders the current editor state."""
+
+    KIND_HEADING = "heading"
+    KIND_TEXT = "text"
+    KIND_QUOTE = "quote"
+    KIND_IMAGE = "image"
+    KIND_VIDEO = "video"
+    KIND_BUY = "buy"
+    KIND_DIVIDER = "divider"
+    KIND_CHOICES = (
+        (KIND_HEADING, "Heading"),
+        (KIND_TEXT, "Paragraph"),
+        (KIND_QUOTE, "Quote"),
+        (KIND_IMAGE, "Image"),
+        (KIND_VIDEO, "Video"),
+        (KIND_BUY, "Stripe buy button"),
+        (KIND_DIVIDER, "Divider"),
+    )
+
+    article = models.ForeignKey(Article, related_name="blocks", on_delete=models.CASCADE)
+    kind = models.CharField(max_length=10, choices=KIND_CHOICES, default=KIND_TEXT)
+    heading_level = models.CharField(
+        max_length=2, choices=(("2", "H2"), ("3", "H3")), default="2", blank=True,
+        help_text="Heading blocks only.",
+    )
+    text = models.TextField(blank=True, help_text="Heading, paragraph or quote text.")
+    quote_attribution = models.CharField(max_length=160, blank=True, help_text="Quote blocks only.")
+    image = models.ForeignKey(
+        ArticleImage, related_name="blocks", on_delete=models.SET_NULL, blank=True, null=True,
+        help_text="Pick one of the images uploaded for this article.",
+    )
+    video_file = models.FileField(upload_to="articles/videos/", blank=True, help_text="Internal video (mp4, webm).")
+    video_url = models.CharField(
+        max_length=400, blank=True, help_text="External YouTube or Vimeo URL. Loads only after consent."
+    )
+    video_caption = models.CharField(max_length=240, blank=True)
+    buy_button = models.ForeignKey(
+        "StripeButton", related_name="blocks", on_delete=models.SET_NULL, blank=True, null=True
+    )
+    sort_order = models.PositiveIntegerField(default=100)
+
+    class Meta:
+        ordering = ["sort_order", "pk"]
+
+    def clean(self):
+        errors = {}
+        if self.kind in (self.KIND_HEADING, self.KIND_TEXT, self.KIND_QUOTE) and not self.text.strip():
+            errors["text"] = "This block needs text."
+        if self.kind == self.KIND_IMAGE and self.image is None:
+            errors["image"] = "Pick an uploaded article image."
+        if self.kind == self.KIND_VIDEO and not (self.video_file or self.video_url.strip()):
+            errors["video_url"] = "Upload a video file or add an external URL."
+        if self.kind == self.KIND_BUY and self.buy_button is None:
+            errors["buy_button"] = "Choose a Stripe buy button."
+        if errors:
+            raise ValidationError(errors)
+
+    @property
+    def video_parts(self):
+        from core.mediatools import video_embed_parts
+
+        return video_embed_parts(self.video_url)
+
+    @property
+    def video_provider(self) -> str:
+        return self.video_parts[0]
+
+    @property
+    def video_embed_url(self) -> str:
+        return self.video_parts[1]
+
+    def __str__(self) -> str:
+        label = self.get_kind_display()
+        if self.text:
+            label += ": " + self.text[:40]
+        elif self.image_id:
+            label += f": {self.image.alt_text}"
+        return label
+
+
+class StripeButton(models.Model):
+    """A reusable Stripe Buy Button. Multiple products, one shared key."""
+
+    label = models.CharField(max_length=120, help_text="Admin-only name, e.g. 'Audit package'.")
+    buy_button_id = models.CharField(max_length=128, help_text="From the Stripe Buy Button code: buy-button-id.")
+    active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=100)
+    note = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        ordering = ["sort_order", "pk"]
+
+    def __str__(self) -> str:
+        return self.label
 
 
 class RobotsRule(models.Model):
