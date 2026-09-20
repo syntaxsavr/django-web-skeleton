@@ -130,7 +130,7 @@ class SiteConfiguration(models.Model):
         default=True, help_text="Append utm_source=<your host> to outbound links."
     )
     external_link_modal = models.BooleanField(
-        default=False, help_text="Show the leave-site confirmation modal for outbound clicks."
+        default=True, help_text="Show the leave-site confirmation modal for outbound clicks."
     )
 
     class Meta:

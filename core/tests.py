@@ -286,13 +286,13 @@ class ExternalLinkMiddlewareTests(ConfigIsolatedTestCase):
         self.assertNotIn('data-external="true"', html)
         fresh_config(enable_external_link_handling=True)
 
-    def test_modal_script_only_when_enabled(self):
-        html = self.client.get("/").content.decode()
-        self.assertNotIn("external-link-modal.js", html)
-        fresh_config(external_link_modal=True)
+    def test_modal_script_enabled_by_default_and_switchable(self):
         html = self.client.get("/").content.decode()
         self.assertIn("external-link-modal.js", html)
         fresh_config(external_link_modal=False)
+        html = self.client.get("/").content.decode()
+        self.assertNotIn("external-link-modal.js", html)
+        fresh_config(external_link_modal=True)
 
 
 class SeedCommandTests(TestCase):
