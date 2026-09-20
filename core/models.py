@@ -158,6 +158,11 @@ class SiteConfiguration(models.Model):
 
     # --- Forms & anti-spam ------------------------------------------------------
     enable_contact_form = models.BooleanField(default=True)
+    enable_message_auto_delete = models.BooleanField(
+        default=True,
+        help_text="Data minimisation: stored contact messages are deleted automatically after the retention window.",
+    )
+    message_retention_days = models.PositiveIntegerField(default=30)
     enable_turnstile = models.BooleanField(
         default=False, help_text="Cloudflare Turnstile on the contact form. Keys come from env or the fields below."
     )
@@ -174,6 +179,10 @@ class SiteConfiguration(models.Model):
 
     # --- Auth -------------------------------------------------------------------
     enable_public_registration = models.BooleanField(default=True)
+    enable_email_otp = models.BooleanField(
+        default=False,
+        help_text="Registration requires entering a one-time code sent by email before the account becomes active.",
+    )
     registration_requires_approval = models.BooleanField(
         default=False,
         help_text="New users are created inactive; an admin activates them in People.",
@@ -320,6 +329,22 @@ class ContactMessage(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} <{self.email}>"
+
+
+class EmailCode(models.Model):
+    """Short-lived one-time email confirmation code (registration)."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="email_codes", on_delete=models.CASCADE)
+    code_hash = models.CharField(max_length=64)
+    purpose = models.CharField(max_length=30, default="registration")
+    created = models.DateTimeField(auto_now_add=True)
+    expires = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-created"]
+
+    def __str__(self) -> str:
+        return f"code for {self.user_id} ({self.purpose})"
 
 
 class Article(models.Model):

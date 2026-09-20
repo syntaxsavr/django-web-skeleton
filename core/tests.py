@@ -1,7 +1,10 @@
 """Smoke tests: every mechanism in the skeleton has at least one assertion
 that proves its control-panel switch actually changes behavior."""
 
+import io
 import tempfile
+
+from django.utils import timezone
 
 from django.contrib.auth import get_user_model
 from django.core import signing
@@ -203,8 +206,11 @@ class CspMiddlewareTests(ConfigIsolatedTestCase):
 
 class ScraperBlockTests(ConfigIsolatedTestCase):
     def test_scraper_user_agent_is_blocked_on_legal_pages(self):
+        # blocked scrapers get the uniform 404 page: production behavior,
+        # since the test runner forces DEBUG=False
         response = self.client.get("/privacy/", HTTP_USER_AGENT="curl/8.0")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Nothing at this address", response.content.decode())
 
     def test_normal_user_agent_passes(self):
         response = self.client.get("/privacy/", HTTP_USER_AGENT="Mozilla/5.0")
@@ -739,3 +745,146 @@ class StripeMultiButtonTests(ConfigIsolatedTestCase):
         policy = self.client.get("/")["Content-Security-Policy"]
         self.assertIn("youtube-nocookie.com", policy)
         self.assertIn("player.vimeo.com", policy)
+
+
+@override_settings(DEBUG=False)
+class ProductionErrorUniformityTests(TestCase):
+    def test_every_error_displays_the_404_page(self):
+        for url, follow in [("/no-such-page/", False)]:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 404)
+                self.assertIn("Nothing at this address", response.content.decode())
+
+    def test_forbidden_renders_as_404_in_prod(self):
+        response = self.client.get("/privacy/", HTTP_USER_AGENT="curl/8.0")
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Nothing at this address", response.content.decode())
+        # the handler renders the uniform page even though the scraper
+        # block middleware produced a 403
+
+    def test_error_padding_has_random_length_up_to_512(self):
+        import re
+
+        lengths = set()
+        for _ in range(12):
+            html = self.client.get("/no-such-page/").content.decode()
+            match = re.search(r'<span class="error-noise" hidden>([^<]*)</span>', html)
+            self.assertIsNotNone(match)
+            lengths.add(len(match.group(1)))
+        self.assertGreater(len(lengths), 2)  # random, not constant
+        self.assertLessEqual(max(lengths), 512)
+
+    def test_debug_keeps_distinct_codes(self):
+        from django.test.utils import override_settings as override
+
+        with override(DEBUG=True):
+            self.assertEqual(self.client.get("/no-such-page/").status_code, 404)
+
+
+class MessageRetentionTests(ConfigIsolatedTestCase):
+    def _make_message(self, days_old):
+        from datetime import timedelta
+
+        from core.models import ContactMessage
+
+        message = ContactMessage.objects.create(
+            name="Old", email="old@example.com", message="hello"
+        )
+        ContactMessage.objects.filter(pk=message.pk).update(
+            created=timezone.now() - timedelta(days=days_old)
+        )
+        return message
+
+    def test_purge_removes_only_old_messages(self):
+        from core.maintenance import purge_old_messages
+
+        old = self._make_message(40)
+        fresh = self._make_message(2)
+        config = fresh_config(enable_message_auto_delete=True, message_retention_days=30)
+        removed = purge_old_messages()
+        self.assertEqual(removed, 1)
+        self.assertFalse(ContactMessage.objects.filter(pk=old.pk).exists())
+        self.assertTrue(ContactMessage.objects.filter(pk=fresh.pk).exists())
+
+    def test_switch_disables_purge(self):
+        from core.maintenance import purge_if_due
+
+        fresh_config(enable_message_auto_delete=False)
+        self._make_message(400)
+        self.assertEqual(purge_if_due(), 0)
+
+    def test_lazy_trigger_runs_daily_and_respects_window(self):
+        from core.maintenance import purge_if_due
+
+        fresh_config(enable_message_auto_delete=True, message_retention_days=30)
+        self._make_message(31)
+        self.assertEqual(purge_if_due(), 1)
+        self._make_message(31)
+        self.assertEqual(purge_if_due(), 0)  # ran today already
+
+    def test_purge_command(self):
+        from django.core.management import call_command
+
+        self._make_message(31)
+        out = io.StringIO()
+        call_command("purge_messages", stdout=out)
+        self.assertIn("Removed 1", out.getvalue())
+
+
+class EmailOtpTests(ConfigIsolatedTestCase):
+    def _register(self):
+        from django.core.mail import outbox
+
+        payload = {
+            "username": "otpgal",
+            "email": "gal@example.com",
+            "password1": "correct-horse-battery-99",
+            "password2": "correct-horse-battery-99",
+        }
+        response = self.client.post("/accounts/register/", payload)
+        return response, outbox
+
+    def test_otp_flow_activates_account(self):
+        import re
+
+        fresh_config(enable_email_otp=True)
+        response, outbox = self._register()
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("confirm", response["Location"])
+        user = User.objects.get(username="otpgal")
+        self.assertFalse(user.is_active)
+        # code arrived by mail (locmem backend; console backend in real DEBUG)
+        codes = re.findall(r"\b(\d{6})\b", "\n".join(m.body for m in outbox))
+        self.assertTrue(codes)
+        response = self.client.post("/accounts/register/confirm/", {"code": codes[0]})
+        self.assertEqual(response.status_code, 302)
+        user.refresh_from_db()
+        self.assertTrue(user.is_active)
+
+    def test_wrong_code_stays_inactive(self):
+        fresh_config(enable_email_otp=True)
+        self._register()
+        self.client.post("/accounts/register/confirm/", {"code": "000000"})
+        self.assertFalse(User.objects.get(username="otpgal").is_active)
+
+    def test_otp_off_keeps_direct_activation(self):
+        fresh_config(enable_email_otp=False)
+        response, outbox = self._register()
+        self.assertTrue(User.objects.get(username="otpgal").is_active)
+        self.assertEqual(len(outbox), 0)
+
+    def test_confirm_page_needs_session(self):
+        self.assertEqual(self.client.get("/accounts/register/confirm/").status_code, 302)
+
+
+class PasswordMinimumTests(TestCase):
+    def test_short_passwords_rejected(self):
+        payload = {
+            "username": "shorty",
+            "email": "short@example.com",
+            "password1": "ab12cd3",
+            "password2": "ab12cd3",
+        }
+        response = self.client.post("/accounts/register/", payload, follow=True)
+        self.assertContains(response, "at least 8 characters")

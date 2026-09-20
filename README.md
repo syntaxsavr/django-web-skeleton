@@ -21,6 +21,19 @@ password: b_4sIcPW007
 
 The first migration creates that superuser if it does not exist. Set `SEED_ADMIN_USERNAME`, `SEED_ADMIN_PASSWORD`, and `SEED_ADMIN_EMAIL` in `.env` to change the defaults. Never expose the starter password to the internet.
 
+## A quick gallery
+
+| | |
+|---|---|
+| ![Home with a Lottie hero](docs/images/home.png) | ![Accessibility panel](docs/images/accessibility-panel.png) |
+| _Index: one big letter, blocks, consent everywhere._ | _Accessibility options, one button in the header._ |
+| ![Admin overview with grouped sidebar](docs/images/admin-overview.png) | ![Control panel](docs/images/control-panel.png) |
+| _Admin: grouped sidebar instead of an app dump._ | _The control panel: IDs, switches, retention, everything._ |
+| ![Block editor](docs/images/block-editor.png) | ![Consent-gated media](docs/images/article-consent.png) |
+| _Article blocks with drag-and-drop ordering._ | _External media stays a placeholder until consent._ |
+| ![Login with password eye](docs/images/login.png) | |
+| _Login and registration with password eye toggles._ | |
+
 ## The control panel
 
 - Articles have publishing, SEO, attribution, disclosures, hero images, Open Graph images, and drag-and-drop inline images.

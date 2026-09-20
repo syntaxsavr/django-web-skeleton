@@ -124,3 +124,5 @@ button:active {
 .inline-related h3 {
   scroll-margin-top: 70px;
 }
+
+/* Admin fieldsets introduced later (data minimisation, media, announcement). */

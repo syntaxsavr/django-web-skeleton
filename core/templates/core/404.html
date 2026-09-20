@@ -28,6 +28,7 @@
   <h1>System error.</h1>
   <p>Something failed on our side. Try again in a moment.</p>
   {% endif %}
+  {% if padding %}<span class="error-noise" hidden>{{ padding }}</span>{% endif %}
   <p class="error-actions">
     <a class="btn" href="/">Back to the index</a>
     <a class="btn btn-ghost" href="/demo/">Show me the demo</a>

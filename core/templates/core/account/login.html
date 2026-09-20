@@ -20,9 +20,9 @@
         <label for="id_username">Username</label>
         <input type="text" name="username" id="id_username" autocomplete="username" required autofocus>
       </div>
-      <div class="form-field">
+      <div class="form-field pw-field">
         <label for="id_password">Password</label>
-        <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+        <input type="password" name="password" id="id_password" autocomplete="current-password" required><button type="button" class="pw-eye" data-password-view="id_password" aria-label="Show or hide password" title="Show password"></button>
       </div>
       <button type="submit" class="btn btn-primary btn-block" data-track="login_submit">Sign in</button>
     </form>
@@ -33,3 +33,4 @@
   </div>
 </section>
 {% endblock %}
+{% block extra_js %}<script defer src="{% static 'core/js/password-toggle.js' %}"></script>{% endblock %}

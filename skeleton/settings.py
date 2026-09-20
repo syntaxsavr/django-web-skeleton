@@ -140,7 +140,10 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
@@ -183,12 +186,30 @@ if DEBUG:
     EMAIL_BACKEND = "django.contrib.mail.backends.console.EmailBackend"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
-    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
-    EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() in ("1", "true", "yes")
-    EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() in ("1", "true", "yes")
-    EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+
+# Provider presets: set EMAIL_PRESET and only add credentials. Any explicit
+# EMAIL_HOST/PORT/TLS/SSL variable still wins over the preset.
+EMAIL_PRESETS = {
+    "ionos": {"EMAIL_HOST": "smtp.ionos.de", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+    "outlook": {"EMAIL_HOST": "smtp-mail.outlook.com", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+    "microsoft365": {"EMAIL_HOST": "smtp.office365.com", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+    "gmail": {"EMAIL_HOST": "smtp.gmail.com", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+    "posteo": {"EMAIL_HOST": "posteo.de", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+    "webde": {"EMAIL_HOST": "smtp.web.de", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+    "gmx": {"EMAIL_HOST": "mail.gmx.net", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+    "mailbox": {"EMAIL_HOST": "mailbox.org", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+    "mailgun": {"EMAIL_HOST": "smtp.mailgun.org", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+    "sendgrid": {"EMAIL_HOST": "smtp.sendgrid.net", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+    "brevo": {"EMAIL_HOST": "smtp-relay.brevo.com", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+    "strato": {"EMAIL_HOST": "smtp.strato.de", "EMAIL_PORT": "587", "EMAIL_USE_TLS": "True"},
+}
+preset = EMAIL_PRESETS.get(os.environ.get("EMAIL_PRESET", "").lower(), {})
+EMAIL_HOST = os.environ.get("EMAIL_HOST", preset.get("EMAIL_HOST", ""))
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", preset.get("EMAIL_PORT", "587")))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", preset.get("EMAIL_USE_TLS", "True")).lower() in ("1", "true", "yes")
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() in ("1", "true", "yes")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "webmaster@localhost")
 CONTACT_RECIPIENT_EMAIL = os.environ.get("CONTACT_RECIPIENT_EMAIL", "")
 
@@ -209,6 +230,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 # Contact/quiz fetch() calls read the token from JS
 CSRF_COOKIE_HTTPONLY = False
+# CSRF failures render through the uniform error page (404 in production)
+CSRF_FAILURE_VIEW = "core.views.errors.csrf_failure"
 
 # --- Feature constants (values live in the admin control panel) ------------
 
@@ -250,7 +273,67 @@ UNFOLD = {
     "SITE_SYMBOL": "page",
     "THEME": "light",
     "STYLES": ["/static/core/css/admin.css"],
+    "SIDEBAR": {
+        "show_search": True,
+        "navigation": (
+            {
+                "title": "Control panel",
+                "separator": True,
+                "items": (
+                    {
+                        "name": "Site configuration",
+                        "icon": "settings",
+                        "url": "/admin/core/siteconfiguration/1/change/",
+                        "badge": "core.admin.badge_config_changed",
+                    },
+                ),
+            },
+        ),
+    },
 }
+
+# Sidebar groups (unfold renders these under the app sections). Keeping the
+# group list here instead of per-model Meta keeps the admin overview in one
+# place; every model still belongs to its app.
+UNFOLD["SIDEBAR"]["navigation"] += (
+    {
+        "title": "Content",
+        "separator": True,
+        "items": (
+            {"name": "Articles", "icon": "article", "url": "/admin/core/article/"},
+            {"name": "Blocks & images", "icon": "dynamic_feed", "url": "/admin/core/article/", "hide_in_menu": False},
+        ),
+    },
+    {
+        "title": "Communication",
+        "separator": True,
+        "items": (
+            {
+                "name": "Contact messages",
+                "icon": "mail",
+                "url": "/admin/core/contactmessage/",
+                "badge": "core.admin.badge_contact_messages",
+            },
+        ),
+    },
+    {
+        "title": "Access & protection",
+        "separator": True,
+        "items": (
+            {"name": "Protected pages", "icon": "lock", "url": "/admin/core/protectedpage/"},
+        ),
+    },
+    {
+        "title": "Structure",
+        "separator": True,
+        "items": (
+            {"name": "Navigation items", "icon": "menu", "url": "/admin/core/navigationitem/"},
+            {"name": "Footer sections", "icon": "table_rows", "url": "/admin/core/footersection/"},
+            {"name": "Stripe buttons", "icon": "payment", "url": "/admin/core/stripebutton/"},
+            {"name": "Robots rules", "icon": "bug_report", "url": "/admin/core/robotsrule/"},
+        ),
+    },
+)
 
 # --- Logging ----------------------------------------------------------------
 

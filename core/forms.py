@@ -3,6 +3,7 @@ Turnstile token field. Validation of the traps happens in the view because
 each failure must be handled silently (bots get a fake success)."""
 
 from django import forms
+from django.contrib.auth.password_validation import validate_password
 
 from core.models import ContactMessage
 
@@ -38,6 +39,12 @@ class RegistrationForm(forms.Form):
     email = forms.EmailField()
     password1 = forms.CharField(widget=forms.PasswordInput, label="Password")
     password2 = forms.CharField(widget=forms.PasswordInput, label="Repeat password")
+
+    def clean_password1(self):
+        password = self.cleaned_data.get("password1")
+        if password:
+            validate_password(password)
+        return password
 
     def clean(self):
         cleaned = super().clean()

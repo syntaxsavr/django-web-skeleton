@@ -66,6 +66,58 @@ docs/NAVIGATION.md        header logo, megamenu and mobile navigation contract
 .agents/skills/           design, motion, copywriting skills (+ .claude mirror)
 ```
 
+## Agent how-to notes (read before touching these areas)
+
+If you are a coding agent and want to change anything below, follow the
+recipe instead of inventing your own approach. These systems interact;
+the notes say how.
+
+- **Error pages (security-critical).** If you need to change how errors
+  look, edit `core/templates/core/404.html` only. In production every
+  failure (403, 400, CSRF, 500) renders that exact page with status 404
+  through `core/views/errors.py`; do not reintroduce distinct pages,
+  status codes or exception messages, and do not remove the random
+  `error_padding` (it defeats response-length fingerprinting). If you
+  need to block someone, raise `PermissionDenied` from a `process_view`
+  (NOT a bare 403 response and NOT from middleware `__call__` - Django
+  only converts exceptions raised in process_view, and bare 403s leak
+  details). Password-reset and registration responses are already
+  uniform; keep it that way and never reveal whether an email exists.
+
+- **Stored messages (data minimisation).** Contact messages self-delete
+  after `message_retention_days` (admin) via the lazy daily trigger in
+  `SiteConfigurationMiddleware` (`core/maintenance.py`). If you add any
+  NEW inbound-message or form-submission model, add it to
+  `purge_old_messages()` and extend the tests - inbound data must not
+  live longer than the retention window by default.
+
+- **Email sending.** Do not hand-wire SMTP settings into code. Pick
+  `EMAIL_PRESET` (ionos, outlook, microsoft365, gmail, posteo, webde,
+  gmx, mailbox, mailgun, sendgrid, brevo, strato) in `.env` and add
+  credentials; explicit `EMAIL_HOST`/`EMAIL_PORT`/`EMAIL_USE_TLS`
+  variables override presets. In DEBUG mail goes to the console. To send
+  mail from a new feature use `send_mail` and read recipients from
+  SiteConfiguration, never from env-only constants.
+
+- **Email OTP for registration.** The `enable_email_otp` switch
+  (control panel) makes registration create an inactive user, email a
+  six-digit code (hashed in `EmailCode`, 15-minute TTL) and require
+  confirmation at `/accounts/register/confirm/`. If you build another
+  flow that needs email proof, reuse `EmailCode` with a new `purpose`
+  value and the helpers in `core/views/auth.py` (`_issue_otp`,
+  `_hash_code`) instead of inventing a second mechanism.
+
+- **Passwords.** Minimum length lives in `AUTH_PASSWORD_VALIDATORS`
+  (min_length 8) and registration runs `validate_password` inside
+  `RegistrationForm.clean_password1`. If you add a password field
+  anywhere, attach the eye toggle: `core/js/password-toggle.js` plus a
+  `data-password-view="<input-id>"` button inside a `.pw-field` wrapper.
+
+- **Admin overview.** The sidebar groups come from `UNFOLD["SIDEBAR"]`
+  in `skeleton/settings.py` and badges from small functions in
+  `core/admin.py`. When you register a new model, add it to the matching
+  group there instead of letting it fall into the default app dump.
+
 ## Two-factor enforcement
 
 `ENFORCE_STAFF_2FA` (settings, defaults to `not DEBUG`) forces every

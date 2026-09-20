@@ -1,0 +1,30 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Confirm your email</h1>
+    {% if messages %}
+    <div role="alert">
+      {% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    <p class="section-lead">Enter the six-digit code we sent to your email address.</p>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <div class="form-field">
+        <label for="id_code">Six-digit code</label>
+        <input type="text" name="code" id="id_code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Confirm email</button>
+    </form>
+    <p class="auth-links">
+      <a href="{% url 'registration_otp_resend' %}">Send a new code</a>
+      <a href="{% url 'register' %}">Wrong address? Register again</a>
+    </p>
+  </div>
+</section>
+{% endblock %}

@@ -29,6 +29,7 @@ Admin paths are exempt from CSP and external-link rewriting: the Django
 admin and its theme ship their own trusted inline scripts.
 """
 
+import logging
 import re
 from urllib.parse import urlsplit
 
@@ -37,6 +38,8 @@ from django.core.cache import cache
 from django.utils.deprecation import MiddlewareMixin
 
 from core.models import ProtectedPage, SiteConfiguration
+
+logger = logging.getLogger(__name__)
 
 ADMIN_PREFIXES = ("/admin/",)
 
@@ -99,6 +102,12 @@ class SiteConfigurationMiddleware:
 
     def __call__(self, request):
         request.site_config = SiteConfiguration.get_solo()
+        from core.maintenance import purge_if_due
+
+        try:
+            purge_if_due()
+        except Exception:
+            logger.exception("Daily message purge failed.")
         response = self.get_response(request)
         response["X-Config-Version"] = str(request.site_config.pk)
         return response
@@ -237,19 +246,20 @@ class PersonalDataScraperBlockMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
-    def __call__(self, request):
+    def process_view(self, request, view_func, view_args, view_kwargs):
         if request.path.startswith(PERSONAL_DATA_PATH_PREFIXES):
             config = _config(request)
             ua = request.META.get("HTTP_USER_AGENT", "").lower()
             if config.enable_scraper_block and (not ua.strip() or any(bot in ua for bot in SCRAPER_USER_AGENTS)):
-                return self._forbidden()
+                from django.core.exceptions import PermissionDenied
+
+                # raising (instead of a bare 403) routes the response through
+                # handler403, which renders the uniform 404 page in production
+                raise PermissionDenied("Scraper blocked.")
+        return None
+
+    def __call__(self, request):
         return self.get_response(request)
-
-    @staticmethod
-    def _forbidden():
-        from django.http import HttpResponseForbidden
-
-        return HttpResponseForbidden("Access denied.")
 
 
 class SearchIndexingMiddleware:

@@ -24,6 +24,8 @@ urlpatterns = [
     path("accounts/login/", account_views.RateLimitedLoginView.as_view(), name="login"),
     path("accounts/logout/", account_views.LogoutView.as_view(), name="logout"),
     path("accounts/register/", account_views.register, name="register"),
+    path("accounts/register/confirm/", account_views.registration_otp, name="registration_otp"),
+    path("accounts/register/resend/", account_views.registration_otp_resend, name="registration_otp_resend"),
     path(
         "accounts/password_reset/",
         account_views.PasswordResetView.as_view(),

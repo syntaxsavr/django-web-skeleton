@@ -138,7 +138,13 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
         ),
         (
             "Auth",
-            {"fields": ("enable_public_registration", "registration_requires_approval")},
+            {
+                "fields": (
+                    "enable_public_registration",
+                    "enable_email_otp",
+                    "registration_requires_approval",
+                )
+            },
         ),
         (
             "Embeds",
@@ -148,6 +154,15 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
                     "calcom_link",
                     "enable_stripe_buy_button",
                     "stripe_publishable_key",
+                )
+            },
+        ),
+        (
+            "Data minimisation",
+            {
+                "fields": (
+                    "enable_message_auto_delete",
+                    "message_retention_days",
                 )
             },
         ),
@@ -296,6 +311,15 @@ class FooterSectionAdmin(admin.ModelAdmin):
 
     class Media:
         js = ("core/js/admin-image-drop.js",)
+
+
+def badge_contact_messages(request):
+    return ContactMessage.objects.count()
+
+
+def badge_config_changed(request):
+    config = SiteConfiguration.get_solo()
+    return "" if config.starter_content_seeded else "!"
 
 
 admin.site.site_header = "Skeleton control panel"
