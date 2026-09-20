@@ -4,6 +4,13 @@ Conventions for anyone (human or model) changing this repository. The
 skeleton is derived from the gritsec-website codebase; its patterns are the
 reference implementation for everything described here.
 
+## One-time initialisation
+
+If `HEY-READ-THIS-FIRST.md` exists and the user says "init the template", read
+and follow it before other project work. It contains the short discovery flow,
+`.env` setup, design and motion brief, consent decisions, verification steps,
+and its own deletion rule. Do not delete it before the initialisation succeeds.
+
 ## Ground rules
 
 1. **No comments in public output.** Templates may use `{# #}` and

@@ -1,4 +1,4 @@
-"""Settings for the django-web-skeleton project.
+"""Settings for the django-skeleton-eu-ready project.
 
 The debug/production switch
 ===========================
@@ -231,7 +231,7 @@ SEED_ADMIN_EMAIL = os.environ.get("SEED_ADMIN_EMAIL", "admin@example.com")
 # (loaded only inside the admin via UNFOLD STYLES).
 UNFOLD = {
     "SITE_TITLE": "Skeleton Admin",
-    "SITE_HEADER": "django-web-skeleton",
+    "SITE_HEADER": "django-skeleton-eu-ready",
     "SITE_SYMBOL": "page",
     "THEME": "light",
     "STYLES": ["/static/core/css/admin.css"],

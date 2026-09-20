@@ -1,4 +1,4 @@
-"""Root URL configuration for django-web-skeleton."""
+"""Root URL configuration for django-skeleton-eu-ready."""
 
 from django.conf import settings
 from django.contrib import admin

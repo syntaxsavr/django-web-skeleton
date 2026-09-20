@@ -48,7 +48,7 @@ def home(request):
         request,
         "core/home.html",
         {
-            "page_title": "django-web-skeleton",
+            "page_title": "django-skeleton-eu-ready",
             "meta_description": _config(request).default_meta_description,
         },
     )

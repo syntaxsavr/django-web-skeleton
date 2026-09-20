@@ -55,7 +55,7 @@ class PageSmokeTests(TestCase):
             "/llms-full.txt": "## Home",
             "/security.txt": "Contact:",
             "/.well-known/security.txt": "Contact:",
-            "/humans.txt": "django-web-skeleton",
+            "/humans.txt": "django-skeleton-eu-ready",
             "/sitemap.xml": "urlset",
         }
         for url, needle in cases.items():
