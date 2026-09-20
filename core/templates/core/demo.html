@@ -106,7 +106,7 @@
   </div>
 </section>
 
-<section class="demo-block section-rule" id="demo-consent" aria-labelledby="demo-consent-heading">
+{% if enable_consent %}<section class="demo-block section-rule" id="demo-consent" aria-labelledby="demo-consent-heading">
   <div class="shell">
     <header class="demo-block-head">
       <span class="demo-no">06</span>
@@ -120,8 +120,9 @@
     </div>
   </div>
 </section>
+{% endif %}
 
-<section class="demo-block section-rule" id="demo-form" aria-labelledby="demo-form-heading">
+{% if enable_contact %}<section class="demo-block section-rule" id="demo-form" aria-labelledby="demo-form-heading">
   <div class="shell">
     <header class="demo-block-head">
       <span class="demo-no">07</span>
@@ -133,6 +134,7 @@
     {% include "core/fragments/contact-form.html" %}
   </div>
 </section>
+{% endif %}
 {% include "core/fragments/cta-band.html" %}
 {% endblock %}
 {% block extra_js %}<script defer src="{% static 'core/js/contact.js' %}"></script>{% endblock %}

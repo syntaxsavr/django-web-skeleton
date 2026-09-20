@@ -9,12 +9,6 @@
 
   function boot() {
     if (!window.klaro || !window.klaroConfig) return false;
-    try {
-      window.klaro.initialize(window.klaroConfig);
-    } catch (e) {
-      return false;
-    }
-
     var suppressed = document.body.hasAttribute("data-consent-suppress");
     var manager = window.klaro.getManager();
     if (!suppressed && !manager.confirmed) {
@@ -22,12 +16,15 @@
     }
 
     var target = document.body;
-    var observer = new MutationObserver(function () {
+    function syncOpenState() {
       var open = !!document.querySelector(".klaro .cm-modal, .klaro .cm-notice");
+      open = open || !!document.querySelector(".klaro .cookie-modal, .klaro .cookie-notice:not(.cookie-notice-hidden)");
       document.documentElement.classList.toggle("klaro-open", open);
       document.body.classList.toggle("klaro-open", open);
-    });
+    }
+    var observer = new MutationObserver(syncOpenState);
     observer.observe(target, { childList: true, subtree: true });
+    syncOpenState();
 
     if (manager.confirmed) {
       document.dispatchEvent(new CustomEvent("skeleton:consent", { detail: null }));

@@ -1,0 +1,202 @@
+.articles-hero {
+  padding-block: clamp(48px, 8vw, 108px);
+}
+.articles-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(320px, 1.2fr);
+  gap: clamp(28px, 7vw, 110px);
+  align-items: end;
+}
+.articles-mark {
+  font-family: var(--font-serif);
+  font-size: clamp(12rem, 31vw, 29rem);
+  font-style: italic;
+  letter-spacing: -0.09em;
+  line-height: 0.58;
+}
+.articles-intro {
+  border-left: 1px solid var(--ink);
+  padding-left: clamp(20px, 3vw, 42px);
+}
+.articles-intro h1 {
+  font-size: clamp(4rem, 10vw, 9rem);
+  line-height: 0.78;
+  margin-bottom: 0.28em;
+}
+.articles-intro p {
+  max-width: 36ch;
+  margin: 0;
+  color: var(--ink-60);
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+}
+.featured-article {
+  padding-block: clamp(46px, 7vw, 94px);
+}
+.featured-article-grid {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.7fr) minmax(0, 2fr);
+  gap: clamp(30px, 7vw, 110px);
+}
+.article-date,
+.article-category,
+.article-index-head p,
+.article-detail-meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+.article-date span {
+  display: block;
+  margin-bottom: 18px;
+  color: var(--ink);
+}
+.featured-article h2 {
+  max-width: 13ch;
+  font-size: clamp(2.8rem, 7vw, 6.7rem);
+  line-height: 0.9;
+}
+.featured-article h2 a,
+.article-row h3 a {
+  text-decoration: none;
+}
+.featured-article h2 a:hover,
+.article-row h3 a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+.featured-summary {
+  max-width: 54ch;
+  color: var(--ink-60);
+  font-size: 1.1rem;
+}
+.article-read {
+  display: inline-block;
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.article-index {
+  padding-block: clamp(44px, 7vw, 90px);
+}
+.article-index-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.article-index-head h2 {
+  margin: 0;
+}
+.article-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.6fr) minmax(240px, 1.1fr) minmax(280px, 1.3fr);
+  gap: clamp(20px, 4vw, 62px);
+  padding-block: clamp(24px, 4vw, 42px);
+  border-top: 1px solid var(--ink);
+}
+.article-row:last-child {
+  border-bottom: 1px solid var(--ink);
+}
+.article-row h3 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+}
+.article-row p:last-child {
+  margin: 0;
+  color: var(--ink-60);
+}
+.articles-empty {
+  border-block: 1px solid var(--ink);
+  padding-block: clamp(40px, 7vw, 84px);
+}
+.article-detail-header {
+  padding-block: clamp(60px, 10vw, 140px);
+}
+.article-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.55fr) minmax(0, 2fr);
+  gap: clamp(32px, 8vw, 120px);
+}
+.article-detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 10px;
+}
+.article-detail-meta a {
+  color: var(--ink);
+}
+.article-detail h1 {
+  max-width: 13ch;
+  font-size: clamp(3.5rem, 9vw, 8.5rem);
+  line-height: 0.88;
+}
+.article-standfirst {
+  max-width: 54ch;
+  margin: 32px 0 0;
+  color: var(--ink-60);
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+}
+.article-body {
+  max-width: 780px;
+  padding-block: clamp(52px, 9vw, 120px);
+  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+  line-height: 1.78;
+}
+.article-body p {
+  margin-bottom: 1.45em;
+}
+.article-hero-image {
+  margin-bottom: clamp(48px, 8vw, 110px);
+}
+.article-hero-image img,
+.article-inline-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--ink);
+}
+.article-hero-image figcaption,
+.article-inline-image figcaption {
+  padding-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-40);
+}
+.article-inline-image {
+  margin: clamp(40px, 7vw, 72px) 0;
+}
+.article-disclosure {
+  margin-top: 48px;
+  padding: 24px 0;
+  border-block: 1px solid var(--ink);
+}
+.article-disclosure h2 {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.article-disclosure p:last-child {
+  margin-bottom: 0;
+}
+@media (max-width: 760px) {
+  .articles-hero-grid,
+  .featured-article-grid,
+  .article-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .articles-mark {
+    font-size: clamp(10rem, 58vw, 15rem);
+  }
+  .article-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}

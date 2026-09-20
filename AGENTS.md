@@ -29,23 +29,40 @@ and its own deletion rule. Do not delete it before the initialisation succeeds.
 5. **Every feature is switchable.** New features get a boolean (or ID
    field) on `SiteConfiguration` plus admin wiring, and must degrade to
    a no-op when switched off. Tests assert both states.
+6. **Disabled means absent.** A disabled public feature must return 404 and
+   disappear from header navigation, footer records, sitemap output and
+   llms page lists. Do not leave dead links or promotional references.
+7. **Never hardcode navigation or footer content.** `base.html` only renders
+   `NavigationItem`, `FooterSection` and `FooterItem` records. Add megamenu
+   links and groups through the Site configuration inline. Add footer links,
+   categories, actions, text and logos through the footer models.
+8. **Keep views feature-owned.** Never recreate `core/views.py` or place
+   behaviour in `core/views/__init__.py`. Add a focused module under
+   `core/views/`. Read `docs/PAGE-BUILDING.md` before adding a page or route.
+9. **Build only the page body.** Public templates extend `core/base.html` and
+   fill `{% block content %}`. Do not duplicate the head, navigation, footer,
+   consent markup or global scripts.
 
 ## Architecture map
 
 ```
 skeleton/settings.py      debug/prod switch, middleware order, unfold theme
 skeleton/urls.py          admin + sitemap + core include + error handlers
-core/models.py            SiteConfiguration (control panel), ProtectedPage,
-                          ContactMessage
+core/models.py            SiteConfiguration, Article, ArticleImage,
+                          RobotsRule, NavigationItem, FooterSection, FooterItem,
+                          ProtectedPage, ContactMessage
+core/bootstrap.py         first-run admin, robots, footer and protected-page data
 core/middleware.py        the stack; read the module docstring for ordering
-core/views.py             pages, lazy_section endpoint, contact defenses,
-                          machine routes (llms/security), error handlers
+core/views/               focused HTTP modules; one feature area per file
+core/page_registry.py     sitemap + llms metadata for public pages
 core/context_processors.py site_settings + tracking_configuration
 core/templatetags/seo_tags.py  JSON-LD + canonical helpers
 core/storage.py           minify -> hash -> brotli/gzip pipeline
 core/templates/core/      base.html + pages + fragments/ + account/ + legal/
 core/static/core/css/     base (tokens) / components / pages / fragments
 core/static/core/js/      one IIFE per concern, all deferred
+docs/PAGE-BUILDING.md     exact placement and page-building contract
+docs/NAVIGATION.md        header logo, megamenu and mobile navigation contract
 .agents/skills/           design, motion, copywriting skills (+ .claude mirror)
 ```
 
@@ -84,6 +101,7 @@ its own trusted inline scripts).
 | `data-consent-suppress` on `<body>` | klaro-bootstrap.js | never auto-open the banner (legal pages) |
 | `data-open-cookie-settings` | klaro-config.js | re-open the consent UI |
 | `data-a11y-action` | prefs.js | dark mode / text size / motion toggles |
+| `data-nav-toggle` + `data-site-navigation` | topbar.js | megamenu and mobile navigation state |
 
 Event bus: `lazy-section-loaded`, `lottie:complete`,
 `skeleton:consent`, `skeleton:modal-open/close`.
@@ -92,15 +110,53 @@ Event bus: `lazy-section-loaded`, `lottie:complete`,
 
 ### Add a page
 
-1. Template `core/templates/core/<name>.html`: extend `base.html`, set
-   `{% block page_css %}` with a file in `core/static/core/css/pages/`,
-   compose sections from `core/fragments/`.
-2. View in `core/views.py` (render with `page_title` and
-   `meta_description` context).
-3. Route in `core/urls.py` with a name.
-4. Register the URL name in `core/sitemaps.py` `routes`.
-5. Add it to `LLMS_PAGES` in `core/views.py` when it should appear in
-   llms.txt.
+Follow `docs/PAGE-BUILDING.md`. The short version:
+
+1. Extend `core/base.html`; write only the content block and page-specific
+   CSS. Shared chrome stays shared.
+2. Put the view in the matching `core/views/<feature>.py` module. Tiny
+   standalone pages belong in `core/views/pages.py`.
+3. Add the named route to `core/urls.py`.
+4. Add its metadata once in `core/page_registry.py`; sitemap and llms output
+   both read that registry.
+5. Wire optional header and automatic footer links to the same feature flag.
+6. Test both switch states when the page is optional.
+
+### Add or change navigation
+
+Read `docs/NAVIGATION.md`. Editors manage the logo, megamenu switch, trigger
+label, groups and links inside Site configuration. Code changes are needed
+only when a new automatic page destination is introduced.
+
+1. Add the destination to `NavigationItem.PAGE_CHOICES`.
+2. Add its route to `core.context_processors.NAVIGATION_ROUTES`.
+3. Bind optional pages to their switch in `_navigation_item_visible()`.
+4. Add starter navigation records in `core/bootstrap.py`.
+5. Test the enabled and disabled states. Disabled destinations must leave no
+   header link behind.
+
+### Add or change footer content
+
+Do not add footer links or columns to `base.html`.
+
+1. Use `FooterSection` for an ordered column.
+2. Use `FooterItem` for a link, action, text block or uploaded logo.
+3. Add new automatic destinations to `FooterItem.PAGE_CHOICES`,
+   `core.context_processors.PAGE_ROUTES` and its visibility checks.
+4. Add starter records in `core/bootstrap.py` only. They are inserted once.
+5. Prove feature-bound entries disappear when their switch is off.
+
+### Add article media
+
+Hero and Open Graph images live on `Article`. Body images are ordered
+`ArticleImage` rows. The admin file fields support click-to-upload and drag
+and drop. Public templates must keep alt text and credits attached.
+
+### Add a robots rule
+
+Use Robots rules in the admin. Rules are ordered and individually active.
+Paths follow robots prefix matching, so `/media/` covers every uploaded file.
+Do not edit a robots template; `core.views.machine.robots_txt` owns the response.
 
 ### Add a section
 

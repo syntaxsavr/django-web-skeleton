@@ -61,3 +61,24 @@ a.button:active,
 button:active {
   translate: 0 1px;
 }
+
+.admin-image-drop {
+  display: grid;
+  gap: 10px;
+  min-height: 112px;
+  padding: 20px;
+  border: 2px dashed #777770;
+  background: #f7f7f2;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.admin-image-drop.is-dragging {
+  border-color: #0a0a0a;
+  background: #ecece6;
+}
+.admin-image-drop input[type="file"] {
+  width: 100%;
+}
+.admin-image-drop-status {
+  color: #575752;
+  font-size: 0.82rem;
+}

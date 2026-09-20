@@ -5,7 +5,7 @@
     python manage.py indexnow --dry-run
 
 The key lives in the control panel (SEO section). The <key>.txt proof
-route is served by core.views.indexnow_key_file and only ever matches
+route is served by core.views.machine.indexnow_key_file and only ever matches
 the configured key.
 """
 

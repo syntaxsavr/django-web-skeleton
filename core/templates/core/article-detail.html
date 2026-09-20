@@ -1,0 +1,43 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-article-detail{% endblock %}
+{% block meta %}<meta name="description" content="{{ article.meta_description }}">{% if article.meta_keywords %}<meta name="keywords" content="{{ article.meta_keywords }}">{% endif %}{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/articles.css' %}">{% endblock %}
+{% block og_image %}{% if article.og_image %}{{ canonical_origin }}{{ article.og_image.url }}{% elif article.hero_image %}{{ canonical_origin }}{{ article.hero_image.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block content %}
+<article class="article-detail">
+  <header class="article-detail-header">
+    <div class="shell article-detail-grid">
+      <div class="article-detail-meta">
+        <a href="{% url 'articles' %}">All articles</a>
+        <time datetime="{{ article.published_at|date:'c' }}">{{ article.published_at|date:"j F Y" }}</time>
+        {% if article.category %}<span>{{ article.category }}</span>{% endif %}
+        <span>{{ article.author_name }}</span>
+      </div>
+      <div>
+        <h1>{{ article.title }}</h1>
+        <p class="article-standfirst">{{ article.excerpt }}</p>
+      </div>
+    </div>
+  </header>
+  {% if article.hero_image %}
+  <figure class="article-hero-image shell">
+    <img src="{{ article.hero_image.url }}" alt="{{ article.hero_image_alt }}">
+    {% if article.hero_image_caption or article.hero_image_credit %}<figcaption>{{ article.hero_image_caption }}{% if article.hero_image_caption and article.hero_image_credit %} · {% endif %}{{ article.hero_image_credit }}</figcaption>{% endif %}
+  </figure>
+  {% endif %}
+  <div class="section-rule">
+    <div class="shell article-body">
+      {{ article.content|linebreaks }}
+      {% for image in article.images.all %}
+      <figure class="article-inline-image">
+        <img src="{{ image.image.url }}" alt="{{ image.alt_text }}" loading="lazy">
+        {% if image.caption or image.credit %}<figcaption>{{ image.caption }}{% if image.caption and image.credit %} · {% endif %}{{ image.credit }}</figcaption>{% endif %}
+      </figure>
+      {% endfor %}
+      {% if article.show_disclaimer %}<aside class="article-disclosure"><h2>Editorial disclaimer</h2><p>This article is general information and is not legal, financial or security advice for a specific situation.</p></aside>{% endif %}
+      {% if article.show_ai_disclosure %}<aside class="article-disclosure"><h2>AI disclosure</h2><p>AI tools supported the production of this article. A human editor reviewed the published text and images.</p></aside>{% endif %}
+    </div>
+  </div>
+</article>
+{% endblock %}

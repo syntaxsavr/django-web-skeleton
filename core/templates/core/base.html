@@ -52,20 +52,53 @@
 {% endif %}
 </head>
 <body class="{% block body_class %}{% endblock %}"{% block body_attributes %}{% endblock %}>
-{% if enable_consent %}<div id="klaro" data-cmp-root aria-live="polite"></div>{% endif %}
 <a class="skip-link" href="#main-content">Skip to content</a>
 <header class="site-header" data-site-header>
   <div class="shell header-inner">
-    <a class="brand" href="{% url 'home' %}" aria-label="{{ site_name }} home">{{ site_name|lower }}<span aria-hidden="true">_</span></a>
-    <nav class="site-nav" aria-label="Main">
+    <a class="brand{% if site_config.enable_header_logo and site_config.header_logo %} brand-image{% endif %}" href="{% url 'home' %}" aria-label="{{ site_name }} home">
+      {% if site_config.enable_header_logo and site_config.header_logo %}<img src="{{ site_config.header_logo.url }}" alt="{{ site_config.header_logo_alt }}">{% else %}{{ site_name|lower }}<span aria-hidden="true">_</span>{% endif %}
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" data-nav-toggle>
+      <span class="nav-toggle-label">{{ site_config.navigation_menu_label }}</span>
+      <span class="nav-toggle-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <nav id="site-navigation" class="site-navigation{% if site_config.enable_megamenu %} has-megamenu{% endif %}" aria-label="Main" data-site-navigation{% if site_config.enable_megamenu %} data-mega-menu{% endif %} hidden>
+      {% if site_config.enable_megamenu %}
+      <div class="shell megamenu-grid">
+        {% for group in navigation_groups %}
+        <div class="megamenu-group">
+          <p class="megamenu-title">{{ group.title }}</p>
+          <ul>
+            {% for item in group.items %}
+            <li>
+              {% if item.is_logout %}
+              <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="megamenu-link"><span>{{ item.label }}</span>{% if item.description %}<small>{{ item.description }}</small>{% endif %}</button></form>
+              {% else %}
+              <a class="megamenu-link" href="{{ item.url }}"><span>{{ item.label }}</span>{% if item.description %}<small>{{ item.description }}</small>{% endif %}</a>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% empty %}
+        <p class="megamenu-empty">Add navigation links in Site configuration.</p>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="site-nav">
       <a href="{% url 'home' %}"{% if request.path == '/' %} aria-current="page"{% endif %}>Index</a>
       <a href="{% url 'demo' %}"{% if request.resolver_match.url_name == 'demo' %} aria-current="page"{% endif %}>Demo</a>
+      {% if enable_articles %}<a href="{% url 'articles' %}"{% if request.resolver_match.url_name == 'articles' or request.resolver_match.url_name == 'article_detail' %} aria-current="page"{% endif %}>Articles</a>{% endif %}
+      {% if enable_contact %}
       <a href="{% url 'contact' %}"{% if request.resolver_match.url_name == 'contact' %} aria-current="page"{% endif %}>Contact</a>
+      {% endif %}
       {% if user.is_authenticated %}
       <a href="{% url 'account_dashboard' %}">Account</a>
       <form method="post" action="{% url 'logout' %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button">Sign out</button></form>
       {% else %}
       <a href="{% url 'login' %}">Sign in</a>
+      {% endif %}
+      </div>
       {% endif %}
     </nav>
   </div>
@@ -73,63 +106,38 @@
 <main id="main-content" tabindex="-1">
 {% block content %}{% endblock %}
 </main>
+{% if site_config.enable_footer %}
 <footer class="site-footer">
   <div class="shell footer-grid">
     <div class="footer-brand-col">
       <p class="footer-brand">{{ site_name }}</p>
-      <p class="footer-note">A production-shaped Django skeleton: flip switches in the control panel instead of wiring boilerplate.</p>
+      {% if site_config.footer_note %}<p class="footer-note">{{ site_config.footer_note }}</p>{% endif %}
     </div>
+    {% for section in footer_sections %}
     <div class="footer-col">
-      <span class="mono-label">Site</span>
+      <span class="mono-label">{{ section.title }}</span>
       <ul>
-        <li><a href="{% url 'home' %}">Index</a></li>
-        <li><a href="{% url 'demo' %}">Demo</a></li>
-        <li><a href="{% url 'contact' %}">Contact</a></li>
-        <li><a href="{% url 'account_dashboard' %}">Account</a></li>
-        {% if user.is_authenticated %}
-        <li><form method="post" action="{% url 'logout' %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button">Sign out</button></form></li>
-        {% else %}
-        <li><a href="{% url 'login' %}">Sign in</a></li>
-        {% if enable_registration %}<li><a href="{% url 'register' %}">Register</a></li>{% endif %}
-        {% endif %}
-        <li><a href="/admin/">Admin backend</a></li>
+        {% for item in section.items %}
+        <li class="footer-item footer-item-{{ item.kind }}{% if item.quiet %} footer-item-quiet{% endif %}">
+          {% if item.kind == 'link' %}<a href="{{ item.url }}">{{ item.label }}</a>{% endif %}
+          {% if item.kind == 'text' %}<div class="footer-text">{{ item.text|linebreaksbr }}</div>{% endif %}
+          {% if item.kind == 'media' %}<div class="footer-media">{% if item.url %}<a href="{{ item.url }}">{% endif %}<img src="{{ item.media_url }}" alt="{{ item.media_alt }}" loading="lazy">{% if item.url %}</a>{% endif %}</div>{% endif %}
+          {% if item.kind == 'action' and item.is_cookie_action %}<button type="button" class="link-button" data-open-cookie-settings>{{ item.label }}</button>{% endif %}
+          {% if item.kind == 'action' and item.a11y_action %}<button type="button" class="link-button" data-a11y-action="{{ item.a11y_action }}">{{ item.label }}</button>{% endif %}
+          {% if item.kind == 'action' and item.is_logout_action %}<form method="post" action="{% url 'logout' %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button">{{ item.label }}</button></form>{% endif %}
+        </li>
+        {% endfor %}
       </ul>
     </div>
-    <div class="footer-col">
-      <span class="mono-label">Legal</span>
-      <ul>
-        <li><a href="{% url 'privacy' %}">Privacy</a></li>
-        <li><a href="{% url 'imprint' %}">Imprint</a></li>
-        <li><a href="{% url 'accessibility' %}">Accessibility</a></li>
-        {% if enable_consent %}<li><button type="button" class="link-button" data-open-cookie-settings>Cookie settings</button></li>{% endif %}
-      </ul>
-    </div>
-    <div class="footer-col">
-      <span class="mono-label">Machine</span>
-      <ul>
-        <li><a href="{% url 'robots_txt' %}">robots.txt</a></li>
-        <li><a href="/sitemap.xml">sitemap.xml</a></li>
-        <li><a href="{% url 'llms_txt' %}">llms.txt</a></li>
-        <li><a href="{% url 'llms_full_txt' %}">llms-full.txt</a></li>
-        <li><a href="{% url 'security_txt_wellknown' %}">security.txt</a></li>
-        <li><a href="{% url 'humans_txt' %}">humans.txt</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <span class="mono-label">Display</span>
-      <ul>
-        <li><button type="button" class="link-button" data-a11y-action="toggle-dark">Dark mode</button></li>
-        <li><button type="button" class="link-button" data-a11y-action="toggle-text">Larger text</button></li>
-        <li><button type="button" class="link-button" data-a11y-action="toggle-motion">Reduce motion</button></li>
-        <li><button type="button" class="link-button" data-a11y-action="print-page">Print page</button></li>
-      </ul>
-    </div>
+    {% endfor %}
   </div>
   <div class="shell footer-bottom">
-    <span>© {% now "Y" %} {{ site_name }}. All switches in /admin/.</span>
-    <span>Django 5.2 · zero build step · output minified</span>
+    <span>© {% now "Y" %} {{ site_name }}{% if site_config.footer_bottom_left %}. {{ site_config.footer_bottom_left }}{% endif %}</span>
+    {% if site_config.footer_bottom_right %}<span>{{ site_config.footer_bottom_right }}</span>{% endif %}
   </div>
 </footer>
+{% endif %}
+{% if enable_external_link_modal %}
 <div id="external-modal" class="modal" hidden data-external-modal{% if turnstile_site_key %} data-turnstile-sitekey="{{ turnstile_site_key }}"{% endif %}>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="external-modal-title">
     <h2 id="external-modal-title">Leaving this site</h2>
@@ -142,6 +150,7 @@
     </div>
   </div>
 </div>
+{% endif %}
 <script defer src="{% static 'core/js/prefs.js' %}"></script>
 <script defer src="{% static 'core/js/lazy-sections.js' %}"></script>
 <script defer src="{% static 'core/js/scroll-reveal.js' %}"></script>
@@ -150,7 +159,7 @@
 <script defer src="{% static 'core/js/topbar.js' %}"></script>
 <script defer src="{% static 'core/js/modal.js' %}"></script>
 {% if enable_external_link_modal %}<script defer src="{% static 'core/js/external-link-modal.js' %}"></script>{% endif %}
-<script defer src="{% static 'core/js/track.js' %}"></script>
+{% if enable_tracking %}<script defer src="{% static 'core/js/track.js' %}"></script>{% endif %}
 {% block extra_js %}{% endblock %}
 </body>
 </html>

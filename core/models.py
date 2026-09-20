@@ -1,17 +1,24 @@
 """Data models for the skeleton core.
 
-Three models carry the whole control-panel idea:
+The models carry the whole control-panel idea:
 
 SiteConfiguration  single-row settings object; the admin panel is the UI.
 ProtectedPage      login-wall rule evaluated by core.middleware.
 ContactMessage     contact form submissions.
+Article            optional editorial content.
+RobotsRule         editable robots.txt path rules.
+FooterSection      ordered footer columns.
+FooterItem         feature-aware links, actions, text and media.
+NavigationItem     ordered, feature-aware header and megamenu links.
 """
 
 from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 
 CONFIG_CACHE_KEY = "core:site_configuration:solo"
 CONFIG_CACHE_TTL = 60
@@ -41,6 +48,23 @@ class SiteConfiguration(models.Model):
     )
     theme_color = models.CharField(max_length=9, default="#fcfcfa")
 
+    # --- Header & navigation ------------------------------------------------
+    enable_header_logo = models.BooleanField(
+        default=True,
+        help_text="Show the uploaded header logo. The site name is used when no logo is uploaded.",
+    )
+    header_logo = models.ImageField(upload_to="navigation/", blank=True)
+    header_logo_alt = models.CharField(
+        max_length=160,
+        blank=True,
+        help_text="Describe the uploaded logo for people who cannot see it.",
+    )
+    enable_megamenu = models.BooleanField(
+        default=True,
+        help_text="Use the grouped megamenu. When off, the compact default navigation is shown.",
+    )
+    navigation_menu_label = models.CharField(max_length=40, default="Menu")
+
     # --- Consent & tracking --------------------------------------------------
     enable_cookie_consent = models.BooleanField(
         default=True, help_text="Master switch for the Klaro! consent manager and banner."
@@ -68,6 +92,10 @@ class SiteConfiguration(models.Model):
     matomo_site_id = models.CharField(max_length=8, blank=True)
 
     # --- SEO ------------------------------------------------------------------
+    enable_articles = models.BooleanField(
+        default=True,
+        help_text="Publishes article index and detail pages and exposes their links.",
+    )
     enable_sitemap = models.BooleanField(default=True)
     enable_robots_txt = models.BooleanField(default=True)
     enable_llms_txt = models.BooleanField(default=True, help_text="Serves /llms.txt and /llms-full.txt for AI crawlers.")
@@ -86,6 +114,25 @@ class SiteConfiguration(models.Model):
     robots_noindex_whole_site = models.BooleanField(
         default=False, help_text="Staging kill switch: X-Robots-Tag noindex on every page."
     )
+
+    # --- Footer ---------------------------------------------------------------
+    enable_footer = models.BooleanField(default=True)
+    footer_note = models.CharField(
+        max_length=240,
+        blank=True,
+        default="A production-shaped Django skeleton. Change the site from the control panel.",
+    )
+    footer_bottom_left = models.CharField(
+        max_length=180,
+        blank=True,
+        default="All public content is controlled from the admin.",
+    )
+    footer_bottom_right = models.CharField(
+        max_length=180,
+        blank=True,
+        default="Django 5.2 · zero build step · output minified",
+    )
+    starter_content_seeded = models.BooleanField(default=False, editable=False)
 
     # --- Forms & anti-spam ------------------------------------------------------
     enable_contact_form = models.BooleanField(default=True)
@@ -147,6 +194,10 @@ class SiteConfiguration(models.Model):
 
     def delete(self, *args, **kwargs):  # pragma: no cover - singleton guard
         cache.delete(CONFIG_CACHE_KEY)
+
+    def clean(self):
+        if self.header_logo and not self.header_logo_alt.strip():
+            raise ValidationError({"header_logo_alt": "Describe the uploaded logo."})
 
     @classmethod
     def get_solo(cls) -> "SiteConfiguration":
@@ -246,3 +297,262 @@ class ContactMessage(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} <{self.email}>"
+
+
+class Article(models.Model):
+    title = models.CharField(max_length=180)
+    slug = models.SlugField(max_length=200, unique=True)
+    category = models.CharField(max_length=80, default="cybersecurity")
+    content = models.TextField(help_text="Plain text. Blank lines become paragraphs.")
+    meta_description = models.CharField(max_length=160)
+    meta_keywords = models.CharField(
+        max_length=300,
+        blank=True,
+        help_text="Optional comma-separated search terms.",
+    )
+    excerpt = models.CharField(max_length=320)
+    author_name = models.CharField(max_length=120, default="Editorial team")
+    hero_image = models.ImageField(upload_to="articles/hero/", blank=True)
+    hero_image_alt = models.CharField(max_length=200, blank=True)
+    hero_image_caption = models.CharField(max_length=240, blank=True)
+    hero_image_credit = models.CharField(max_length=160, blank=True)
+    og_image = models.ImageField(upload_to="articles/og/", blank=True)
+    seo_title = models.CharField(max_length=110, blank=True)
+    show_disclaimer = models.BooleanField(default=False)
+    show_ai_disclosure = models.BooleanField(default=False)
+    published_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    published = models.BooleanField(default=False)
+    is_featured = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-is_featured", "-published_at", "-pk"]
+
+    def __str__(self) -> str:
+        return self.title
+
+    def clean(self):
+        if self.hero_image and not self.hero_image_alt.strip():
+            raise ValidationError({"hero_image_alt": "Describe the hero image for people who cannot see it."})
+
+    def get_absolute_url(self):
+        return reverse("article_detail", kwargs={"slug": self.slug})
+
+
+class ArticleImage(models.Model):
+    article = models.ForeignKey(Article, related_name="images", on_delete=models.CASCADE)
+    image = models.ImageField(upload_to="articles/content/")
+    alt_text = models.CharField(max_length=200)
+    caption = models.CharField(max_length=240, blank=True)
+    credit = models.CharField(max_length=160, blank=True)
+    sort_order = models.PositiveIntegerField(default=100)
+
+    class Meta:
+        ordering = ["sort_order", "pk"]
+
+    def __str__(self) -> str:
+        return self.alt_text
+
+
+class RobotsRule(models.Model):
+    ALLOW = "allow"
+    DISALLOW = "disallow"
+    DIRECTIVE_CHOICES = ((DISALLOW, "Disallow"), (ALLOW, "Allow"))
+
+    path = models.CharField(
+        max_length=240,
+        help_text="Path or prefix. /static/ covers every URL that starts with /static/.",
+    )
+    directive = models.CharField(max_length=10, choices=DIRECTIVE_CHOICES, default=DISALLOW)
+    active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=100)
+    note = models.CharField(max_length=160, blank=True, help_text="Admin-only explanation.")
+
+    class Meta:
+        ordering = ["sort_order", "path", "pk"]
+        constraints = [models.UniqueConstraint(fields=["path", "directive"], name="unique_robots_rule")]
+
+    def clean(self):
+        self.path = (self.path or "").strip()
+        if not self.path.startswith("/"):
+            raise ValidationError({"path": "Start paths with /."})
+
+    def __str__(self) -> str:
+        return f"{self.get_directive_display()}: {self.path}"
+
+
+class NavigationItem(models.Model):
+    PAGE_CUSTOM = "custom"
+    PAGE_HOME = "home"
+    PAGE_DEMO = "demo"
+    PAGE_ARTICLES = "articles"
+    PAGE_CONTACT = "contact"
+    PAGE_ACCOUNT = "account"
+    PAGE_LOGIN = "login"
+    PAGE_REGISTER = "register"
+    PAGE_LOGOUT = "logout"
+    PAGE_ADMIN = "admin"
+    PAGE_PRIVACY = "privacy"
+    PAGE_IMPRINT = "imprint"
+    PAGE_ACCESSIBILITY = "accessibility"
+    PAGE_CHOICES = (
+        (PAGE_CUSTOM, "Custom URL"),
+        (PAGE_HOME, "Home"),
+        (PAGE_DEMO, "Demo"),
+        (PAGE_ARTICLES, "Articles"),
+        (PAGE_CONTACT, "Contact"),
+        (PAGE_ACCOUNT, "Account"),
+        (PAGE_LOGIN, "Sign in"),
+        (PAGE_REGISTER, "Register"),
+        (PAGE_LOGOUT, "Sign out"),
+        (PAGE_ADMIN, "Admin"),
+        (PAGE_PRIVACY, "Privacy"),
+        (PAGE_IMPRINT, "Imprint"),
+        (PAGE_ACCESSIBILITY, "Accessibility"),
+    )
+
+    site_configuration = models.ForeignKey(
+        SiteConfiguration,
+        related_name="navigation_items",
+        on_delete=models.CASCADE,
+        default=1,
+    )
+    group = models.CharField(
+        max_length=80,
+        default="Explore",
+        help_text="Items with the same group name form one megamenu column.",
+    )
+    label = models.CharField(max_length=100)
+    description = models.CharField(
+        max_length=180,
+        blank=True,
+        help_text="Optional supporting line shown in the megamenu.",
+    )
+    page = models.CharField(max_length=20, choices=PAGE_CHOICES, default=PAGE_CUSTOM)
+    url = models.CharField(max_length=500, blank=True, help_text="Used only for Custom URL links.")
+    sort_order = models.PositiveIntegerField(default=100)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "pk"]
+
+    def clean(self):
+        if self.page == self.PAGE_CUSTOM and not self.url.strip():
+            raise ValidationError({"url": "Add a URL or choose an automatic page."})
+
+    def __str__(self) -> str:
+        return f"{self.group}: {self.label}"
+
+
+class FooterSection(models.Model):
+    title = models.CharField(max_length=80)
+    sort_order = models.PositiveIntegerField(default=100)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "pk"]
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class FooterItem(models.Model):
+    KIND_LINK = "link"
+    KIND_TEXT = "text"
+    KIND_MEDIA = "media"
+    KIND_ACTION = "action"
+    KIND_CHOICES = (
+        (KIND_LINK, "Link"),
+        (KIND_TEXT, "Text block"),
+        (KIND_MEDIA, "Logo or image"),
+        (KIND_ACTION, "Site action"),
+    )
+
+    PAGE_CUSTOM = "custom"
+    PAGE_HOME = "home"
+    PAGE_DEMO = "demo"
+    PAGE_ARTICLES = "articles"
+    PAGE_CONTACT = "contact"
+    PAGE_ACCOUNT = "account"
+    PAGE_LOGIN = "login"
+    PAGE_REGISTER = "register"
+    PAGE_ADMIN = "admin"
+    PAGE_PRIVACY = "privacy"
+    PAGE_IMPRINT = "imprint"
+    PAGE_ACCESSIBILITY = "accessibility"
+    PAGE_ROBOTS = "robots"
+    PAGE_SITEMAP = "sitemap"
+    PAGE_LLMS = "llms"
+    PAGE_LLMS_FULL = "llms_full"
+    PAGE_SECURITY = "security"
+    PAGE_HUMANS = "humans"
+    PAGE_CHOICES = (
+        (PAGE_CUSTOM, "Custom URL"),
+        (PAGE_HOME, "Home"),
+        (PAGE_DEMO, "Demo"),
+        (PAGE_ARTICLES, "Articles"),
+        (PAGE_CONTACT, "Contact"),
+        (PAGE_ACCOUNT, "Account"),
+        (PAGE_LOGIN, "Sign in"),
+        (PAGE_REGISTER, "Register"),
+        (PAGE_ADMIN, "Admin"),
+        (PAGE_PRIVACY, "Privacy"),
+        (PAGE_IMPRINT, "Imprint"),
+        (PAGE_ACCESSIBILITY, "Accessibility"),
+        (PAGE_ROBOTS, "robots.txt"),
+        (PAGE_SITEMAP, "sitemap.xml"),
+        (PAGE_LLMS, "llms.txt"),
+        (PAGE_LLMS_FULL, "llms-full.txt"),
+        (PAGE_SECURITY, "security.txt"),
+        (PAGE_HUMANS, "humans.txt"),
+    )
+
+    ACTION_COOKIE = "cookie"
+    ACTION_DARK = "dark"
+    ACTION_TEXT = "text_size"
+    ACTION_MOTION = "motion"
+    ACTION_PRINT = "print"
+    ACTION_LOGOUT = "logout"
+    ACTION_CHOICES = (
+        (ACTION_COOKIE, "Open cookie settings"),
+        (ACTION_DARK, "Toggle dark mode"),
+        (ACTION_TEXT, "Change text size"),
+        (ACTION_MOTION, "Toggle reduced motion"),
+        (ACTION_PRINT, "Print page"),
+        (ACTION_LOGOUT, "Sign out"),
+    )
+
+    section = models.ForeignKey(FooterSection, related_name="items", on_delete=models.CASCADE)
+    kind = models.CharField(max_length=12, choices=KIND_CHOICES, default=KIND_LINK)
+    label = models.CharField(max_length=100, blank=True)
+    page = models.CharField(max_length=20, choices=PAGE_CHOICES, default=PAGE_CUSTOM, blank=True)
+    url = models.CharField(max_length=500, blank=True, help_text="Used only for Custom URL links.")
+    text = models.TextField(blank=True, help_text="Used only for Text block entries.")
+    media = models.FileField(upload_to="footer/", blank=True)
+    media_alt = models.CharField(max_length=160, blank=True)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES, blank=True)
+    sort_order = models.PositiveIntegerField(default=100)
+    active = models.BooleanField(default=True)
+    quiet = models.BooleanField(
+        default=False,
+        help_text="Positions this entry as a low-contrast footer credit.",
+    )
+
+    class Meta:
+        ordering = ["sort_order", "pk"]
+
+    def clean(self):
+        errors = {}
+        if self.kind == self.KIND_LINK and self.page == self.PAGE_CUSTOM and not self.url.strip():
+            errors["url"] = "Add a URL or choose an automatic page."
+        if self.kind == self.KIND_TEXT and not self.text.strip():
+            errors["text"] = "Add text for this entry."
+        if self.kind == self.KIND_MEDIA and not self.media:
+            errors["media"] = "Upload a logo or image."
+        if self.kind == self.KIND_ACTION and not self.action:
+            errors["action"] = "Choose the action this entry runs."
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self) -> str:
+        return self.label or self.get_kind_display()

@@ -6,11 +6,28 @@ from django.contrib import admin
 from django.core.cache import cache
 
 from core.middleware import ProtectedPageMiddleware
-from core.models import ContactMessage, ProtectedPage, SiteConfiguration
+from core.models import (
+    Article,
+    ArticleImage,
+    ContactMessage,
+    FooterItem,
+    FooterSection,
+    NavigationItem,
+    ProtectedPage,
+    RobotsRule,
+    SiteConfiguration,
+)
+
+
+class NavigationItemInline(admin.TabularInline):
+    model = NavigationItem
+    extra = 1
+    fields = ("sort_order", "active", "group", "label", "description", "page", "url")
 
 
 @admin.register(SiteConfiguration)
 class SiteConfigurationAdmin(admin.ModelAdmin):
+    inlines = (NavigationItemInline,)
     fieldsets = (
         (
             "Site identity",
@@ -22,6 +39,19 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
                     "default_meta_description",
                     "theme_color",
                 )
+            },
+        ),
+        (
+            "Header & navigation",
+            {
+                "description": "Upload the brand mark and edit ordered megamenu links below. Reuse a group name to place links in the same column.",
+                "fields": (
+                    "enable_header_logo",
+                    "header_logo",
+                    "header_logo_alt",
+                    "enable_megamenu",
+                    "navigation_menu_label",
+                ),
             },
         ),
         (
@@ -52,6 +82,7 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
             "SEO",
             {
                 "fields": (
+                    "enable_articles",
                     "enable_sitemap",
                     "enable_robots_txt",
                     "enable_llms_txt",
@@ -64,6 +95,18 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
                     "pinterest_domain_verification",
                     "robots_noindex_whole_site",
                 )
+            },
+        ),
+        (
+            "Footer",
+            {
+                "description": "Footer columns and entries are edited under Footer sections. Do not edit the public template.",
+                "fields": (
+                    "enable_footer",
+                    "footer_note",
+                    "footer_bottom_left",
+                    "footer_bottom_right",
+                ),
             },
         ),
         (
@@ -121,6 +164,9 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
         cache.delete("core:site_configuration:solo")
         ProtectedPageMiddleware.invalidate_cache()
 
+    class Media:
+        js = ("core/js/admin-image-drop.js",)
+
 
 @admin.register(ProtectedPage)
 class ProtectedPageAdmin(admin.ModelAdmin):
@@ -152,6 +198,73 @@ class ContactMessageAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+class ArticleImageInline(admin.StackedInline):
+    model = ArticleImage
+    extra = 1
+    fields = ("image", "alt_text", "caption", "credit", "sort_order")
+
+
+@admin.register(Article)
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ("title", "category", "author_name", "published_at", "is_featured", "published")
+    list_filter = ("published", "is_featured", "show_disclaimer", "show_ai_disclosure", "category")
+    search_fields = ("title", "excerpt", "content", "meta_keywords")
+    prepopulated_fields = {"slug": ("title",)}
+    list_editable = ("is_featured", "published")
+    date_hierarchy = "published_at"
+    inlines = (ArticleImageInline,)
+    fieldsets = (
+        ("Article", {"fields": ("title", "slug", "category", "author_name", "excerpt", "content")}),
+        ("Lead image", {"fields": ("hero_image", "hero_image_alt", "hero_image_caption", "hero_image_credit")}),
+        ("Search and sharing", {"fields": ("seo_title", "meta_description", "meta_keywords", "og_image")}),
+        (
+            "Publishing",
+            {"fields": ("published", "is_featured", "published_at", "show_disclaimer", "show_ai_disclosure")},
+        ),
+    )
+
+    class Media:
+        js = ("core/js/admin-image-drop.js",)
+
+
+@admin.register(RobotsRule)
+class RobotsRuleAdmin(admin.ModelAdmin):
+    list_display = ("path", "directive", "active", "sort_order", "note")
+    list_editable = ("directive", "active", "sort_order")
+    list_filter = ("active", "directive")
+    search_fields = ("path", "note")
+    ordering = ("sort_order", "path")
+
+
+class FooterItemInline(admin.TabularInline):
+    model = FooterItem
+    extra = 1
+    fields = (
+        "sort_order",
+        "active",
+        "quiet",
+        "kind",
+        "label",
+        "page",
+        "url",
+        "text",
+        "media",
+        "media_alt",
+        "action",
+    )
+
+
+@admin.register(FooterSection)
+class FooterSectionAdmin(admin.ModelAdmin):
+    list_display = ("title", "sort_order", "active")
+    list_editable = ("sort_order", "active")
+    ordering = ("sort_order",)
+    inlines = (FooterItemInline,)
+
+    class Media:
+        js = ("core/js/admin-image-drop.js",)
 
 
 admin.site.site_header = "Skeleton control panel"

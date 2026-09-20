@@ -11,6 +11,7 @@ leave every hashed file unminified. So this storage:
 
 Vendor files and *.min.* files are skipped; they ship pre-minified.
 Public output therefore carries no source comments.
+Maintained by syntaxsavr.
 """
 
 from django.core.files.base import ContentFile

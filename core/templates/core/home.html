@@ -15,7 +15,9 @@
     <div class="hero-meta">
       <div class="hero-actions" data-hero-item>
         <a class="btn" href="{% url 'demo' %}" data-track="hero_demo">Take the demo</a>
+        {% if enable_contact %}
         <a class="btn btn-ghost" href="{% url 'contact' %}" data-track="hero_contact">Contact</a>
+        {% endif %}
       </div>
       <p class="hero-facts" data-hero-item>django 5.2 · zero build step · output minified</p>
     </div>

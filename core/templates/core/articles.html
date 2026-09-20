@@ -1,0 +1,58 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-articles{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/articles.css' %}">{% endblock %}
+{% block content %}
+<section class="articles-hero" aria-labelledby="articles-heading">
+  <div class="shell articles-hero-grid">
+    <div class="articles-mark" aria-hidden="true">A</div>
+    <div class="articles-intro">
+      <h1 id="articles-heading">Articles</h1>
+      <p>Longer notes, practical guides and work worth keeping.</p>
+    </div>
+  </div>
+</section>
+
+{% if featured_article %}
+<section class="featured-article section-rule" aria-labelledby="featured-article-heading">
+  <div class="shell featured-article-grid">
+    <p class="article-date"><span>Featured</span>{{ featured_article.published_at|date:"j F Y" }}</p>
+    <div>
+      {% if featured_article.category %}<p class="article-category">{{ featured_article.category }}</p>{% endif %}
+      <h2 id="featured-article-heading"><a href="{{ featured_article.get_absolute_url }}">{{ featured_article.title }}</a></h2>
+      <p class="featured-summary">{{ featured_article.excerpt }}</p>
+      <a class="article-read" href="{{ featured_article.get_absolute_url }}">Read {{ featured_article.title }}</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="article-index section-rule" aria-labelledby="article-index-heading">
+  <div class="shell">
+    <header class="article-index-head">
+      <h2 id="article-index-heading">All articles</h2>
+      <p>{{ articles|length }} published</p>
+    </header>
+    {% if articles %}
+    <div class="article-rows">
+      {% for article in articles %}{% if article != featured_article %}
+      <article class="article-row">
+        <p class="article-date">{{ article.published_at|date:"j M Y" }}</p>
+        <div>
+          {% if article.category %}<p class="article-category">{{ article.category }}</p>{% endif %}
+          <h3><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h3>
+        </div>
+        <p>{{ article.excerpt }}</p>
+      </article>
+      {% endif %}{% endfor %}
+    </div>
+    {% else %}
+    <div class="articles-empty">
+      <h3>No articles yet</h3>
+      <p>Published articles will appear here.</p>
+      {% if user.is_staff %}<a class="btn" href="{% url 'admin:core_article_add' %}">Add an article</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

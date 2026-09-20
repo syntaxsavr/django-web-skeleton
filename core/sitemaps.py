@@ -1,9 +1,10 @@
-"""Sitemap registry. Add a URL name here and the page enters sitemap.xml."""
+"""Sitemap adapters for the shared public page registry and articles."""
 
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
-from core.models import SiteConfiguration
+from core.models import Article, SiteConfiguration
+from core.page_registry import public_pages
 
 
 class StaticViewSitemap(Sitemap):
@@ -11,29 +12,35 @@ class StaticViewSitemap(Sitemap):
     changefreq = "weekly"
     priority = 0.7
 
-    routes = (
-        ("home", 1.0, "daily"),
-        ("demo", 0.8, "weekly"),
-        ("contact", 0.6, "monthly"),
-        ("privacy", 0.3, "yearly"),
-        ("imprint", 0.3, "yearly"),
-        ("accessibility", 0.3, "yearly"),
-    )
-
     def items(self):
-        return [name for name, _p, _f in self.routes]
+        return public_pages(SiteConfiguration.get_solo())
 
     def location(self, item):
-        return reverse(item)
+        return reverse(item.route_name)
 
     def priority(self, item):
-        return dict((name, prio) for name, prio, _f in self.routes).get(item, 0.5)
+        return item.sitemap_priority
 
     def changefreq(self, item):
-        return dict((name, freq) for name, _p, freq in self.routes).get(item, "weekly")
+        return item.sitemap_changefreq
 
     def get_urls(self, *args, **kwargs):
         config = SiteConfiguration.get_solo()
         if not config.enable_sitemap:
             return []
         return super().get_urls(*args, **kwargs)
+
+
+class ArticleSitemap(Sitemap):
+    protocol = "https"
+    changefreq = "monthly"
+    priority = 0.6
+
+    def items(self):
+        config = SiteConfiguration.get_solo()
+        if not config.enable_sitemap or not config.enable_articles:
+            return Article.objects.none()
+        return Article.objects.filter(published=True)
+
+    def lastmod(self, item):
+        return item.updated_at

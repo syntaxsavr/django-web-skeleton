@@ -185,13 +185,13 @@
 
   var googleOn = has("googleAnalyticsId") || has("googleTagManagerId") || has("googleAdsId");
 
-  function service(name, purposes, cookies, title, description) {
+  function service(name, purposes, cookies, title, description, required) {
     return {
       name: name,
       title: title,
       description: description,
       default: false,
-      required: false,
+      required: !!required,
       purposes: purposes,
       cookies: cookies,
     };
@@ -251,15 +251,18 @@
     storageMethod: "cookie",
     storageName: server.storageName || "skeleton_consent",
     cookieExpiresAfterDays: 365,
+    privacyPolicy: server.privacyPolicyUrl || "/privacy/",
     default: false,
     mustConsent: false,
     acceptAll: true,
     hideDeclineAll: false,
     htmlTexts: true,
     noAutoLoad: true,
+    showNoticeTitle: true,
     translations: {
       en: {
         consentNotice: {
+          title: "Your privacy, your choice",
           description: "We use cookies for essential features and, only with your consent, for statistics and marketing.",
           learnMore: "Choose individually",
         },
@@ -273,11 +276,16 @@
           marketing: { title: "Marketing", description: "Measure campaign success." },
           external: { title: "External content", description: "Embed third-party features on request." },
         },
+        acceptAll: "Accept all",
+        acceptSelected: "Accept selected",
+        decline: "Reject optional",
+        ok: "Accept all",
+        save: "Save choices",
         privacyPolicy: { name: "privacy policy", text: "Read the {privacyPolicy} to learn more." },
       },
     },
     services: [
-      service("essential", ["essential"], [/^csrftoken$/, /^sessionid$/, /^skeleton_consent$/], "Essential", "Session and security cookies.")
+      service("essential", ["essential"], [/^csrftoken$/, /^sessionid$/, /^skeleton_consent$/], "Essential", "Session and security cookies.", true)
     ]
       .concat(analyticsServices)
       .concat(marketingServices)
@@ -287,11 +295,10 @@
         Object.keys(consent).forEach(function (key) {
           if (consent[key]) fireService(key);
         });
-        announce(consent);
-        return;
+      } else if (consent) {
+        fireService(app.name);
       }
-      if (consent[app.name]) fireService(app.name);
-      announce(consent);
+      setTimeout(announce, 0);
     },
   };
 
@@ -305,9 +312,10 @@
     }
   }
 
-  function announce(consent) {
+  function announce() {
     var klaro = window.klaro;
-    var prefs = summarize(consent, klaro);
+    var manager = klaro && klaro.getManager();
+    var prefs = summarize(manager ? manager.consents : {}, klaro);
     window.getConsentPrefs = function () {
       return summarize(klaro ? klaro.getManager().consents : {}, klaro);
     };

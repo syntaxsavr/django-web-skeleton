@@ -1,4 +1,4 @@
-/* django-skeleton-eu-ready base: paper-and-ink tokens, editorial type system,
+/* django-skeleton base: paper-and-ink tokens, editorial type system,
    header, mega footer. Comments are stripped from public output. */
 
 @font-face {
@@ -212,6 +212,132 @@ hr {
 .brand:hover {
   text-decoration: underline;
 }
+.brand-image {
+  display: inline-flex;
+  align-items: center;
+}
+.brand-image img {
+  display: block;
+  width: auto;
+  max-width: min(220px, 42vw);
+  max-height: 48px;
+  object-fit: contain;
+  object-position: left center;
+}
+.nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 0 16px;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.nav-toggle:active {
+  transform: scale(0.98);
+}
+.nav-toggle-icon {
+  display: grid;
+  gap: 4px;
+  width: 22px;
+}
+.nav-toggle-icon span {
+  display: block;
+  height: 2px;
+  background: currentColor;
+  transform-origin: center;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 120ms ease;
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-icon span:first-child {
+  transform: translateY(6px) rotate(45deg);
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-icon span:nth-child(2) {
+  opacity: 0;
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-icon span:last-child {
+  transform: translateY(-6px) rotate(-45deg);
+}
+.site-navigation {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule-strong);
+}
+.site-navigation[hidden] {
+  display: none;
+}
+.megamenu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+.megamenu-group {
+  min-height: 220px;
+  padding: clamp(24px, 3vw, 42px);
+  border-right: 1px solid var(--rule);
+}
+.megamenu-group:last-child {
+  border-right: 0;
+}
+.megamenu-title {
+  margin: 0 0 24px;
+  color: var(--ink-40);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.megamenu-group ul {
+  display: grid;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.megamenu-group form {
+  margin: 0;
+}
+.megamenu-link {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.megamenu-link span {
+  font-size: clamp(1.1rem, 1.7vw, 1.45rem);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+.megamenu-link small {
+  color: var(--ink-60);
+  font-size: 0.82rem;
+}
+.megamenu-link:hover span,
+.megamenu-link:focus-visible span {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+.megamenu-empty {
+  padding-block: 32px;
+  color: var(--ink-60);
+}
 .site-nav {
   display: flex;
   align-items: center;
@@ -250,13 +376,14 @@ hr {
 }
 
 .site-footer {
+  position: relative;
   border-top: 1px solid var(--rule-strong);
   margin-top: clamp(64px, 9vw, 140px);
   background: var(--paper);
 }
 .footer-grid {
   display: grid;
-  grid-template-columns: 1.4fr repeat(4, minmax(130px, 1fr));
+  grid-template-columns: minmax(220px, 1.4fr) repeat(auto-fit, minmax(140px, 1fr));
   gap: clamp(24px, 3vw, 48px);
   padding-block: clamp(40px, 6vw, 72px) clamp(28px, 4vw, 48px);
 }
@@ -296,6 +423,41 @@ hr {
   text-decoration: underline;
   text-underline-offset: 0.18em;
 }
+.footer-text {
+  max-width: 30ch;
+  color: var(--ink-60);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.footer-media img {
+  display: block;
+  width: auto;
+  max-width: 160px;
+  max-height: 72px;
+  object-fit: contain;
+  object-position: left center;
+}
+.footer-media a {
+  display: inline-block;
+}
+.footer-item-quiet {
+  position: absolute;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: 4px;
+  opacity: 0.08;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  transition: opacity 0.15s ease;
+}
+.footer-item-quiet:hover,
+.footer-item-quiet:focus-within {
+  opacity: 0.7;
+}
+.footer-col .footer-item-quiet a {
+  font-size: inherit;
+}
 .footer-bottom {
   border-top: 1px solid var(--rule);
   padding-block: 18px;
@@ -324,9 +486,77 @@ hr {
     grid-template-columns: 1fr;
   }
   .header-inner {
-    flex-direction: column;
-    align-items: flex-start;
-    padding-block: 12px;
-    gap: 8px;
+    min-height: 76px;
+    gap: 12px;
+  }
+  .nav-toggle {
+    min-width: 58px;
+    min-height: 58px;
+    padding-inline: 16px;
+  }
+  .nav-toggle-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .nav-toggle-icon {
+    width: 26px;
+    gap: 6px;
+  }
+  .nav-toggle-icon span {
+    height: 3px;
+  }
+  .nav-toggle[aria-expanded="true"] .nav-toggle-icon span:first-child {
+    transform: translateY(9px) rotate(45deg);
+  }
+  .nav-toggle[aria-expanded="true"] .nav-toggle-icon span:last-child {
+    transform: translateY(-9px) rotate(-45deg);
+  }
+  .site-navigation {
+    max-height: calc(100dvh - 76px);
+    overflow-y: auto;
+  }
+  .megamenu-grid {
+    grid-template-columns: 1fr;
+  }
+  .megamenu-group {
+    min-height: 0;
+    padding: 26px 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .megamenu-group:last-child {
+    border-bottom: 0;
+  }
+  .megamenu-group ul {
+    gap: 20px;
+  }
+  .megamenu-link span {
+    font-size: 1.55rem;
+  }
+  .site-nav {
+    display: grid;
+    gap: 0;
+    padding: 14px var(--page-gutter) 24px;
+  }
+  .site-nav a,
+  .site-nav .inline-form {
+    display: flex;
+    align-items: center;
+    min-height: 54px;
+    border-bottom: 1px solid var(--rule);
+  }
+  html.nav-open {
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-toggle,
+  .nav-toggle-icon span {
+    transition-duration: 0.01ms;
   }
 }

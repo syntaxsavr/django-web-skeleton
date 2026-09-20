@@ -1,74 +1,60 @@
 """URL routes for the core app."""
 
-from django.contrib.auth import views as auth_views
 from django.urls import path, re_path
-from django.views.generic import TemplateView
 
-from core import views
+from core.views import articles as article_views
+from core.views import auth as account_views
+from core.views import contact as contact_views
+from core.views import fragments as fragment_views
+from core.views import legal as legal_views
+from core.views import machine as machine_views
+from core.views import pages as page_views
 
 urlpatterns = [
-    path("", views.home, name="home"),
-    path("demo/", views.demo, name="demo"),
+    path("", page_views.home, name="home"),
+    path("demo/", page_views.demo, name="demo"),
+    path("articles/", article_views.articles, name="articles"),
+    path("articles/<slug:slug>/", article_views.article_detail, name="article_detail"),
     # --- Contact ---
-    path("contact/", views.contact, name="contact"),
-    path("contact/thanks/", views.contact_thanks, name="contact_thanks"),
+    path("contact/", contact_views.contact, name="contact"),
+    path("contact/thanks/", contact_views.contact_thanks, name="contact_thanks"),
     # --- Auth ---
-    path("accounts/login/", views.RateLimitedLoginView.as_view(), name="login"),
-    path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
-    path("accounts/register/", views.register, name="register"),
+    path("accounts/login/", account_views.RateLimitedLoginView.as_view(), name="login"),
+    path("accounts/logout/", account_views.LogoutView.as_view(), name="logout"),
+    path("accounts/register/", account_views.register, name="register"),
     path(
         "accounts/password_reset/",
-        auth_views.PasswordResetView.as_view(template_name="core/account/password_reset.html"),
+        account_views.PasswordResetView.as_view(),
         name="password_reset",
     ),
     path(
         "accounts/password_reset/done/",
-        auth_views.PasswordResetDoneView.as_view(template_name="core/account/password_reset_done.html"),
+        account_views.PasswordResetDoneView.as_view(),
         name="password_reset_done",
     ),
     path(
         "accounts/reset/<uidb64>/<token>/",
-        auth_views.PasswordResetConfirmView.as_view(template_name="core/account/password_reset_confirm.html"),
+        account_views.PasswordResetConfirmView.as_view(),
         name="password_reset_confirm",
     ),
     path(
         "accounts/reset/done/",
-        auth_views.PasswordResetCompleteView.as_view(template_name="core/account/password_reset_complete.html"),
+        account_views.PasswordResetCompleteView.as_view(),
         name="password_reset_complete",
     ),
-    path("account/", views.account_dashboard, name="account_dashboard"),
+    path("account/", account_views.account_dashboard, name="account_dashboard"),
     # --- Legal ---
-    path("privacy/", TemplateView.as_view(template_name="core/legal/privacy.html"), name="privacy"),
-    path("imprint/", TemplateView.as_view(template_name="core/legal/imprint.html"), name="imprint"),
-    path(
-        "accessibility/",
-        TemplateView.as_view(template_name="core/legal/accessibility.html"),
-        name="accessibility",
-    ),
+    path("privacy/", legal_views.privacy, name="privacy"),
+    path("imprint/", legal_views.imprint, name="imprint"),
+    path("accessibility/", legal_views.accessibility, name="accessibility"),
     # --- Machine routes ---
-    path(
-        "robots.txt",
-        TemplateView.as_view(template_name="core/robots.txt", content_type="text/plain; charset=utf-8"),
-        name="robots_txt",
-    ),
-    path("llms.txt", views.llms_txt, name="llms_txt"),
-    path("llms-full.txt", views.llms_full_txt, name="llms_full_txt"),
-    path(
-        "humans.txt",
-        TemplateView.as_view(template_name="core/humans.txt", content_type="text/plain; charset=utf-8"),
-        name="humans_txt",
-    ),
-    path(
-        "security.txt",
-        TemplateView.as_view(template_name="core/security.txt", content_type="text/plain; charset=utf-8"),
-        name="security_txt",
-    ),
-    path(
-        ".well-known/security.txt",
-        TemplateView.as_view(template_name="core/security.txt", content_type="text/plain; charset=utf-8"),
-        name="security_txt_wellknown",
-    ),
-    re_path(r"^([A-Za-z0-9-]{8,128})\.txt$", views.indexnow_key_file, name="indexnow_key_file"),
+    path("robots.txt", machine_views.robots_txt, name="robots_txt"),
+    path("llms.txt", machine_views.llms_txt, name="llms_txt"),
+    path("llms-full.txt", machine_views.llms_full_txt, name="llms_full_txt"),
+    path("humans.txt", machine_views.humans_txt, name="humans_txt"),
+    path("security.txt", machine_views.security_txt, name="security_txt"),
+    path(".well-known/security.txt", machine_views.security_txt, name="security_txt_wellknown"),
+    re_path(r"^([A-Za-z0-9-]{8,128})\.txt$", machine_views.indexnow_key_file, name="indexnow_key_file"),
     # --- Lazy sections ---
-    path("lazy-section/<path:name>/", views.lazy_section, name="lazy_section"),
+    path("lazy-section/<path:name>/", fragment_views.lazy_section, name="lazy_section"),
 ]

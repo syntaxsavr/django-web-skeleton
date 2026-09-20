@@ -8,7 +8,9 @@
     </div>
     <div class="cta-actions">
       <a class="btn" href="{% url 'demo' %}" data-track="cta_band_demo">Tour the demo</a>
+      {% if enable_contact %}
       <a class="btn btn-ghost" href="{% url 'contact' %}" data-track="cta_band_contact">Get in touch</a>
+      {% endif %}
     </div>
   </div>
 </section>

@@ -6,8 +6,16 @@ from django.core import signing
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 
-from core.models import CONFIG_CACHE_KEY, ContactMessage, ProtectedPage, SiteConfiguration
-from core.views import FORM_TS_SALT
+from core.models import (
+    Article,
+    CONFIG_CACHE_KEY,
+    ContactMessage,
+    NavigationItem,
+    ProtectedPage,
+    RobotsRule,
+    SiteConfiguration,
+)
+from core.views.contact import FORM_TS_SALT
 
 User = get_user_model()
 
@@ -33,9 +41,9 @@ def fresh_config(**kwargs):
     return config
 
 
-class PageSmokeTests(TestCase):
+class PageSmokeTests(ConfigIsolatedTestCase):
     def test_public_pages_render(self):
-        for url in ["/", "/demo/", "/contact/"]:
+        for url in ["/", "/demo/", "/articles/", "/contact/"]:
             with self.subTest(url=url):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, 200, url)
@@ -55,7 +63,7 @@ class PageSmokeTests(TestCase):
             "/llms-full.txt": "## Home",
             "/security.txt": "Contact:",
             "/.well-known/security.txt": "Contact:",
-            "/humans.txt": "django-skeleton-eu-ready",
+            "/humans.txt": "django-skeleton",
             "/sitemap.xml": "urlset",
         }
         for url, needle in cases.items():
@@ -94,6 +102,9 @@ class ConsentAndTrackingTests(ConfigIsolatedTestCase):
         html = self.client.get("/").content.decode()
         self.assertIn("klaro-config.js", html)
         self.assertIn("skeleton-tracking-config", html)
+        self.assertLess(html.index("klaro-config.js"), html.index("vendor/klaro/klaro.js"))
+        self.assertLess(html.index("vendor/klaro/klaro.js"), html.index("klaro-bootstrap.js"))
+        self.assertNotIn('data-cmp-root', html)
 
     def test_consent_assets_absent_when_disabled(self):
         fresh_config(enable_cookie_consent=False)
@@ -116,9 +127,20 @@ class SeoSwitchTests(ConfigIsolatedTestCase):
     def test_sitemap_respects_switch(self):
         self.assertIn("<loc>", self.client.get("/sitemap.xml").content.decode())
         fresh_config(enable_sitemap=False)
-        content = self.client.get("/sitemap.xml").content.decode()
-        self.assertNotIn("<loc>", content)
+        response = self.client.get("/sitemap.xml")
+        self.assertEqual(response.status_code, 404)
+        self.assertNotIn("sitemap.xml", self.client.get("/").content.decode())
         fresh_config(enable_sitemap=True)
+
+    def test_robots_rules_and_switch(self):
+        RobotsRule.objects.create(path="/private-library/", active=True, sort_order=1)
+        content = self.client.get("/robots.txt").content.decode()
+        self.assertIn("Disallow: /private-library/", content)
+        self.assertIn("Disallow: /static/", content)
+        self.assertIn("Disallow: /privacy/", content)
+        fresh_config(enable_robots_txt=False)
+        self.assertEqual(self.client.get("/robots.txt").status_code, 404)
+        self.assertNotIn('href="/robots.txt"', self.client.get("/").content.decode())
 
     def test_llms_txt_respects_switch(self):
         fresh_config(enable_llms_txt=False)
@@ -206,11 +228,11 @@ class RegistrationSwitchTests(ConfigIsolatedTestCase):
     def test_registration_available_by_default(self):
         self.assertEqual(self.client.get("/accounts/register/").status_code, 200)
 
-    def test_registration_disabled_redirects_to_login(self):
+    def test_registration_disabled_returns_not_found(self):
         fresh_config(enable_public_registration=False)
         response = self.client.get("/accounts/register/")
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("/accounts/login/", response["Location"])
+        self.assertEqual(response.status_code, 404)
+        self.assertNotIn('href="/accounts/register/"', self.client.get("/accounts/login/").content.decode())
         fresh_config(enable_public_registration=True)
 
     def test_registration_creates_active_user(self):
@@ -278,8 +300,117 @@ class ContactDefenseTests(ConfigIsolatedTestCase):
     def test_contact_form_switch(self):
         fresh_config(enable_contact_form=False)
         response = self.client.get("/contact/")
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(self.client.get("/contact/thanks/").status_code, 404)
+        self.assertNotIn('href="/contact/"', self.client.get("/").content.decode())
         fresh_config(enable_contact_form=True)
+
+
+class ArticleSwitchTests(ConfigIsolatedTestCase):
+    def setUp(self):
+        super().setUp()
+        self.article = Article.objects.create(
+            title="A field note",
+            slug="a-field-note",
+            content="First paragraph.\n\nSecond paragraph.",
+            meta_description="A short description for search results.",
+            excerpt="A concise article summary.",
+            published=True,
+        )
+
+    def test_article_index_and_detail_render(self):
+        self.assertContains(self.client.get("/articles/"), "A field note")
+        self.assertContains(self.client.get("/articles/a-field-note/"), "Second paragraph")
+        self.assertIn("/articles/", self.client.get("/sitemap.xml").content.decode())
+
+    def test_article_switch_removes_every_public_reference(self):
+        fresh_config(enable_articles=False)
+        self.assertEqual(self.client.get("/articles/").status_code, 404)
+        self.assertEqual(self.client.get("/articles/a-field-note/").status_code, 404)
+        self.assertNotIn('href="/articles/"', self.client.get("/").content.decode())
+        self.assertNotIn("/articles/", self.client.get("/sitemap.xml").content.decode())
+        self.assertNotIn("/articles/", self.client.get("/llms.txt").content.decode())
+
+    def test_draft_article_is_private(self):
+        self.article.published = False
+        self.article.save()
+        self.assertEqual(self.client.get("/articles/a-field-note/").status_code, 404)
+
+    def test_article_admin_loads_drag_and_drop_editor(self):
+        admin = User.objects.get(username="admin")
+        self.client.force_login(admin)
+        response = self.client.get("/admin/core/article/add/")
+        self.assertContains(response, "admin-image-drop.js")
+        self.assertContains(response, 'name="meta_description"')
+        self.assertContains(response, "Article images")
+
+
+class FooterSwitchTests(ConfigIsolatedTestCase):
+    def test_quiet_syntaxsavr_credit_is_seeded(self):
+        html = self.client.get("/").content.decode()
+        self.assertIn("footer-item-quiet", html)
+        self.assertIn("https://github.com/syntaxsavr", html)
+
+    def test_footer_can_be_removed(self):
+        self.assertContains(self.client.get("/"), 'class="site-footer"')
+        fresh_config(enable_footer=False)
+        self.assertNotContains(self.client.get("/"), 'class="site-footer"')
+
+
+class HeaderNavigationTests(ConfigIsolatedTestCase):
+    def test_megamenu_renders_configured_groups_and_mobile_toggle(self):
+        response = self.client.get("/")
+        self.assertContains(response, "data-mega-menu")
+        self.assertContains(response, 'class="megamenu-title">Explore')
+        self.assertContains(response, "data-nav-toggle")
+        self.assertContains(response, 'aria-controls="site-navigation"')
+
+    def test_megamenu_switch_restores_compact_navigation(self):
+        fresh_config(enable_megamenu=False)
+        response = self.client.get("/")
+        self.assertNotContains(response, "data-mega-menu")
+        self.assertContains(response, 'class="site-nav"')
+        self.assertContains(response, "data-nav-toggle")
+
+    def test_configured_item_and_uploaded_logo_render(self):
+        config = fresh_config(header_logo="navigation/mark.png", header_logo_alt="Skeleton mark")
+        NavigationItem.objects.create(
+            site_configuration=config,
+            group="Work",
+            label="Case studies",
+            description="Selected project notes.",
+            page=NavigationItem.PAGE_CUSTOM,
+            url="/work/",
+            sort_order=5,
+        )
+        response = self.client.get("/")
+        self.assertContains(response, 'src="/media/navigation/mark.png"')
+        self.assertContains(response, 'alt="Skeleton mark"')
+        self.assertContains(response, "Case studies")
+        self.assertContains(response, "Selected project notes.")
+
+    def test_logo_switch_uses_site_name_fallback(self):
+        fresh_config(
+            enable_header_logo=False,
+            header_logo="navigation/mark.png",
+            header_logo_alt="Skeleton mark",
+        )
+        response = self.client.get("/")
+        self.assertNotContains(response, "/media/navigation/mark.png")
+        self.assertContains(response, "skeleton")
+
+    def test_feature_bound_megamenu_item_disappears(self):
+        self.assertContains(self.client.get("/"), 'href="/articles/"')
+        fresh_config(enable_articles=False)
+        self.assertNotContains(self.client.get("/"), 'href="/articles/"')
+
+    def test_site_configuration_admin_contains_logo_and_navigation_editor(self):
+        admin = User.objects.get(username="admin")
+        self.client.force_login(admin)
+        response = self.client.get("/admin/core/siteconfiguration/1/change/")
+        self.assertContains(response, 'name="header_logo"')
+        self.assertContains(response, 'name="enable_megamenu"')
+        self.assertContains(response, "Navigation items")
 
 
 class ExternalLinkMiddlewareTests(ConfigIsolatedTestCase):
@@ -310,8 +441,10 @@ class SeedCommandTests(TestCase):
     def test_seed_creates_superuser_and_defaults(self):
         from django.core.management import call_command
 
+        User.objects.filter(username="admin").delete()
         call_command("seed", verbosity=0)
-        self.assertTrue(User.objects.filter(username="admin", is_superuser=True).exists())
+        admin = User.objects.get(username="admin", is_superuser=True)
+        self.assertTrue(admin.check_password("b_4sIcPW007"))
         self.assertTrue(ProtectedPage.objects.filter(path="/account/").exists())
         # Idempotent: second run must not explode or duplicate.
         call_command("seed", verbosity=0)
