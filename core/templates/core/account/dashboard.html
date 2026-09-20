@@ -1,0 +1,19 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-account{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Your account</h1>
+    <p class="section-lead">This page sits behind the login wall: a ProtectedPage rule covers <code>/account/</code>. Manage the rules in the admin under Protected pages.</p>
+    <dl class="account-meta">
+      <dt>Username</dt><dd>{{ user.username }}</dd>
+      <dt>Email</dt><dd>{{ user.email|default:"-" }}</dd>
+      <dt>Member since</dt><dd>{{ user.date_joined|date:"j F Y" }}</dd>
+    </dl>
+    <p><a class="btn btn-ghost" href="{% url 'password_reset' %}">Change password</a></p>
+  </div>
+</section>
+{% endblock %}

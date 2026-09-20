@@ -1,0 +1,49 @@
+/* Auth pages and account dashboard. */
+
+.auth-section {
+  display: grid;
+  place-items: start center;
+  padding-block: clamp(56px, 8vw, 110px);
+}
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  padding: clamp(26px, 4vw, 40px);
+  box-shadow: var(--shadow-card);
+}
+.auth-card h1 {
+  font-size: 1.6rem;
+}
+.auth-note {
+  background: var(--accent-soft);
+  border: 1px solid rgba(77, 127, 255, 0.35);
+  border-radius: var(--radius-s);
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0 0;
+  font-size: 0.9rem;
+}
+.account-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 20px;
+  margin: 20px 0;
+}
+.account-meta dt {
+  color: var(--text-faint);
+  font-size: 0.85rem;
+  align-self: baseline;
+}
+.account-meta dd {
+  margin: 0;
+}

@@ -1,0 +1,45 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-home{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/home.css' %}">{% endblock %}
+{% block content %}
+<section class="hero" data-hero-entrance>
+  <div class="shell hero-grid">
+    <div class="hero-copy">
+      <p class="hero-kicker" data-hero-item>A Django skeleton with opinions</p>
+      <h1 class="hero-title" data-hero-item>Ship the site,<br>not the plumbing</h1>
+      <p class="hero-lead" data-hero-item>Consent-first tracking, the SEO suite, lazy sections, Lottie motion and a control panel in the admin. Flip switches instead of writing boilerplate.</p>
+      <div class="hero-actions" data-hero-item>
+        <a class="btn btn-primary" href="{% url 'demo' %}" data-track="hero_demo">See the demo</a>
+        <a class="btn btn-ghost" href="{% url 'contact' %}" data-track="hero_contact">Contact</a>
+      </div>
+      <ul class="hero-facts" data-hero-item>
+        <li>Django 5.2</li>
+        <li>Zero build step</li>
+        <li>Minified output</li>
+      </ul>
+    </div>
+    <div class="hero-stage" data-hero-item>
+      <figure class="lottie-figure" data-lottie="{% static 'core/lottie/hero-orbit.json' %}" data-lottie-loop="true" data-lottie-ratio="1/1" aria-hidden="true"></figure>
+    </div>
+  </div>
+</section>
+<section class="section" id="features" aria-labelledby="features-heading">
+  <div class="shell">
+    <header class="section-head">
+      <h2 id="features-heading">Included from the start</h2>
+      <p class="section-lead">Everything below is a switch in the admin control panel or a documented pattern in AGENTS.md.</p>
+    </header>
+    {% include "core/fragments/home-features.html" %}
+  </div>
+</section>
+<section class="section section-alt" id="patterns" aria-labelledby="patterns-heading" data-lazy-section data-lazy-url="{% url 'lazy_section' 'home-patterns' %}">
+  <div class="shell">
+    <header class="section-head">
+      <h2 id="patterns-heading">Loaded when you get here</h2>
+      <p class="section-lead">This section was fetched by IntersectionObserver as you scrolled towards it.</p>
+    </header>
+  </div>
+</section>
+{% include "core/fragments/cta-band.html" %}
+{% endblock %}

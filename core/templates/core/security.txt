@@ -1,0 +1,4 @@
+Contact: mailto:{{ site_config.contact_email|default:"TODO-set-contact-email" }}
+Expires: {% now "Y-m-d" %}T23:59:59Z
+Preferred-Languages: en
+Canonical: {{ canonical_origin }}/.well-known/security.txt

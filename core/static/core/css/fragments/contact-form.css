@@ -1,0 +1,18 @@
+/* Fragment: contact-form */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 18px;
+}
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.contact-form .cf-submit {
+  margin-top: 6px;
+}
+.contact-form .cf-turnstile {
+  margin: 18px 0;
+}

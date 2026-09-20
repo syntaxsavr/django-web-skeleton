@@ -1,0 +1,10 @@
+{% load static %}<link rel="stylesheet" href="{% static 'core/css/fragments/demo-lazy-panel.css' %}">
+<div class="lazy-panel">
+  <h3>You scrolled, we fetched</h3>
+  <p>This fragment was not part of the initial HTML. The loader inserted a placeholder box, fetched this markup from <code>/lazy-section/demo-lazy-panel/</code> (server-cached for 12 hours) and re-executed nothing because there was nothing to execute. Had the fragment carried a script tag, it would run now.</p>
+  <ul class="lazy-panel-list">
+    <li>Placeholder reserves height: no layout shift.</li>
+    <li>Errors degrade into a visible lazy-error state, never a blank gap.</li>
+    <li>Hash links load all preceding lazy sections first.</li>
+  </ul>
+</div>

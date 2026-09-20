@@ -1,0 +1,55 @@
+/* Network-lazy sections: placeholder reserves height so nothing shifts. */
+
+[data-lazy-section] {
+  position: relative;
+}
+[data-lazy-section].loading .lazy-placeholder {
+  opacity: 1;
+}
+[data-lazy-section].lazy-loaded .lazy-placeholder {
+  display: none;
+}
+.lazy-placeholder {
+  position: relative;
+  min-height: 220px;
+  margin-top: 24px;
+  border-radius: var(--radius-m);
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  overflow: hidden;
+}
+.lazy-placeholder::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%);
+  animation: lazy-shimmer 1.6s linear infinite;
+}
+[data-lazy-section].lazy-error .lazy-placeholder {
+  border-style: solid;
+  border-color: rgba(214, 69, 69, 0.5);
+}
+[data-lazy-section].lazy-error .lazy-placeholder::before {
+  content: "This section failed to load.";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+@keyframes lazy-shimmer {
+  from {
+    translate: -60% 0;
+  }
+  to {
+    translate: 60% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lazy-placeholder::after {
+    animation: none;
+  }
+}

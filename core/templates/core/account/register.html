@@ -1,0 +1,37 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Create account</h1>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <div class="form-field">
+        <label for="id_username">Username</label>
+        <input type="text" name="username" id="id_username" autocomplete="username" required value="{{ form.username.value|default:'' }}">
+        {{ form.username.errors }}
+      </div>
+      <div class="form-field">
+        <label for="id_email">Email</label>
+        <input type="email" name="email" id="id_email" autocomplete="email" required value="{{ form.email.value|default:'' }}">
+        {{ form.email.errors }}
+      </div>
+      <div class="form-field">
+        <label for="id_password1">Password</label>
+        <input type="password" name="password1" id="id_password1" autocomplete="new-password" required>
+        {{ form.password1.errors }}
+      </div>
+      <div class="form-field">
+        <label for="id_password2">Repeat password</label>
+        <input type="password" name="password2" id="id_password2" autocomplete="new-password" required>
+        {{ form.non_field_errors }}
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" data-track="register_submit">Create account</button>
+    </form>
+    <p class="auth-links"><a href="{% url 'login' %}">Already have an account?</a></p>
+  </div>
+</section>
+{% endblock %}

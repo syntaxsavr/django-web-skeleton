@@ -1,0 +1,14 @@
+{% extends "core/base.html" %}
+{% block body_class %}page-contact-thanks{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="shell shell-narrow">
+    <header class="section-head">
+      <h1>Message sent</h1>
+      <p class="section-lead">Thanks{% if summary %}, {{ summary.name }}{% endif %}. We will reply as soon as possible.</p>
+    </header>
+    <p><a class="btn btn-primary" href="{% url 'home' %}" data-track="thanks_home">Back to the start page</a></p>
+  </div>
+</section>
+{% endblock %}

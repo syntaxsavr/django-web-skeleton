@@ -1,0 +1,13 @@
+/* Legal pages. */
+
+.legal-body h2 {
+  font-size: 1.2rem;
+  margin-top: 1.8em;
+}
+.legal-todo {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 12px 16px;
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+  color: var(--text-secondary);
+}

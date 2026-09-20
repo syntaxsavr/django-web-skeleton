@@ -1,0 +1,19 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-legal{% endblock %}
+{% block body_attributes %}data-consent-suppress{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/legal.css' %}">{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="shell shell-narrow legal-body">
+    <h1>Imprint</h1>
+    <p class="legal-todo">TODO: replace with the legally required operator information for your jurisdiction.</p>
+    <h2>Operator</h2>
+    <p>Company name, address, registration number, VAT ID.</p>
+    <h2>Contact</h2>
+    <p>Email: <a href="mailto:{{ site_config.contact_email|default:'TODO-set-contact-email' }}">{{ site_config.contact_email|default:"TODO-set-contact-email" }}</a></p>
+    <h2>Responsible for content</h2>
+    <p>Name and address of the person responsible under local press law.</p>
+  </div>
+</section>
+{% endblock %}

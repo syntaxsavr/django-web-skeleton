@@ -1,0 +1,12 @@
+# django-web-skeleton
+
+Built as a starting point for production websites.
+CSS is token-first, JS is vanilla and deferred, output is minified.
+
+# Authors
+
+Site owner: set your name and contact here.
+
+# Colophon
+
+Django, WhiteNoise, Klaro!, lottie-web (light build), Inter (SIL OFL 1.1).

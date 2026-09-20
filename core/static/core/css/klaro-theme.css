@@ -1,0 +1,76 @@
+/* Klaro! consent UI themed to the skeleton tokens. Klaro renders its own
+   DOM into #klaro; these rules restyle both current (cm-*) class names. */
+
+#klaro {
+  --cm-bg: var(--surface-2, #171b21);
+  --cm-text: var(--text-primary, #f2f4f8);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+.klaro .cm-modal,
+.klaro .cm-notice {
+  background: var(--cm-bg) !important;
+  color: var(--cm-text) !important;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 14px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+}
+.klaro .cm-title {
+  color: var(--cm-text) !important;
+  font-weight: 700;
+}
+.klaro .cm-description,
+.klaro .cm-services .cm-service-description,
+.klaro .cm-list-stacked .cm-service-description {
+  color: var(--text-secondary, #a8b0bd) !important;
+}
+.klaro .cm-link {
+  color: var(--accent-strong, #7aa0ff) !important;
+}
+.klaro .cm-btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  min-height: 44px;
+  border: 1px solid transparent !important;
+  cursor: pointer;
+  font-family: inherit;
+}
+.klaro .cm-btn-success,
+.klaro .cm-btn-accept {
+  background: var(--accent, #4d7fff) !important;
+  color: #fff !important;
+}
+.klaro .cm-btn-danger,
+.klaro .cm-btn-decline {
+  background: transparent !important;
+  color: var(--text-primary, #f2f4f8) !important;
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.16)) !important;
+}
+.klaro .cm-btn-info {
+  background: transparent !important;
+  color: var(--accent-strong, #7aa0ff) !important;
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.16)) !important;
+}
+.klaro .cm-toggle,
+.klaro .cm-toggle-switch {
+  background: var(--surface-3, #1e232b) !important;
+}
+.klaro .cm-toggle.cm-toggle-on,
+.klaro .cm-toggle-switch.cm-toggle-on {
+  background: var(--accent, #4d7fff) !important;
+}
+.klaro .cm-toggle.cm-toggle-on .knob,
+.klaro .cm-toggle-switch.cm-toggle-on .knob {
+  background: #fff !important;
+}
+.klaro .cm-service,
+.klaro .cm-list-item {
+  border-color: var(--border, rgba(255, 255, 255, 0.08)) !important;
+}
+.klaro .cm-service .cm-service-title,
+.klaro .cm-list-item .cm-service-title {
+  color: var(--cm-text) !important;
+}
+html.klaro-open,
+body.klaro-open {
+  overflow: hidden;
+}

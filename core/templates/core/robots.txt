@@ -1,0 +1,11 @@
+{% if site_config.robots_noindex_whole_site %}User-agent: *
+Disallow: /
+{% else %}User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /account/
+Disallow: /api/
+Disallow: /lazy-section/
+{% endif %}
+Sitemap: {{ canonical_origin }}/sitemap.xml

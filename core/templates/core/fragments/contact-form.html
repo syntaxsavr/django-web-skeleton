@@ -1,0 +1,38 @@
+{% load static %}<link rel="stylesheet" href="{% static 'core/css/fragments/contact-form.css' %}">
+<form method="post" action="{% url 'contact' %}" id="contact-form" class="contact-form" novalidate>
+  {% csrf_token %}
+  {{ form.form_ts }}
+  {% if enable_honeypot %}<div class="hp-field" aria-hidden="true">{{ form.website }}</div>{% endif %}
+  <div class="form-grid">
+    <div class="form-field">
+      <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+      {{ form.name }}{{ form.name.errors }}
+    </div>
+    <div class="form-field">
+      <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+      {{ form.email }}{{ form.email.errors }}
+    </div>
+    <div class="form-field">
+      <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }} (optional)</label>
+      {{ form.phone }}{{ form.phone.errors }}
+    </div>
+    <div class="form-field">
+      <label for="{{ form.preference.id_for_label }}">Preferred reply</label>
+      {{ form.preference }}{{ form.preference.errors }}
+    </div>
+  </div>
+  <div class="form-field">
+    <label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+    {{ form.message }}{{ form.message.errors }}
+  </div>
+  {% if turnstile_on %}
+  <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark" data-size="flexible" data-callback="skeletonTurnstileOk" data-expired-callback="skeletonTurnstileGone" data-error-callback="skeletonTurnstileGone"></div>
+  <input type="hidden" name="cf_turnstile_response" id="cf-turnstile-response">
+  {% endif %}
+  <div class="form-field form-consent">
+    <label class="checkbox-label">{{ form.consent }} {{ form.consent.label }}</label>
+    {{ form.consent.errors }}
+  </div>
+  <button type="submit" class="btn btn-primary cf-submit"{% if turnstile_on %} disabled{% endif %} data-track="contact_submit">Send message</button>
+</form>
+{% if turnstile_on %}<script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>{% endif %}

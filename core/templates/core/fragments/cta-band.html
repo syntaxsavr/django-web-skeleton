@@ -1,0 +1,13 @@
+{% load static %}<link rel="stylesheet" href="{% static 'core/css/fragments/cta-band.css' %}">
+<section class="cta-band" aria-labelledby="cta-band-heading">
+  <div class="shell cta-inner">
+    <div>
+      <h2 id="cta-band-heading">Start your next project here</h2>
+      <p>Clone the skeleton, rename the brand, flip the switches you need.</p>
+    </div>
+    <div class="cta-actions">
+      <a class="btn btn-primary" href="{% url 'demo' %}" data-track="cta_band_demo">Tour the demo</a>
+      <a class="btn btn-ghost" href="{% url 'contact' %}" data-track="cta_band_contact">Get in touch</a>
+    </div>
+  </div>
+</section>

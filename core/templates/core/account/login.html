@@ -1,0 +1,35 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Sign in</h1>
+    {% if messages %}
+    <div role="alert">
+      {% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    {% if protected_title %}<p class="auth-note">This area (<strong>{{ protected_title }}</strong>) is only visible after signing in.</p>{% endif %}
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="form-field">
+        <label for="id_username">Username</label>
+        <input type="text" name="username" id="id_username" autocomplete="username" required autofocus>
+      </div>
+      <div class="form-field">
+        <label for="id_password">Password</label>
+        <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" data-track="login_submit">Sign in</button>
+    </form>
+    <p class="auth-links">
+      <a href="{% url 'password_reset' %}">Forgot the password?</a>
+      {% if enable_registration %}<a href="{% url 'register' %}">Create an account</a>{% endif %}
+    </p>
+  </div>
+</section>
+{% endblock %}

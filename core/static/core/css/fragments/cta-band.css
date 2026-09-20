@@ -1,0 +1,34 @@
+/* Fragment: cta-band */
+
+.cta-band {
+  background:
+    radial-gradient(60% 90% at 85% 10%, rgba(77, 127, 255, 0.16), transparent 70%),
+    var(--surface-2);
+  border-block: 1px solid var(--border);
+  padding-block: clamp(44px, 6vw, 72px);
+}
+.cta-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.cta-inner h2 {
+  margin-bottom: 0.35em;
+}
+.cta-inner p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+.cta-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+@media (max-width: 720px) {
+  .cta-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

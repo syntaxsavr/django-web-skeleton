@@ -1,0 +1,10 @@
+Django>=5.2,<5.3
+gunicorn>=23.0
+whitenoise>=6.12
+rcssmin>=1.2
+rjsmin>=1.2
+Brotli>=1.1
+django-unfold>=0.42
+django-ratelimit>=4.1
+Pillow>=11.0
+requests>=2.32

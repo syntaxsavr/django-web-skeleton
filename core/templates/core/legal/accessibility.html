@@ -1,0 +1,22 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-legal{% endblock %}
+{% block body_attributes %}data-consent-suppress{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/legal.css' %}">{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="shell shell-narrow legal-body">
+    <h1>Accessibility statement</h1>
+    <p class="legal-todo">TODO: adapt to your compliance status and legal framework (for example EN 301 549 or local equality law).</p>
+    <h2>What the skeleton already does</h2>
+    <ul>
+      <li>Skip link to main content on every page.</li>
+      <li>Visible focus styles and 44px minimum interactive targets.</li>
+      <li>All motion respects prefers-reduced-motion; Lottie parks on static frames.</li>
+      <li>Contrast-aware dark theme with an accessibility panel (light mode, high contrast, larger text).</li>
+    </ul>
+    <h2>Feedback</h2>
+    <p>Report barriers to <a href="mailto:{{ site_config.contact_email|default:'TODO-set-contact-email' }}">{{ site_config.contact_email|default:"TODO-set-contact-email" }}</a>.</p>
+  </div>
+</section>
+{% endblock %}

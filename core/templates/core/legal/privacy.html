@@ -1,0 +1,19 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-legal{% endblock %}
+{% block body_attributes %}data-consent-suppress{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/legal.css' %}">{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="shell shell-narrow legal-body">
+    <h1>Privacy policy</h1>
+    <p class="legal-todo">TODO: replace this placeholder with the real policy before going live. The routes, headers and crawler handling around it are already wired: noindex, scraper block, consent suppression.</p>
+    <h2>What this site stores</h2>
+    <p>Describe cookies set by the consent manager, form submissions and any analytics that run after consent. The skeleton itself sets only the session cookie and, when enabled, the Klaro consent cookie <code>{{ site_config.consent_cookie_name }}</code>.</p>
+    <h2>Your rights</h2>
+    <p>Outline access, rectification and deletion requests. Contact address: <a href="mailto:{{ site_config.contact_email|default:'TODO-set-contact-email' }}">{{ site_config.contact_email|default:"TODO-set-contact-email" }}</a>.</p>
+    <h2>Hosting and logs</h2>
+    <p>Document the processor, log retention and legal basis placeholders.</p>
+  </div>
+</section>
+{% endblock %}

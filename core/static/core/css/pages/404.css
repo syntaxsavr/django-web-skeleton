@@ -1,0 +1,67 @@
+/* Error pages: standalone dark stage, works without JS. */
+
+.page-error {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.error-stage {
+  text-align: center;
+  max-width: 520px;
+}
+.error-code {
+  font-family: var(--font-mono, monospace);
+  font-size: clamp(4.4rem, 14vw, 7.5rem);
+  font-weight: 700;
+  line-height: 1;
+  margin: 0;
+  color: var(--accent, #4d7fff);
+  text-shadow: 0 0 44px rgba(77, 127, 255, 0.4);
+  animation: error-float 5s ease-in-out infinite;
+}
+.error-stage h1 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  margin-top: 14px;
+}
+.error-stage p {
+  color: var(--text-secondary, #a8b0bd);
+}
+.error-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+@keyframes error-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .error-code {
+    animation: none;
+  }
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.btn-primary {
+  background: #4d7fff;
+  color: #fff;
+}
+.btn-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f2f4f8;
+}

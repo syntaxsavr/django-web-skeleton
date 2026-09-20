@@ -1,0 +1,60 @@
+/* Print edition: the dark site becomes clean paper. */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt;
+  }
+  .site-header,
+  .site-footer,
+  .skip-link,
+  .cta-band,
+  #klaro,
+  .modal,
+  [data-lottie],
+  [data-lazy-section] .lazy-placeholder {
+    display: none !important;
+  }
+  .section {
+    padding-block: 12pt;
+  }
+  a {
+    color: #000 !important;
+    text-decoration: underline;
+  }
+  .btn {
+    display: none !important;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+  p,
+  li {
+    orphans: 3;
+    widows: 3;
+  }
+  .section,
+  .feature-card,
+  .pattern-card {
+    break-inside: avoid;
+  }
+  * {
+    box-shadow: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  .reveal-pending {
+    opacity: 1 !important;
+    clip-path: none !important;
+    translate: none !important;
+    scale: none !important;
+  }
+}

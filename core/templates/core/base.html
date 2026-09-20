@@ -1,0 +1,129 @@
+{% load static seo_tags %}<!doctype html>
+<html lang="en" data-lottie-player="{% static 'core/vendor/lottie-light.min.js' %}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>{% block title %}{{ page_title|default:site_name }}{% endblock %} · {{ site_name }}</title>
+{% block meta %}
+<meta name="description" content="{{ meta_description|default:site_config.default_meta_description }}">
+{% endblock %}
+{% block robots %}
+<meta name="robots" content="index, follow, max-snippet:-1, max-video-preview:-1, noimageindex">
+{% endblock %}
+<link rel="canonical" href="{% block canonical %}{% canonical_url %}{% endblock %}">
+<meta name="theme-color" content="{{ site_config.theme_color }}">
+{% if site_config.google_site_verification %}<meta name="google-site-verification" content="{{ site_config.google_site_verification }}">{% endif %}
+{% if site_config.bing_site_verification %}<meta name="msvalidate.01" content="{{ site_config.bing_site_verification }}">{% endif %}
+{% if site_config.facebook_domain_verification %}<meta name="facebook-domain-verification" content="{{ site_config.facebook_domain_verification }}">{% endif %}
+{% if site_config.pinterest_domain_verification %}<meta name="p:domain_verify" content="{{ site_config.pinterest_domain_verification }}">{% endif %}
+<meta property="og:type" content="{% block og_type %}website{% endblock %}">
+<meta property="og:title" content="{% block og_title %}{{ page_title|default:site_name }}{% endblock %}">
+<meta property="og:description" content="{{ meta_description|default:site_config.default_meta_description }}">
+<meta property="og:url" content="{% canonical_url %}">
+<meta property="og:image" content="{% block og_image %}{{ canonical_origin }}{% static 'core/img/og.png' %}{% endblock %}">
+<meta property="og:site_name" content="{{ site_name }}">
+<meta property="og:locale" content="en">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+<link rel="icon" href="{% static 'favicon.png' %}" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
+<link rel="manifest" href="{% static 'core/site.webmanifest' %}">
+{% block structured_data %}{% organization_schema %}{% endblock %}
+{% block breadcrumb_schema %}{% seo_breadcrumbs %}{% endblock %}
+{{ tracking_data|json_script:"skeleton-tracking-config" }}
+<link rel="preload" href="{% static 'core/css/font-inter/static/inter-400-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{% static 'core/css/font-inter/static/inter-700-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{% static 'core/css/base.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/components.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/lazy-sections.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/hero-entrance.css' %}">
+{% if enable_consent %}
+<link rel="stylesheet" href="{% static 'core/vendor/klaro/klaro.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/klaro-theme.css' %}">
+{% endif %}
+<link rel="stylesheet" href="{% static 'core/css/a11y.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/print.css' %}">
+{% block page_css %}{% endblock %}
+{% block extra_css %}{% endblock %}
+{% if enable_consent %}
+<script defer src="{% static 'core/js/klaro-config.js' %}"></script>
+<script defer src="{% static 'core/vendor/klaro/klaro.js' %}" data-klaro-config="klaroConfig"></script>
+<script defer src="{% static 'core/js/klaro-bootstrap.js' %}"></script>
+{% endif %}
+</head>
+<body class="{% block body_class %}{% endblock %}"{% block body_attributes %}{% endblock %}>
+{% if enable_consent %}<div id="klaro" data-cmp-root aria-live="polite"></div>{% endif %}
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-site-header>
+  <div class="shell header-inner">
+    <a class="brand" href="{% url 'home' %}" aria-label="{{ site_name }} home">
+      <svg class="brand-mark" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M12 2 4 5v6c0 5 3.4 9.3 8 11 4.6-1.7 8-6 8-11V5l-8-3z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="11" r="2.4" fill="currentColor"/></svg>
+      <span class="brand-name">{{ site_name }}</span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="{% url 'home' %}"{% if request.path == '/' %} aria-current="page"{% endif %}>Home</a>
+      <a href="{% url 'demo' %}"{% if request.resolver_match.url_name == 'demo' %} aria-current="page"{% endif %}>Demo</a>
+      <a href="{% url 'contact' %}"{% if request.resolver_match.url_name == 'contact' %} aria-current="page"{% endif %}>Contact</a>
+      {% if user.is_authenticated %}
+      <a href="{% url 'account_dashboard' %}">Account</a>
+      <form method="post" action="{% url 'logout' %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button">Sign out</button></form>
+      {% else %}
+      <a href="{% url 'login' %}">Sign in</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+<main id="main-content" tabindex="-1">
+{% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+  <div class="shell footer-grid">
+    <div>
+      <p class="footer-brand">{{ site_name }}</p>
+      <p class="footer-note">Built on django-web-skeleton.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'demo' %}">Demo</a>
+      <a href="{% url 'contact' %}">Contact</a>
+      <a href="{% url 'privacy' %}">Privacy</a>
+      <a href="{% url 'imprint' %}">Imprint</a>
+      <a href="{% url 'accessibility' %}">Accessibility</a>
+      {% if enable_consent %}<button type="button" class="link-button" data-open-cookie-settings>Cookie settings</button>{% endif %}
+    </nav>
+  </div>
+  <div class="shell footer-meta">
+    <span>© {% now "Y" %} {{ site_name }}</span>
+    <span class="a11y-controls" role="group" aria-label="Display preferences">
+      <button type="button" class="link-button" data-a11y-action="toggle-light">Light mode</button>
+      <button type="button" class="link-button" data-a11y-action="toggle-text">Larger text</button>
+      <button type="button" class="link-button" data-a11y-action="toggle-motion">Reduce motion</button>
+    </span>
+    <span><a href="{% url 'llms_txt' %}">llms.txt</a></span>
+  </div>
+</footer>
+<div id="external-modal" class="modal" hidden data-external-modal{% if turnstile_site_key %} data-turnstile-sitekey="{{ turnstile_site_key }}"{% endif %}>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="external-modal-title">
+    <h2 id="external-modal-title">Leaving this site</h2>
+    <p class="modal-destination">You are about to visit <span data-external-target></span></p>
+    <p class="modal-note">We are not responsible for external content.</p>
+    {% if turnstile_site_key %}<div class="modal-turnstile" data-external-turnstile></div>{% endif %}
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-modal-cancel>Stay here</button>
+      <a class="btn btn-primary" data-external-proceed href="#">Continue</a>
+    </div>
+  </div>
+</div>
+<script defer src="{% static 'core/js/prefs.js' %}"></script>
+<script defer src="{% static 'core/js/lazy-sections.js' %}"></script>
+<script defer src="{% static 'core/js/scroll-reveal.js' %}"></script>
+<script defer src="{% static 'core/js/lottie-mount.js' %}"></script>
+<script defer src="{% static 'core/js/hero-entrance.js' %}"></script>
+<script defer src="{% static 'core/js/topbar.js' %}"></script>
+<script defer src="{% static 'core/js/modal.js' %}"></script>
+{% if enable_external_link_modal %}<script defer src="{% static 'core/js/external-link-modal.js' %}"></script>{% endif %}
+<script defer src="{% static 'core/js/track.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,304 @@
+/* Components: buttons, cards, forms, messages, modals, and the scroll
+   reveal system. Every element here is composable from any page. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 22px;
+  border-radius: var(--radius-s);
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease, color 0.16s ease;
+  text-decoration: none;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--accent-strong);
+  text-decoration: none;
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.btn-ghost:hover {
+  background: var(--surface-2);
+  text-decoration: none;
+}
+.btn-block {
+  width: 100%;
+}
+
+.feature-card,
+.pattern-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 26px 24px;
+  box-shadow: var(--shadow-card);
+}
+.feature-card h3,
+.pattern-card h3 {
+  margin-bottom: 0.5em;
+}
+.feature-card p,
+.pattern-card p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.form-field {
+  margin-bottom: 18px;
+}
+.form-field label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+select,
+textarea {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  border-radius: var(--radius-s);
+  padding: 12px 14px;
+  font: inherit;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-faint);
+}
+textarea {
+  resize: vertical;
+  min-height: 130px;
+}
+.errorlist,
+.errorlist li {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+.checkbox-label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.checkbox-label input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.message {
+  border-radius: var(--radius-s);
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  font-size: 0.92rem;
+}
+.message-error {
+  background: rgba(214, 69, 69, 0.12);
+  border: 1px solid rgba(214, 69, 69, 0.4);
+  color: #f0a2a2;
+}
+.message-info,
+.message-success {
+  background: var(--accent-soft);
+  border: 1px solid rgba(77, 127, 255, 0.35);
+  color: var(--accent-strong);
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background: rgba(5, 6, 8, 0.72);
+  backdrop-filter: blur(4px);
+}
+.modal[hidden] {
+  display: none;
+}
+.modal-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  padding: 28px;
+  width: min(440px, calc(100vw - 40px));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+}
+.modal-card h2 {
+  font-size: 1.2rem;
+}
+.modal-destination span {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  word-break: break-all;
+  color: var(--accent-strong);
+}
+.modal-note {
+  color: var(--text-faint);
+  font-size: 0.88rem;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 22px;
+}
+.modal-actions .is-locked {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.modal-turnstile {
+  margin-top: 14px;
+  min-height: 65px;
+}
+
+/* Scroll reveal system -------------------------------------------------- */
+
+.reveal-pending {
+  opacity: 0;
+}
+.reveal-pending.reveal-mask {
+  clip-path: inset(0 0 100% 0);
+}
+.reveal-pending.reveal-scale {
+  scale: 0.94;
+}
+.reveal-pending.reveal-left {
+  opacity: 0;
+  translate: -28px 0;
+}
+.reveal-enter {
+  animation: site-reveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+.reveal-enter.reveal-mask {
+  animation-name: site-reveal-mask;
+}
+.reveal-enter.reveal-scale {
+  animation-name: site-reveal-scale;
+}
+.reveal-enter.reveal-left {
+  animation-name: site-reveal-left;
+}
+@keyframes site-reveal {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes site-reveal-mask {
+  from {
+    clip-path: inset(0 0 100% 0);
+    opacity: 1;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+@keyframes site-reveal-scale {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes site-reveal-left {
+  from {
+    opacity: 0;
+    translate: -28px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not(.a11y-motion) .reveal-pending {
+    opacity: 1;
+    clip-path: none;
+    scale: none;
+    translate: none;
+  }
+  .reveal-enter {
+    animation: none;
+  }
+}
+
+/* Lottie figure contract -------------------------------------------------- */
+
+.lottie-figure {
+  margin: 0;
+  aspect-ratio: var(--lot-ar, 1 / 1);
+  width: 100%;
+  max-width: 480px;
+  border-radius: var(--radius-l);
+  background:
+    radial-gradient(60% 55% at 50% 42%, rgba(77, 127, 255, 0.12), transparent 70%),
+    var(--surface-1);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.lottie-figure svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

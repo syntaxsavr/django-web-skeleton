@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "skills": {
+    "animations": {
+      "source": "mthines/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/design/animations/SKILL.md",
+      "computedHash": "d3141db4628ec3049025d8d585cfd119ed42cc81cd18d18453e3bebc985dd8a6"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "89496d5dd00f4810205f351759594fc2742bf8eea85a2f2b2d1de59f4bd91576"
+    },
+    "motion-design": {
+      "source": "LottieFiles/motion-design-skill",
+      "sourceType": "github",
+      "skillPath": "skills/motion-design/SKILL.md",
+      "computedHash": "9fcf9130cc46ee8fd1d8e09a9263347a9d76efbcbfa46591cc4cefaf19bbb453"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "computedHash": "3219a1944e404ffc14d1d9d6aef6dd2e3855b81387ee0a044ccbfe14d34c2357"
+    },
+    "vercel-react-view-transitions": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-view-transitions/SKILL.md",
+      "computedHash": "73fddafed488c308ee0799178432801fe10aa338451948ea05f4200541053040"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "a6a44d5498f7e8f68289902f3dedfc6f38ae0cee1e96527c80724cf27f727c2a"
+    },
+    "copywriting": {
+      "source": "alexconner-79/ill-communication",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "1ba489d187809c042cb4ed2ed5b8f2911c0c4e0f75cc1b8abf6ff7e6f6166c9f",
+      "localName": "copywriting",
+      "license": "MIT"
+    }
+  }
+}

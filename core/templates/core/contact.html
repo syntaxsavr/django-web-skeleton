@@ -1,0 +1,21 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-contact{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/contact.css' %}">{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="shell shell-narrow">
+    <header class="section-head">
+      <h1>Contact</h1>
+      <p class="section-lead">The form carries a honeypot, a time-trap and optional Turnstile protection.</p>
+    </header>
+    {% if messages %}
+    <div class="form-messages" role="alert">
+      {% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    {% include "core/fragments/contact-form.html" %}
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}<script defer src="{% static 'core/js/contact.js' %}"></script>{% endblock %}

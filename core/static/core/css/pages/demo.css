@@ -1,0 +1,57 @@
+/* Demo page: showcase grids. */
+
+.demo-hero {
+  padding-block: clamp(56px, 8vw, 96px) 0;
+}
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+.demo-box {
+  display: grid;
+  place-items: center;
+  min-height: 130px;
+  border-radius: var(--radius-m);
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.demo-hero-sample {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface-2);
+  padding: clamp(24px, 4vw, 44px);
+  display: grid;
+  gap: 12px;
+}
+.demo-hero-sample p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.demo-lottie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+.demo-lottie-card {
+  margin: 0;
+}
+.demo-lottie-card figcaption {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-faint);
+}
+.demo-note {
+  margin-top: 22px;
+  color: var(--text-faint);
+  font-size: 0.9rem;
+}
+.demo-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}

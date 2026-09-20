@@ -1,0 +1,11 @@
+New contact message via {{ config.site_name }}
+
+From: {{ entry.name }} <{{ entry.email }}>
+Phone: {{ entry.phone|default:"-" }}
+Preference: {{ entry.get_preference_display }}
+Received: {{ entry.created }}
+
+Message:
+{{ entry.message }}
+
+Reply from the admin: /admin/core/contactmessage/
