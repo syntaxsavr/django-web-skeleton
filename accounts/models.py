@@ -82,19 +82,36 @@ class UserProfile(models.Model):
 
 
 class ConsentText(models.Model):
-    """Admin-managed consent block shown (unticked) at registration."""
+    """Admin-managed consent block shown (unticked) at registration.
 
-    title = models.CharField(max_length=160)
-    slug = models.SlugField(max_length=80, unique=True)
+    Why: consent checkboxes must never be pre-ticked (GDPR). Each active
+    row here becomes one checkbox on the signup form. What a user accepted
+    is snapshotted into 'user consent acceptances' - editing this text does
+    not rewrite past acceptances; bump the version instead."""
+
+    title = models.CharField(
+        max_length=160,
+        help_text="The checkbox label at registration, e.g. 'I accept the privacy policy'.",
+    )
+    slug = models.SlugField(
+        max_length=80,
+        unique=True,
+        help_text="Internal key under which acceptances are stored. Never change it after go-live; edit the title instead.",
+    )
     body = models.TextField(help_text="Plain text shown under the checkbox.")
     url = models.CharField(max_length=300, blank=True, help_text="Optional link, e.g. the privacy policy.")
     required = models.BooleanField(default=True, help_text="Registration blocks until this box is ticked.")
     active = models.BooleanField(default=True)
     sort_order = models.PositiveIntegerField(default=100)
-    version = models.PositiveSmallIntegerField(default=1)
+    version = models.PositiveSmallIntegerField(
+        default=1,
+        help_text="Bump this number whenever you edit the text. Each acceptance records the version, so you can always tell which wording a user agreed to.",
+    )
 
     class Meta:
         ordering = ["sort_order", "pk"]
+        verbose_name = "consent text (signup checkbox)"
+        verbose_name_plural = "consent texts (signup checkboxes)"
 
     def clean(self):
         from urllib.parse import urlsplit
@@ -110,7 +127,11 @@ class ConsentText(models.Model):
 
 
 class UserConsent(models.Model):
-    """Accepted consent, with a snapshot of the text at acceptance time."""
+    """Accepted consent, with a snapshot of the text at acceptance time.
+
+    Read-only record: created automatically when a user ticks a consent
+    text checkbox at registration. Do not edit by hand - it is the proof
+    of what exactly was agreed to and when."""
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="consents", on_delete=models.CASCADE)
     slug = models.CharField(max_length=80)
@@ -120,6 +141,8 @@ class UserConsent(models.Model):
 
     class Meta:
         ordering = ["-accepted_at"]
+        verbose_name = "user consent acceptance"
+        verbose_name_plural = "user consent acceptances"
         constraints = [
             models.UniqueConstraint(fields=["user", "slug", "version"], name="unique_consent_version")
         ]
@@ -129,7 +152,13 @@ class UserConsent(models.Model):
 
 
 class RegistrationField(models.Model):
-    """Admin-defined profile field asked at registration (and completion)."""
+    """Admin-defined profile field asked at registration (and completion).
+
+    Why: you decide what you need from users. Every active row becomes one
+    field on the signup form; required fields also force EXISTING users
+    through /account/complete/ at their next visit, so accounts created
+    before the field existed fill it in too. Values are stored on the
+    user profile and appear in their data export."""
 
     KIND_TEXT = "text"
     KIND_TEXTAREA = "textarea"
@@ -154,6 +183,8 @@ class RegistrationField(models.Model):
 
     class Meta:
         ordering = ["sort_order", "pk"]
+        verbose_name = "signup form field"
+        verbose_name_plural = "signup form fields"
 
     def __str__(self) -> str:
         return self.label
@@ -182,8 +213,8 @@ class LoginEvent(models.Model):
 
     class Meta:
         ordering = ["-created"]
-        verbose_name = "Login event"
-        verbose_name_plural = "Login events"
+        verbose_name = "login trace"
+        verbose_name_plural = "login traces"
 
     def __str__(self) -> str:
         return f"{self.user_id} {self.method} {self.created:%Y-%m-%d %H:%M}"
@@ -215,6 +246,8 @@ class DataExportRequest(models.Model):
 
     class Meta:
         ordering = ["-created"]
+        verbose_name = "data export request"
+        verbose_name_plural = "data export requests"
 
     @property
     def is_expired(self) -> bool:

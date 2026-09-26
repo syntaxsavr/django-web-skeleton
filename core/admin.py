@@ -5,6 +5,7 @@ delete so the singleton stays a singleton."""
 from django.contrib import admin
 from django.core.cache import cache
 
+from core.admin_mixins import DescribedAdminMixin
 from core.middleware import ProtectedPageMiddleware
 from core.models import (
     Article,
@@ -221,7 +222,12 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProtectedPage)
-class ProtectedPageAdmin(admin.ModelAdmin):
+class ProtectedPageAdmin(DescribedAdminMixin, admin.ModelAdmin):
+    changelist_description = (
+        "Login-wall rules: every active row puts a path (or everything below a prefix) behind login. "
+        "Anonymous visitors are redirected to the sign-in page. Use this for member areas, reports, downloads - "
+        "anything that should not be public. Changes apply immediately."
+    )
     list_display = ("path", "match_type", "title", "active")
     list_filter = ("active", "match_type")
     search_fields = ("path", "title")
@@ -241,7 +247,12 @@ class ProtectedPageAdmin(admin.ModelAdmin):
 
 
 @admin.register(ContactMessage)
-class ContactMessageAdmin(admin.ModelAdmin):
+class ContactMessageAdmin(DescribedAdminMixin, admin.ModelAdmin):
+    changelist_description = (
+        "Inbound messages from the contact form. Data minimisation: they are DELETED automatically after the retention "
+        "window in Site configuration (Data minimisation) - do not use this list as a long-term archive; move anything "
+        "worth keeping into your CRM. 'Responded' is your personal to-do flag."
+    )
     list_display = ("created", "name", "email", "preference", "responded")
     list_filter = ("preference", "responded")
     search_fields = ("name", "email", "message")
@@ -271,14 +282,24 @@ class ArticleBlockInline(admin.StackedInline):
 
 
 @admin.register(StripeButton)
-class StripeButtonAdmin(admin.ModelAdmin):
+class StripeButtonAdmin(DescribedAdminMixin, admin.ModelAdmin):
+    changelist_description = (
+        "Reusable Stripe Buy Buttons. Create one row per product (the buy-button-id comes from Stripe's Buy Button "
+        "code), then attach it to any article as a 'Stripe buy button' block. Buttons render only when the master "
+        "switch is on AND the visitor consents to the Stripe service."
+    )
     list_display = ("label", "buy_button_id", "active", "sort_order")
     list_editable = ("active", "sort_order")
     ordering = ("sort_order", "pk")
 
 
 @admin.register(Article)
-class ArticleAdmin(admin.ModelAdmin):
+class ArticleAdmin(DescribedAdminMixin, admin.ModelAdmin):
+    changelist_description = (
+        "Editorial content. Build articles from blocks (heading, text, quote, image, video, buy button, divider) - "
+        "the Preview button renders your current editor state without saving. Untick 'Published' to hide an article "
+        "everywhere without deleting it."
+    )
     list_display = ("title", "category", "author_name", "published_at", "is_featured", "published")
     list_filter = ("published", "is_featured", "show_disclaimer", "show_ai_disclosure", "category")
     search_fields = ("title", "excerpt", "content", "meta_keywords")
@@ -301,7 +322,11 @@ class ArticleAdmin(admin.ModelAdmin):
 
 
 @admin.register(RobotsRule)
-class RobotsRuleAdmin(admin.ModelAdmin):
+class RobotsRuleAdmin(DescribedAdminMixin, admin.ModelAdmin):
+    changelist_description = (
+        "Rules for robots.txt: search engines are told which paths to skip. A path covers everything below it. "
+        "This is advisory only - well-behaved crawlers obey, so keep truly private material behind the login wall instead."
+    )
     list_display = ("path", "directive", "active", "sort_order", "note")
     list_editable = ("directive", "active", "sort_order")
     list_filter = ("active", "directive")

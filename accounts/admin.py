@@ -7,6 +7,8 @@ from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
+from core.admin_mixins import DescribedAdminMixin
+
 from accounts.models import (
     ConsentText,
     DataExportRequest,
@@ -92,7 +94,12 @@ class SkeletonUserAdmin(DjangoUserAdmin):
 
 
 @admin.register(RegistrationField)
-class RegistrationFieldAdmin(admin.ModelAdmin):
+class RegistrationFieldAdmin(DescribedAdminMixin, admin.ModelAdmin):
+    changelist_description = (
+        "Fields of the signup form (and the profile-completion page). Every active row is one form field; "
+        "required fields force existing users to fill them in at their next visit. Values are sanitized, stored "
+        "on the user profile and included in the GDPR data export."
+    )
     list_display = ("label", "slug", "kind", "required", "active", "sort_order")
     list_editable = ("required", "active", "sort_order")
     prepopulated_fields = {"slug": ("label",)}
@@ -100,7 +107,11 @@ class RegistrationFieldAdmin(admin.ModelAdmin):
 
 
 @admin.register(ConsentText)
-class ConsentTextAdmin(admin.ModelAdmin):
+class ConsentTextAdmin(DescribedAdminMixin, admin.ModelAdmin):
+    changelist_description = (
+        "Consent checkboxes shown on the signup form. They are NEVER pre-ticked (GDPR): a user must actively tick them. "
+        "What each user accepted is snapshotted under 'User consent acceptances'. Editing text here does not change past acceptances - bump the version."
+    )
     list_display = ("title", "slug", "required", "active", "version", "sort_order")
     list_editable = ("required", "active", "version", "sort_order")
     prepopulated_fields = {"slug": ("title",)}
@@ -126,7 +137,12 @@ class LoginEventAdmin(admin.ModelAdmin):
 
 
 @admin.register(DataExportRequest)
-class DataExportRequestAdmin(admin.ModelAdmin):
+class DataExportRequestAdmin(DescribedAdminMixin, admin.ModelAdmin):
+    changelist_description = (
+        "GDPR data-export requests. Users wait out the configured waiting period, then download a gzipped archive of "
+        "everything the site stores about them. Archives auto-delete after the export retention window; the files live in "
+        "PRIVATE storage and are only reachable through the authenticated download view."
+    )
     list_display = ("user", "status", "created", "ready_at", "expires_at")
     list_filter = ("status",)
     readonly_fields = ("user", "status", "created", "ready_at", "expires_at", "file")

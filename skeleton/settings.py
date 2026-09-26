@@ -360,6 +360,23 @@ UNFOLD["SIDEBAR"]["navigation"] += (
         ),
     },
     {
+        "title": "Signup form",
+        "separator": True,
+        "items": (
+            {"name": "Signup fields", "icon": "edit_note", "url": "/admin/accounts/registrationfield/"},
+            {"name": "Consent texts", "icon": "fact_check", "url": "/admin/accounts/consenttext/"},
+        ),
+    },
+    {
+        "title": "Privacy",
+        "separator": True,
+        "items": (
+            {"name": "Login traces", "icon": "fingerprint", "url": "/admin/accounts/loginevent/"},
+            {"name": "Data export requests", "icon": "download", "url": "/admin/accounts/dataexportrequest/"},
+            {"name": "Consent acceptances", "icon": "verified_user", "url": "/admin/accounts/userconsent/"},
+        ),
+    },
+    {
         "title": "Structure",
         "separator": True,
         "items": (
