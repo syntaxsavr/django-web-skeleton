@@ -135,7 +135,7 @@ class ContentSecurityPolicyMiddleware:
         "pinterest": ("s.pinimg.com", "ct.pinterest.com"),
         "x_pixel": ("static.ads-twitter.com",),
         "turnstile": ("challenges.cloudflare.com",),
-        "calcom": ("app.cal.com", "*"),
+        "calcom": ("app.cal.com",),
         "stripe": ("js.stripe.com",),
     }
     CONNECT_HOSTS = {
@@ -337,8 +337,26 @@ class ProtectedPageMiddleware:
     def invalidate_cache(cls):
         cache.delete(PROTECTED_CACHE_KEY)
 
+    TWO_FACTOR_PREFIXES = ("/account/two-factor/", "/accounts/logout/")
+
     def __call__(self, request):
-        if request.user.is_authenticated or request.path.startswith(ADMIN_PREFIXES):
+        user = getattr(request, "user", None)
+        if user is not None and user.is_authenticated and user.is_active:
+            config = _config(request)
+            # Forced 2FA protects EVERY surface: an authenticated but
+            # unverified session must not reach protected pages by walking
+            # around /account/. Exemptions stay as narrow as possible.
+            if (
+                config.force_2fa_users
+                and not getattr(user, "otp_device", None)
+                and not request.path.startswith(self.TWO_FACTOR_PREFIXES)
+            ):
+                from core.views.twofa import pending_redirect
+
+                return pending_redirect(request)
+            return self.get_response(request)
+
+        if request.path.startswith(ADMIN_PREFIXES):
             return self.get_response(request)
 
         path = request.path

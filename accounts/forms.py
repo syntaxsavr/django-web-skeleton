@@ -4,7 +4,6 @@ registration, consents, profile data. Every inbound string is sanitized."""
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from django.utils.safestring import mark_safe
 
 from accounts.models import ConsentText, RegistrationField, UserProfile
 from core.sanitizers import clean_multiline, clean_text
@@ -82,7 +81,13 @@ class DynamicRegistrationForm(forms.Form):
             self._consent_fields.append((name, consent))
             label = consent.title
             if consent.url:
-                label = mark_safe(f'{consent.title} <a href="{consent.url}" target="_blank" rel="noopener">read</a>')
+                from django.utils.html import format_html
+
+                label = format_html(
+                    '{} <a href="{}" target="_blank" rel="noopener">read</a>',
+                    consent.title,
+                    consent.url,
+                )
             self.fields[name] = forms.BooleanField(
                 label=label, required=consent.required, help_text=consent.body
             )
@@ -180,6 +185,8 @@ class AvatarForm(forms.Form):
         avatar = self.cleaned_data.get("avatar")
         if not avatar:
             return None
+        from PIL import Image
+
         from core.models import SiteConfiguration
 
         config = SiteConfiguration.get_solo()
@@ -187,4 +194,11 @@ class AvatarForm(forms.Form):
             raise forms.ValidationError("Avatar uploads are disabled on this site.")
         if avatar.size > config.avatar_max_kb * 1024:
             raise forms.ValidationError(f"Avatars are limited to {config.avatar_max_kb} KB.")
+        # Header-only dimension check BEFORE any full decode: rejects
+        # decompression bombs early.
+        avatar.seek(0)
+        with Image.open(avatar) as probe:
+            if probe.width > 8000 or probe.height > 8000:
+                raise forms.ValidationError("That image is far too large.")
+        avatar.seek(0)
         return avatar

@@ -11,11 +11,13 @@ import gzip
 import json
 import logging
 import time
+import uuid
 from datetime import timedelta
+
+from django.utils import timezone
 
 from django.core.cache import cache
 from django.core.files.base import ContentFile
-from django.utils import timezone
 
 from accounts.models import DataExportRequest, LoginEvent, UserProfile
 from core.maintenance import purge_old_messages
@@ -39,7 +41,7 @@ def process_due_exports(limit: int = 1) -> int:
         time.sleep(1)  # yield: exports get almost no resources on purpose
         payload = _export_payload(request_obj.user)
         blob = gzip.compress(json.dumps(payload, ensure_ascii=False, indent=1, default=str).encode("utf-8"))
-        name = f"export-{request_obj.user_id}-{request_obj.pk}.json.gz"
+        name = f"export-{uuid.uuid4().hex}.json.gz"
         request_obj.file.save(name, ContentFile(blob), save=False)
         request_obj.status = DataExportRequest.STATUS_READY
         request_obj.save(update_fields=["status", "file"])
@@ -72,11 +74,11 @@ def _export_payload(user) -> dict:
     }
     from core.models import ContactMessage
 
-    if user.email:
-        messages = ContactMessage.objects.filter(email__iexact=user.email)
-        sections["contact_messages"] = list(
-            messages.values("name", "email", "message", "created", "responded")
-        )
+    # Identity comes from the account relation ONLY: an email string is not
+    # proof of ownership, so historical messages are never attached by address.
+    sections["contact_messages"] = list(
+        ContactMessage.objects.filter(user=user).values("name", "email", "message", "created", "responded")
+    )
     return sections
 
 
@@ -127,26 +129,42 @@ def execute_due_deletions() -> dict:
         profile.data_deletion_requested = None
         profile.save(update_fields=["extra_data", "avatar", "data_deletion_at", "data_deletion_requested"])
         user.consents.all().delete()
+        purge_user_exports(user)
         # Technical traces (login events) stay for their full retention
         # window; the regular login-event purge removes them later.
-        user.is_active = True
-        user.save(update_fields=["is_active"])
+        # Reactivate only what this flow deactivated - an administrator's
+        # separate suspension must survive.
+        if profile.suspended_by_data_deletion:
+            profile.suspended_by_data_deletion = False
+            profile.save(update_fields=["suspended_by_data_deletion"])
+            user.is_active = True
+            user.save(update_fields=["is_active"])
         result["data"] += 1
 
     for profile in UserProfile.objects.filter(account_deletion_at__lte=now).exclude(account_deletion_at=None):
         user = profile.user
         user.consents.all().delete()
         user.login_events.all().delete()
-        user.export_requests.all().delete()
+        purge_user_exports(user)
         if profile.avatar:
             profile.avatar.delete(save=False)
         profile.extra_data = {}
         profile.avatar = ""
         profile.account_deletion_at = None
-        profile.save(update_fields=["extra_data", "avatar", "account_deletion_at"])
+        profile.suspended_by_data_deletion = False
+        profile.save(update_fields=["extra_data", "avatar", "account_deletion_at", "suspended_by_data_deletion"])
         _pseudonymise_user(user)
         result["account"] += 1
     return result
+
+
+def purge_user_exports(user) -> int:
+    """Delete every export row AND its archive bytes for a user."""
+    removed = 0
+    for entry in user.export_requests.all():
+        entry.delete()  # the model delete removes the file too
+        removed += 1
+    return removed
 
 
 def purge_login_events() -> int:

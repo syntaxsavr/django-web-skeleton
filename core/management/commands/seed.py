@@ -14,8 +14,14 @@ class Command(BaseCommand):
         if created:
             self.stdout.write(self.style.SUCCESS(f"Created superuser '{user.username}' with the seeded password."))
             self.stdout.write("Change it immediately for anything reachable by others.")
-        else:
+        elif user:
             self.stdout.write(self.style.WARNING(f"User '{user.username}' already exists, password unchanged."))
+        else:
+            self.stdout.write(
+                self.style.WARNING(
+                    "DEBUG is off: no administrative user was created. Use createsuperuser."
+                )
+            )
 
         config, seeded = ensure_starter_content()
         self.stdout.write(self.style.SUCCESS(f"SiteConfiguration ready ({config.site_name})."))

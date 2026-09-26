@@ -19,6 +19,8 @@ from accounts.models import DataExportRequest, UserProfile
 from core.models import SiteConfiguration
 from core.views.helpers import site_config
 
+CONFIRMATION_FRESHNESS = 10 * 60  # seconds
+
 PHRASE_VERBS = ("erase", "remove", "purge", "wipe", "delete")
 PHRASE_OBJECTS = ("my data", "my profile", "my details", "my information")
 
@@ -39,8 +41,16 @@ def _phrase(request, key: str) -> str:
 
 
 def _check_step_one(request, purpose: str) -> bool:
-    """True when the email code for this purpose was verified this session."""
-    return bool(request.session.get("confirmed_" + purpose))
+    """True only while the email-code confirmation is FRESH: a browser left
+    open cannot skip the email step hours or days later."""
+    confirmed_at = request.session.get("confirmed_" + purpose)
+    if not confirmed_at:
+        return False
+    try:
+        age = (timezone.now() - timezone.datetime.fromisoformat(confirmed_at)).total_seconds()
+    except (ValueError, TypeError):
+        return False
+    return age <= CONFIRMATION_FRESHNESS
 
 
 def _reset_steps(request, purpose: str):
@@ -157,10 +167,11 @@ def _handle_confirmation_post(request, purpose: str, success_redirect: str):
         from accounts.views.auth import _consume_user_code
 
         if _consume_user_code(request.user, purpose, request.POST.get("code", "")):
-            request.session["confirmed_" + purpose] = True
+            request.session["confirmed_" + purpose] = timezone.now().isoformat()
             request.session.pop("phrase_" + purpose, None)
             request.session.pop("code_sent_" + purpose, None)
             return redirect(request.path)
+        cache.set(attempt_key, attempts + 1, 16 * 60)
         messages.error(request, "That code is wrong or expired.")
         return redirect(request.path)
     if request.POST.get("action") == "confirm_phrase":
@@ -192,7 +203,8 @@ def data_deletion(request):
         delay = timedelta(hours=config.deletion_delay_hours)
         profile.data_deletion_requested = now
         profile.data_deletion_at = now + delay
-        profile.save(update_fields=["data_deletion_requested", "data_deletion_at", "updated"])
+        profile.suspended_by_data_deletion = True
+        profile.save(update_fields=["data_deletion_requested", "data_deletion_at", "suspended_by_data_deletion", "updated"])
         request.user.is_active = False  # suspended until the deletion executes
         request.user.save(update_fields=["is_active"])
         logout(request)
@@ -232,6 +244,10 @@ def account_deletion(request):
         delay = timedelta(hours=config.deletion_delay_hours)
         profile.account_deletion_at = now + delay
         profile.save(update_fields=["account_deletion_at", "updated"])
+        # Suspended immediately: other sessions must not stay usable while
+        # deletion is pending, and the account can never be reactivated.
+        request.user.is_active = False
+        request.user.save(update_fields=["is_active"])
         logout(request)
         request.session.flush()
         messages.info(

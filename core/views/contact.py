@@ -6,6 +6,7 @@ import requests
 from django.conf import settings
 from django.contrib import messages
 from django.core import signing
+from django_ratelimit.decorators import ratelimit
 from django.core.mail import send_mail
 from django.http import Http404
 from django.shortcuts import redirect, render
@@ -33,7 +34,10 @@ def _turnstile_ok(request, config):
         return True
     secret = config.effective_turnstile_secret_key
     if not secret:
-        return True
+        import logging
+
+        logging.getLogger(__name__).error("Turnstile is enabled but TURNSTILE_SECRET_KEY is missing.")
+        return False
     token = request.POST.get("cf_turnstile_response", "")
     if not token:
         return False
@@ -45,11 +49,15 @@ def _turnstile_ok(request, config):
         )
         return bool(response.json().get("success"))
     except (requests.RequestException, ValueError):
-        return True
+        return False
 
 
+@ratelimit(key="ip", rate=settings.CONTACT_IP_RATELIMIT, block=False)
 def contact(request):
     config = site_config(request)
+    if getattr(request, "limited", False):
+        messages.error(request, "Too many messages from your network. Please try again later.")
+        return redirect("contact")
     if not config.enable_contact_form:
         raise Http404
 
@@ -76,7 +84,12 @@ def contact(request):
             return redirect("contact_thanks")
 
         if form.is_valid() and _turnstile_ok(request, config):
-            entry = form.save()
+            entry = form.save(commit=False)
+            if request.user.is_authenticated:
+                # ownership for the data export: set ONLY for authenticated
+                # submissions, never derived from an email address
+                entry.user = request.user
+            entry.save()
             request.session[rate_key] = time.time()
             request.session["contact_summary"] = {"name": entry.name, "email": entry.email}
             if config.contact_email:

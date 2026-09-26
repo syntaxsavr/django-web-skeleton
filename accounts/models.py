@@ -11,9 +11,14 @@ Everything here is built around two principles:
    removed accounts are pseudonymised instead of kept.
 """
 
+import hashlib
+import uuid
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+
+from accounts.storage import PrivateMediaStorage
 from django.utils import timezone
 
 
@@ -40,6 +45,10 @@ class UserProfile(models.Model):
     # Scheduled data deletion (account stays, non-technical data is purged).
     data_deletion_requested = models.DateTimeField(null=True, blank=True)
     data_deletion_at = models.DateTimeField(null=True, blank=True)
+    suspended_by_data_deletion = models.BooleanField(
+        default=False,
+        help_text="True while the data-deletion flow owns the deactivation. Maintenance only reactivates accounts it deactivated itself.",
+    )
     # Scheduled account deletion (row survives pseudonymised).
     account_deletion_at = models.DateTimeField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -86,6 +95,15 @@ class ConsentText(models.Model):
 
     class Meta:
         ordering = ["sort_order", "pk"]
+
+    def clean(self):
+        from urllib.parse import urlsplit
+
+        url = (self.url or "").strip()
+        if url:
+            scheme = urlsplit(url).scheme
+            if scheme not in ("https",) and not url.startswith("/"):
+                raise ValidationError({"url": "Use an https:// URL or a local path starting with /."})
 
     def __str__(self) -> str:
         return self.title
@@ -190,7 +208,10 @@ class DataExportRequest(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     ready_at = models.DateTimeField()
     expires_at = models.DateTimeField()
-    file = models.FileField(upload_to="exports/", blank=True)
+    file = models.FileField(
+        upload_to="exports/", storage=PrivateMediaStorage(), blank=True,
+        help_text="Private storage: never reachable through /media/ or any public route.",
+    )
 
     class Meta:
         ordering = ["-created"]
@@ -199,5 +220,56 @@ class DataExportRequest(models.Model):
     def is_expired(self) -> bool:
         return timezone.now() > self.expires_at
 
+    def delete(self, *args, **kwargs):
+        """Remove the archive bytes with the row: Django does not delete
+        files for you, and orphaned exports must never outlive the request."""
+        if self.file:
+            self.file.delete(save=False)
+        return super().delete(*args, **kwargs)
+
     def __str__(self) -> str:
         return f"export:{self.user_id}:{self.status}"
+
+
+class MagicLink(models.Model):
+    """Single-use magic sign-in tokens, hashed at rest and consumed
+    atomically in the database so replay is impossible across workers."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="magic_links", on_delete=models.CASCADE)
+    token_hash = models.CharField(max_length=64, unique=True)
+    created = models.DateTimeField(auto_now_add=True)
+    expires = models.DateTimeField()
+    consumed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created"]
+
+    @classmethod
+    def issue(cls, user, ttl_seconds: int) -> "tuple[str, MagicLink]":
+        import secrets
+        from datetime import timedelta
+
+        from django.utils import timezone as tz
+
+        raw = secrets.token_urlsafe(32)
+        link = cls.objects.create(
+            user=user,
+            token_hash=hashlib.sha256(raw.encode()).hexdigest(),
+            expires=tz.now() + timedelta(seconds=ttl_seconds),
+        )
+        return raw, link
+
+    def consume(self) -> bool:
+        """Atomic single-use: the conditional update wins for exactly one
+        request, even with concurrent clicks or multiple workers."""
+        from django.utils import timezone as tz
+
+        if self.consumed_at or self.expires < tz.now():
+            return False
+        updated = type(self).objects.filter(pk=self.pk, consumed_at__isnull=True).update(
+            consumed_at=tz.now()
+        )
+        return bool(updated)
+
+    def __str__(self) -> str:
+        return f"magic:{self.user_id}"

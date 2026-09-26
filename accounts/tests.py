@@ -10,6 +10,9 @@ from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
+from django.conf import settings
+from django.core import signing
+
 from accounts.models import (
     ConsentText,
     DataExportRequest,
@@ -17,6 +20,7 @@ from accounts.models import (
     RegistrationField,
     UserProfile,
 )
+from core.views.contact import FORM_TS_SALT
 from core.models import SiteConfiguration
 
 User = get_user_model()
@@ -98,8 +102,11 @@ class EmailCodeLoginTests(IsolatedTest):
             return re.sub(r'name="csrfmiddlewaretoken" value="[^"]*"', "name=csrf", html)
 
         self.assertEqual(mask(body_existing, "codie@example.com"), mask(body_ghost, "ghost@example.com"))
-        # the ghost address never receives anything
-        self.assertFalse(any("ghost@example.com" in m.to for m in mail.outbox))
+        # The ghost address receives a REGISTRATION code (open registration):
+        # whoever controls the inbox can register; nobody else can. The
+        # response itself stays identical either way.
+        ghost_mail = [m for m in mail.outbox if "ghost@example.com" in m.to]
+        self.assertEqual(len(ghost_mail), 1)
 
     def test_code_login_works(self):
         self.client.post("/accounts/login/code/", {"email": "codie@example.com"})
@@ -449,3 +456,193 @@ class SanitizationTests(IsolatedTest):
         profile = UserProfile.objects.get(user__username="sri")
         self.assertEqual(profile.extra_data["bio"], "alert(1)Clean text")
         self.assertNotIn("<", profile.extra_data["bio"])
+
+
+class SecurityRegressionTests(IsolatedTest):
+    """Regression tests for the external security assessment."""
+
+    def test_superusers_never_created_by_migrate_in_production(self):
+        # The test runner forces DEBUG=False; post_migrate must not seed.
+        from django.core.management import call_command
+
+        call_command("migrate", verbosity=0)
+        self.assertFalse(User.objects.filter(is_superuser=True).exists())
+
+    def test_export_contains_only_own_messages_not_address_matches(self):
+        from core.models import ContactMessage
+
+        attacker = User.objects.create_user("attacker", "shared@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=attacker)
+        # A message from the victim that merely shares the email address,
+        # attached to NO account.
+        ContactMessage.objects.create(
+            name="Victim", email="shared@example.com", message="Secret details"
+        )
+        self.client.force_login(attacker)
+        self.client.post("/account/privacy/export/")
+        from accounts.models import DataExportRequest
+
+        entry = DataExportRequest.objects.get()
+        from accounts.maintenance import _export_payload
+
+        payload = _export_payload(attacker)
+        self.assertEqual(payload["contact_messages"], [])
+
+    def test_export_archive_lives_outside_media_root(self):
+        import os
+
+        from accounts import maintenance
+
+        user = User.objects.create_user("arch", "arch@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=user)
+        from django.test import Client
+
+        c = Client()
+        c.force_login(user)
+        c.post("/account/privacy/export/")
+        from accounts.models import DataExportRequest
+
+        entry = DataExportRequest.objects.get()
+        from django.utils import timezone
+
+        DataExportRequest.objects.filter(pk=entry.pk).update(ready_at=timezone.now())
+        maintenance.process_due_exports()
+        entry.refresh_from_db()
+        media_root = os.path.realpath(settings_media_root())
+        self.assertFalse(os.path.realpath(entry.file.path).startswith(media_root))
+
+    def test_deleting_export_row_removes_the_archive(self):
+        import os
+
+        from accounts import maintenance
+
+        user = User.objects.create_user("gone", "gone@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=user)
+        from django.test import Client
+
+        c = Client()
+        c.force_login(user)
+        c.post("/account/privacy/export/")
+        from accounts.models import DataExportRequest
+
+        entry = DataExportRequest.objects.get()
+        from django.utils import timezone
+
+        DataExportRequest.objects.filter(pk=entry.pk).update(ready_at=timezone.now())
+        maintenance.process_due_exports()
+        entry.refresh_from_db()
+        path = entry.file.path
+        self.assertTrue(os.path.exists(path))
+        entry.delete()
+        self.assertFalse(os.path.exists(path))
+
+    def test_download_requires_owner(self):
+        from accounts import maintenance
+
+        owner = User.objects.create_user("owner", "owner@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=owner)
+        intruder = User.objects.create_user("intruder", "intruder@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=intruder)
+        from accounts.models import DataExportRequest
+
+        entry = DataExportRequest.objects.create(
+            user=owner,
+            status=DataExportRequest.STATUS_READY,
+            ready_at=timezone.now(),
+            expires_at=timezone.now() + timedelta(days=1),
+        )
+        c = self.client
+        c.force_login(intruder)
+        response = c.get(f"/account/privacy/export/{entry.pk}/download/")
+        self.assertIn(response.status_code, (403, 404))
+
+    def test_magic_link_single_use_database_backed(self):
+        from accounts.models import MagicLink
+
+        user = User.objects.create_user("mag", "mag@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=user)
+        fresh_config(enable_login_magic_link=True, enable_login_password=False)
+        raw, link = MagicLink.issue(user, 900)
+        self.assertTrue(link.consume())
+        self.assertFalse(link.consume())  # replay
+
+    def test_open_redirect_blocked_after_login(self):
+        User.objects.create_user("phish", "phish@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=User.objects.get(username="phish"))
+        response = self.client.post(
+            "/accounts/login/?next=https://evil.example/fake",
+            {"identifier": "phish", "password": "S3cure!pass"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(response["Location"].startswith("https://evil.example"))
+
+    def test_account_deletion_suspends_immediately(self):
+        fresh_config(deletion_delay_hours=72)
+        user = User.objects.create_user("bye", "bye@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=user)
+        self.client.force_login(user)
+        # step 1: request code
+        self.client.post("/account/privacy/delete-account/", {"action": "request_code"})
+        code = mail.outbox[-1].body.split("code is ")[1].split("\n")[0].strip()
+        self.client.post("/account/privacy/delete-account/", {"action": "verify_code", "code": code})
+        self.client.get("/account/privacy/delete-account/")
+        phrase = self.client.session["phrase_account_deletion"]
+        self.client.post("/account/privacy/delete-account/", {"action": "confirm_phrase", "phrase": phrase})
+        self.assertFalse(User.objects.get(username="bye").is_active)
+
+    def test_confirmation_freshness_expires(self):
+        fresh_config(deletion_delay_hours=72)
+        user = User.objects.create_user("slow", "slow@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=user)
+        self.client.force_login(user)
+        self.client.post("/account/privacy/delete-data/", {"action": "request_code"})
+        code = mail.outbox[-1].body.split("code is ")[1].split("\n")[0].strip()
+        self.client.post("/account/privacy/delete-data/", {"action": "verify_code", "code": code})
+        # age the confirmation beyond the freshness window
+        from django.utils import timezone
+
+        session = self.client.session
+        stale = (timezone.now() - timedelta(minutes=11)).isoformat()
+        session["confirmed_data_deletion"] = stale
+        session.save()
+        response = self.client.get("/account/privacy/delete-data/")
+        # expired confirmation: the phrase step is unreachable again
+        self.assertNotContains(response, "Type this sentence exactly")
+        self.assertNotContains(response, "confirm_phrase")
+
+    def test_csp_script_src_never_contains_wildcard(self):
+        fresh_config(enable_calcom_embed=True)
+        policy = self.client.get("/")["Content-Security-Policy"]
+        script = [p for p in policy.split(";") if p.strip().startswith("script-src")][0]
+        self.assertNotIn("*", script)
+
+    def test_duplicate_email_rejected_by_database(self):
+        User.objects.create_user("first", "dup@example.com", "S3cure!pass")
+        from django.db import IntegrityError, transaction
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                User.objects.create_user("second", "DUP@example.com", "S3cure!pass")
+
+    def test_turnstile_enabled_without_secret_fails_closed(self):
+        from unittest.mock import patch
+
+        fresh_config(enable_turnstile=True, turnstile_secret_key="")
+        payload = {
+            "name": "Tester",
+            "email": "t@example.com",
+            "message": "hi",
+            "form_ts": signing.dumps(0, salt=FORM_TS_SALT),
+            "consent": "on",
+            "cf_turnstile_response": "anything",
+        }
+        self.client.post("/contact/", payload)
+        from core.models import ContactMessage
+
+        self.assertFalse(ContactMessage.objects.exists())
+
+
+def settings_media_root():
+    from django.conf import settings as s
+
+    return str(s.MEDIA_ROOT)

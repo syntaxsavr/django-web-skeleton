@@ -12,12 +12,12 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Open `http://127.0.0.1:8000/admin/`:
-
-```text
-username: admin
-password: b_4sIcPW007
-```
+Open `http://127.0.0.1:8000/admin/`. The development seed (`manage.py seed`
+or the first migration in DEBUG mode) creates the superuser from
+`SEED_ADMIN_USERNAME` / `SEED_ADMIN_PASSWORD` in your `.env` - set your own
+values before the first run. In production the seed never runs: create the
+admin with `python manage.py createsuperuser`, and the server refuses to
+boot while `SEED_ADMIN_PASSWORD` is unset or still the published default.
 
 The first migration creates that superuser if it does not exist. Set `SEED_ADMIN_USERNAME`, `SEED_ADMIN_PASSWORD`, and `SEED_ADMIN_EMAIL` in `.env` to change the defaults. Never expose the starter password to the internet.
 

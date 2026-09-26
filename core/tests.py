@@ -357,7 +357,13 @@ class ArticleSwitchTests(ConfigIsolatedTestCase):
         self.assertEqual(self.client.get("/articles/a-field-note/").status_code, 404)
 
     def test_article_admin_loads_drag_and_drop_editor(self):
-        admin = User.objects.get(username="admin")
+        admin, _created = User.objects.get_or_create(
+            username="admin",
+            defaults={"is_staff": True, "is_superuser": True, "email": "a@example.com"},
+        )
+        if _created:
+            admin.set_password("S3cure!pass")
+            admin.save()
         self.client.force_login(admin)
         response = self.client.get("/admin/core/article/add/")
         self.assertContains(response, "admin-image-drop.js")
@@ -425,7 +431,13 @@ class HeaderNavigationTests(ConfigIsolatedTestCase):
         self.assertNotContains(self.client.get("/"), 'href="/articles/"')
 
     def test_site_configuration_admin_contains_logo_and_navigation_editor(self):
-        admin = User.objects.get(username="admin")
+        admin, _created = User.objects.get_or_create(
+            username="admin",
+            defaults={"is_staff": True, "is_superuser": True, "email": "a@example.com"},
+        )
+        if _created:
+            admin.set_password("S3cure!pass")
+            admin.save()
         self.client.force_login(admin)
         response = self.client.get("/admin/core/siteconfiguration/1/change/")
         self.assertContains(response, 'name="header_logo"')
@@ -457,18 +469,28 @@ class ExternalLinkMiddlewareTests(ConfigIsolatedTestCase):
 
 
 class SeedCommandTests(TestCase):
-    @override_settings(SEED_ADMIN_USERNAME="admin", SEED_ADMIN_PASSWORD="b_4sIcPW007")
+    @override_settings(DEBUG=True, SEED_ADMIN_USERNAME="admin", SEED_ADMIN_PASSWORD="dev-only-pass-1")
     def test_seed_creates_superuser_and_defaults(self):
         from django.core.management import call_command
 
         User.objects.filter(username="admin").delete()
         call_command("seed", verbosity=0)
         admin = User.objects.get(username="admin", is_superuser=True)
-        self.assertTrue(admin.check_password("b_4sIcPW007"))
+        self.assertTrue(admin.check_password("dev-only-pass-1"))
         self.assertTrue(ProtectedPage.objects.filter(path="/account/").exists())
         # Idempotent: second run must not explode or duplicate.
         call_command("seed", verbosity=0)
         self.assertEqual(User.objects.filter(username="admin").count(), 1)
+
+    def test_seed_never_creates_admin_in_production(self):
+        from django.core.management import call_command
+
+        # The test runner forces DEBUG=False: production mode. Seeding
+        # must not create administrative credentials automatically.
+        call_command("seed", verbosity=0)
+        self.assertFalse(User.objects.filter(is_superuser=True).exists())
+        # Starter content (protected page, robots rules) still works.
+        self.assertTrue(ProtectedPage.objects.filter(path="/account/").exists())
 
 
 class AccessibilityPanelTests(ConfigIsolatedTestCase):
@@ -621,14 +643,26 @@ class ArticleBlockTests(ConfigIsolatedTestCase):
     def test_preview_requires_staff(self):
         response = self.client.post("/articles/preview/", {"title": "x"})
         self.assertEqual(response.status_code, 302)  # redirected to admin login
-        staff = User.objects.get(username="admin")
+        staff, _created = User.objects.get_or_create(
+            username="admin",
+            defaults={"is_staff": True, "is_superuser": True, "email": "a@example.com"},
+        )
+        if _created:
+            staff.set_password("S3cure!pass")
+            staff.save()
         self.client.force_login(staff)
         response = self.client.post("/articles/preview/", {"title": "Preview me", "inline_prefix": "blocks", "blocks-TOTAL_FORMS": "0"})
         self.assertEqual(response.status_code, 200)
         self.assertIn("Preview me", response.content.decode())
 
     def test_preview_renders_submitted_blocks(self):
-        staff = User.objects.get(username="admin")
+        staff, _created = User.objects.get_or_create(
+            username="admin",
+            defaults={"is_staff": True, "is_superuser": True, "email": "a@example.com"},
+        )
+        if _created:
+            staff.set_password("S3cure!pass")
+            staff.save()
         self.client.force_login(staff)
         payload = {
             "title": "Preview blocks",

@@ -15,7 +15,7 @@ NavigationItem     ordered, feature-aware header and megamenu links.
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -359,6 +359,14 @@ class ContactMessage(models.Model):
         ("email", "Reply by email"),
         ("call", "Call me back"),
     )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="contact_messages",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Set only when an authenticated user submits the form. Historical messages are never attached by address.",
+    )
     created = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=120)
     email = models.EmailField()
@@ -491,7 +499,12 @@ class ArticleBlock(models.Model):
         ArticleImage, related_name="blocks", on_delete=models.SET_NULL, blank=True, null=True,
         help_text="Pick one of the images uploaded for this article.",
     )
-    video_file = models.FileField(upload_to="articles/videos/", blank=True, help_text="Internal video (mp4, webm).")
+    video_file = models.FileField(
+        upload_to="articles/videos/",
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=["mp4", "webm"])],
+        help_text="Internal video (mp4, webm only).",
+    )
     video_url = models.CharField(
         max_length=400, blank=True, help_text="External YouTube or Vimeo URL. Loads only after consent."
     )
@@ -734,7 +747,11 @@ class FooterItem(models.Model):
     page = models.CharField(max_length=20, choices=PAGE_CHOICES, default=PAGE_CUSTOM, blank=True)
     url = models.CharField(max_length=500, blank=True, help_text="Used only for Custom URL links.")
     text = models.TextField(blank=True, help_text="Used only for Text block entries.")
-    media = models.FileField(upload_to="footer/", blank=True)
+    media = models.FileField(
+        upload_to="footer/",
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "webp"])],
+    )
     media_alt = models.CharField(max_length=160, blank=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES, blank=True)
     sort_order = models.PositiveIntegerField(default=100)

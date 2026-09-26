@@ -8,6 +8,9 @@ from core.models import FooterItem, FooterSection, NavigationItem, ProtectedPage
 
 
 def ensure_admin_user():
+    """Development-only bootstrap. Production must use createsuperuser."""
+    if not settings.DEBUG:
+        return None, False
     User = get_user_model()
     username = settings.SEED_ADMIN_USERNAME
     user = User.objects.filter(username=username).first()

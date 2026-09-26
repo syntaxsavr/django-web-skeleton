@@ -192,6 +192,66 @@ the notes say how.
   `core/admin.py`. When you register a new model, add it to the matching
   group there instead of letting it fall into the default app dump.
 
+## Security invariants (do not program over these)
+
+These invariants came out of a security review. If a coding agent changes
+the surrounding code, the invariant MUST survive. Every one of them has a
+regression test in `accounts/tests.py::SecurityRegressionTests` or
+`core/tests.py` - if your change breaks one, your change is wrong.
+
+1. **Production never auto-creates administrative credentials.** The
+   post-migrate signal and `manage.py seed` create a superuser ONLY while
+   DEBUG is on, and the server refuses to boot in production while
+   `SEED_ADMIN_PASSWORD` is unset or still the published default. Do not
+   loosen this, do not print credentials anywhere, do not put them back
+   into the README.
+2. **Data exports attach messages by account relation only.**
+   `ContactMessage.user` is set exclusively when an authenticated user
+   submits the form. Never match messages to users by email address -
+   email verification is not universally enforced, so an address match
+   proves nothing.
+3. **Export archives live in private storage** (`accounts/storage.py`,
+   outside MEDIA_ROOT, no public URL). Only the ownership-checked download
+   view serves them. Deleting an export row MUST delete the file too (the
+   model's delete() does this; bulk deletions go through
+   `purge_user_exports`). Do not move archives into public media storage.
+4. **Every authentication and confirmation endpoint is rate limited**
+   (django-ratelimit on the view) and code verification counts attempts
+   (`_register_code_attempt`): too many wrong codes burn the code. New
+   auth flows need both. Rate-limited responses stay uniform - a 429 must
+   not become an account-existence oracle.
+5. **Magic links are single-use in the database** (`MagicLink.consume()`
+   conditional update). Never replace this with cache flags: local-memory
+   cache is per-process and replay-prone.
+6. **Anti-enumeration**: code and magic flows answer byte-identically for
+   existing and unknown addresses (unknown addresses get a code only when
+   registration is open, which doubles as email verification). Keep the
+   test that asserts the equality.
+7. **Redirects after authentication go through `_safe_next`** - never pass
+   a raw `?next` value to redirect().
+8. **Forced 2FA covers every surface.** While `force_2fa_users` is on,
+   both `ProtectedPageMiddleware` (any protected path) and
+   `UserGateMiddleware` (/account/) reject sessions without a verified
+   device; exemptions are only the 2FA pages and logout. If you add a new
+   authenticated area, it is covered automatically - keep it that way.
+9. **Contact form defenses fail closed.** An enabled Turnstile with a
+   missing secret is a hard error, not a bypass; Cloudflare outages also
+   block submission. The session cooldown is UX only - the IP rate limit
+   is the actual control.
+10. **Destructive confirmations expire.** The deletion confirmation state
+    is valid for 10 minutes (`CONFIRMATION_FRESHNESS`) and wrong-code
+    attempts are capped. Do not extend these windows casually.
+11. **Uploads are allow-listed.** New file fields get
+    `FileExtensionValidator` with the narrowest extension list that works,
+    and images are re-encoded (avatars) or dimension-checked before
+    decode. Serve media from a separate origin in production deployments
+    (deployment-level control, note it in the server config).
+12. **No wildcards in script-src.** The CSP builder lists exact hosts;
+    if a new integration needs another host, add it explicitly and extend
+    the no-wildcard test.
+13. **No debug output in public views.** No print/console statements in
+    any view; logs go through logging.getLogger.
+
 ## Two-factor enforcement
 
 `ENFORCE_STAFF_2FA` (settings, defaults to `not DEBUG`) forces every

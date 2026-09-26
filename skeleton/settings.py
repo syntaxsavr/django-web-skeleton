@@ -267,13 +267,32 @@ CONTACT_RATE_LIMIT_SECONDS = int(os.environ.get("CONTACT_RATE_LIMIT_SECONDS", "3
 
 # django-ratelimit windows for auth views (constant by design: brute force
 # protection should not be accidentally disableable from the DB).
-LOGIN_RATELIMIT = "5/m"
+LOGIN_RATELIMIT = "10/m"
 REGISTER_RATELIMIT = "3/m"
+CODE_START_RATELIMIT = "5/15m"
+CODE_VERIFY_RATELIMIT = "10/m"
+TOKEN_REGISTER_RATELIMIT = "3/h"
+CONTACT_IP_RATELIMIT = "5/h"
 
-# Bootstrap seed credentials (manage.py seed)
+# Bootstrap seed credentials (manage.py seed). Seeding is a DEVELOPMENT
+# convenience: the post-migrate signal only creates the superuser when
+# DEBUG is on. Production must use createsuperuser, and refuses to boot
+# while the password is unset or still the published development default.
 SEED_ADMIN_USERNAME = os.environ.get("SEED_ADMIN_USERNAME", "admin")
 SEED_ADMIN_PASSWORD = os.environ.get("SEED_ADMIN_PASSWORD", "b_4sIcPW007")
 SEED_ADMIN_EMAIL = os.environ.get("SEED_ADMIN_EMAIL", "admin@example.com")
+if not DEBUG and SEED_ADMIN_PASSWORD in ("", "b_4sIcPW007"):
+    if "test" not in sys.argv:
+        raise RuntimeError(
+            "Refusing to run in production with the development seed password. "
+            "Set SEED_ADMIN_PASSWORD to a strong unique value (or use DEBUG mode "
+            "for local development)."
+        )
+
+# Sensitive downloads (data-export archives) live OUTSIDE MEDIA_ROOT and
+# are never exposed by the /media/ route; only the authenticated view
+# serves them.
+PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"
 
 # --- django-unfold admin theme ---------------------------------------------
 # Light theme, brand-matched. Input contrast is enforced in core/css/admin.css

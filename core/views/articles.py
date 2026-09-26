@@ -31,7 +31,6 @@ def article_detail(request, slug):
     config = site_config(request)
     if not config.enable_articles:
         raise Http404
-    print("VDEBUG enable_articles:", config.enable_articles, "slugs:", list(Article.objects.values_list("slug", "published")))
     article = get_object_or_404(Article.objects.prefetch_related("images", "blocks"), slug=slug, published=True)
     return render(
         request,
