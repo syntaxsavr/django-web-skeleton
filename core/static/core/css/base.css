@@ -53,6 +53,9 @@
 
 html {
   scroll-behavior: smooth;
+  /* Reserve the scrollbar slot permanently so scroll locks (modals,
+     consent banner) never shift the page horizontally. */
+  scrollbar-gutter: stable;
 }
 
 body {
