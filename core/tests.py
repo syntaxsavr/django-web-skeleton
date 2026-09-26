@@ -922,3 +922,22 @@ class PasswordMinimumTests(TestCase):
         }
         response = self.client.post("/accounts/register/", payload, follow=True)
         self.assertContains(response, "at least 8 characters")
+
+
+class AdminDocsTests(ConfigIsolatedTestCase):
+    def test_docs_page_staff_only(self):
+        response = self.client.get("/admin/docs/")
+        self.assertEqual(response.status_code, 302)  # admin login
+        staff, _created = User.objects.get_or_create(
+            username="docadmin",
+            defaults={"is_staff": True, "is_superuser": True, "email": "d@example.com"},
+        )
+        if _created:
+            staff.set_password("S3cure!pass")
+            staff.save()
+        self.client.force_login(staff)
+        response = self.client.get("/admin/docs/")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("What do you want to change?", html)
+        self.assertIn("ops/pending/", html)
