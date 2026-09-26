@@ -1,6 +1,6 @@
 """URL routes for the core app."""
 
-from django.urls import path, re_path
+from django.urls import include, path, re_path
 
 from core.views import articles as article_views
 from core.views import auth as account_views
@@ -21,10 +21,8 @@ urlpatterns = [
     path("contact/", contact_views.contact, name="contact"),
     path("contact/thanks/", contact_views.contact_thanks, name="contact_thanks"),
     # --- Auth ---
-    path("accounts/login/", account_views.RateLimitedLoginView.as_view(), name="login"),
-    path("accounts/logout/", account_views.LogoutView.as_view(), name="logout"),
-    path("accounts/register/", account_views.register, name="register"),
-    path("accounts/register/confirm/", account_views.registration_otp, name="registration_otp"),
+        path("accounts/logout/", account_views.LogoutView.as_view(), name="logout"),
+        path("accounts/register/confirm/", account_views.registration_otp, name="registration_otp"),
     path("accounts/register/resend/", account_views.registration_otp_resend, name="registration_otp_resend"),
     path(
         "accounts/password_reset/",
@@ -46,8 +44,7 @@ urlpatterns = [
         account_views.PasswordResetCompleteView.as_view(),
         name="password_reset_complete",
     ),
-    path("account/", account_views.account_dashboard, name="account_dashboard"),
-    path("account/two-factor/", twofa_views.two_factor_manage, name="two_factor_manage"),
+        path("account/two-factor/", twofa_views.two_factor_manage, name="two_factor_manage"),
     path("account/two-factor/setup/", twofa_views.two_factor_setup, name="two_factor_setup"),
     path("account/two-factor/verify/", twofa_views.two_factor_verify, name="two_factor_verify"),
     path("account/two-factor/remove/", twofa_views.two_factor_remove, name="two_factor_remove"),
@@ -63,6 +60,7 @@ urlpatterns = [
     path("security.txt", machine_views.security_txt, name="security_txt"),
     path(".well-known/security.txt", machine_views.security_txt, name="security_txt_wellknown"),
     re_path(r"^([A-Za-z0-9-]{8,128})\.txt$", machine_views.indexnow_key_file, name="indexnow_key_file"),
+    path("", include("accounts.urls")),
     # --- Lazy sections ---
     path("lazy-section/<path:name>/", fragment_views.lazy_section, name="lazy_section"),
 ]

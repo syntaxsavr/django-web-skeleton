@@ -68,6 +68,80 @@ docs/NAVIGATION.md        header logo, megamenu and mobile navigation contract
 
 ## Agent how-to notes (read before touching these areas)
 
+### Accounts app (accounts/) - the login and privacy layer
+
+If you are a coding agent and want to change anything about logins,
+profiles or privacy, read this first. The rules below are requirements,
+not suggestions.
+
+- **Login methods** are switches on SiteConfiguration: password
+  (`login_identifier_mode` picks username/email/either), email code,
+  magic link, anonymous access codes. `enable_accounts` is the master
+  switch: when off, `accounts.middleware.AccountsMiddleware` 404s the
+  whole surface and the context processors remove every link. If you add
+  a new login method, it MUST follow the anti-enumeration rule: the
+  response for an existing address and an unknown address is byte-level
+  identical except the address the visitor typed (see
+  `accounts/tests.py::EmailCodeLoginTests` for the exact assertion) and
+  unknown addresses only proceed when registration is open. Magic links
+  are single-use (cache-marked), codes are hashed (`EmailCode`,
+  session-only for unknown addresses) and expire in 15 minutes.
+
+- **Every login goes through `accounts.authhelpers.pending_profile_gate`**:
+  suspension check (pending deletions block login), forced 2FA check,
+  required-profile-fields check, then `record_login` (LoginEvent with IP
+  and agent). If you add a login method, call the gate and record the
+  event - the sign-in history page shows this data to users.
+
+- **Registration is dynamic.** Admin-defined `RegistrationField` rows
+  become form fields; values live in `UserProfile.extra_data` as plain
+  sanitized strings. `ConsentText` rows become untickable-by-default
+  checkboxes; acceptances are snapshotted into `UserConsent` (slug,
+  title, version) - never reference the text, snapshot it, so later text
+  edits do not silently rewrite what people agreed to. Accounts created
+  before a required field existed are forced to
+  `/account/complete/` by `accounts.middleware.UserGateMiddleware` until
+  they fill it in.
+
+- **Privacy center flows have deliberate friction - do not optimize it
+  away.** Exports: request -> `export_wait_minutes` (30) waiting ->
+  throttled archive build (`process_due_exports`, ONE archive per
+  maintenance pass, `time.sleep(1)` intentional) -> download window of
+  `export_retention_days` (30) -> auto-purge -> `export_cooldown_days`
+  (28) before the next request. Data deletion and account deletion both
+  require (1) an email code and (2) typing an uncopyable session-generated
+  sentence (`.confirm-phrase` is user-select:none; regenerate per attempt);
+  both suspend the account (`is_active=False`) for `deletion_delay_hours`
+  (72). Data deletion then wipes profile data but KEEPS login events for
+  their retention window; account deletion pseudonymises the row
+  (`_pseudonymise_user`) so identifiers are freed. `mailhashed` accounts
+  are one-way: the plain email is gone, login matches
+  sha256(lowercased email) stored in `email_hash`; there is no unhash
+  path except manual admin edits.
+
+- **Sanitisation is mandatory.** Any new form that accepts text from
+  outside must pass it through `core.sanitizers.clean_text` /
+  `clean_multiline` (bleach, tags stripped). Avatars are re-encoded with
+  Pillow (EXIF stripped, 256px PNG) and only allowed while
+  `allow_avatar_upload` is on, capped by `avatar_max_kb`.
+
+- **Passwords** hash with Argon2id (PASSWORD_HASHERS), minimum 8 chars
+  via validators + `validate_password` in any new password form; eye
+  toggle via `core/js/password-toggle.js` and a `.pw-field` wrapper.
+
+- **Admin user controls**: the user admin has one-way "convert to hashed
+  email", "disable", and "pseudonymise now" actions. `force_2fa_users`
+  drags staff along: while it is on, staff 2FA cannot be waived by env
+  (see `Staff2FAMiddleware.process_view`).
+
+- **Maintenance**: `accounts.maintenance.run_all` (daily, from the core
+  trigger or `manage.py accounts_maintenance`) processes due exports,
+  purges expired archives, executes scheduled deletions and purges login
+  events past `login_event_retention_days`. Anything new that stores user
+  data must be added to the export payload AND a purge path.
+
+### Error pages (security-critical)
+
 If you are a coding agent and want to change anything below, follow the
 recipe instead of inventing your own approach. These systems interact;
 the notes say how.

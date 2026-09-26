@@ -1,0 +1,14 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Check your inbox</h1>
+    <p class="section-lead">{{ notice }}</p>
+    <p class="auth-links"><a href="{% url 'login' %}">Back to sign in</a></p>
+  </div>
+</section>
+{% endblock %}

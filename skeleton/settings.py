@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "django_otp",
     "django_otp.plugins.otp_totp",
     "core",
+    "accounts",
 ]
 
 MIDDLEWARE = [
@@ -98,6 +99,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django_otp.middleware.OTPMiddleware",
     "core.middleware.Staff2FAMiddleware",
+    "accounts.middleware.AccountsMiddleware",
+    "accounts.middleware.UserGateMiddleware",
     "core.middleware.ProtectedPageMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -137,6 +140,14 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# Argon2id first: the tightest mainstream password hashing. Existing
+# PBKDF2 hashes upgrade transparently on the next login.
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+]
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -183,7 +194,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # --- Email -----------------------------------------------------------------
 
 if DEBUG:
-    EMAIL_BACKEND = "django.contrib.mail.backends.console.EmailBackend"
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 

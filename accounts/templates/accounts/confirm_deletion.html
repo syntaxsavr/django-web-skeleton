@@ -1,0 +1,49 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>{{ title }}</h1>
+    {% if messages %}<div role="alert">{% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}
+    <p class="section-lead">{{ intro }}</p>
+
+    {% if step == 1 and not code_sent %}
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="request_code">
+      <p>Step 1 of 2: confirm with a code sent to your email address.</p>
+      <button type="submit" class="btn btn-primary btn-block">Send me a code</button>
+    </form>
+    {% elif step == 1 %}
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="verify_code">
+      <p>Step 1 of 2: enter the code we sent to your email address.</p>
+      <div class="form-field">
+        <label for="id_code">Six-digit code</label>
+        <input type="text" name="code" id="id_code" inputmode="numeric" maxlength="6" pattern="[0-9]*" autocomplete="one-time-code" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Confirm code</button>
+    </form>
+    {% endif %}
+
+    {% if step == 2 %}
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="confirm_phrase">
+      <p>Step 2 of 2: type this sentence exactly. It changes every time and cannot be copied.</p>
+      <p class="confirm-phrase" aria-label="Confirmation sentence to type">{{ phrase }}</p>
+      <div class="form-field">
+        <label for="id_phrase">Type the sentence</label>
+        <textarea name="phrase" id="id_phrase" rows="2" required></textarea>
+      </div>
+      <button type="submit" class="btn btn-danger btn-block">{{ title }}</button>
+    </form>
+    {% endif %}
+    <p class="auth-links"><a href="{% url 'privacy_center' %}">Cancel and go back</a></p>
+  </div>
+</section>
+{% endblock %}

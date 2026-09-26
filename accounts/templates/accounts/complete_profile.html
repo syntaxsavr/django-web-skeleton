@@ -1,0 +1,24 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Complete your profile</h1>
+    <p class="section-lead">This site now asks for a few details your account does not have yet. Fill them in to continue.</p>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      {% for field in form.visible_fields %}
+      <div class="form-field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="field-help">{{ field.help_text }}</p>{% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary btn-block">Save and continue</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

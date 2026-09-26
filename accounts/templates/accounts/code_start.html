@@ -1,0 +1,23 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>{% if magic %}Magic link{% else %}Email code{% endif %}</h1>
+    {% if messages %}<div role="alert">{% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}
+    <p class="section-lead">{{ notice }}</p>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <div class="form-field">
+        <label for="id_email">{{ form.email.label }}</label>
+        <input type="email" name="email" id="id_email" autocomplete="email" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">{% if magic %}Send the link{% else %}Send the code{% endif %}</button>
+    </form>
+    <p class="auth-links"><a href="{% url 'login' %}">Other sign-in options</a></p>
+  </div>
+</section>
+{% endblock %}

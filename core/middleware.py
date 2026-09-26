@@ -298,7 +298,11 @@ class Staff2FAMiddleware:
         return response
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if not getattr(settings, "ENFORCE_STAFF_2FA", False):
+        config = _config(request)
+        # The user-forced switch drags the admin along: while any user is
+        # forced, staff enforcement cannot be waived by env either.
+        forced = getattr(settings, "ENFORCE_STAFF_2FA", False) or config.force_2fa_users
+        if not forced:
             return None
         user = getattr(request, "user", None)
         if not (user is not None and user.is_authenticated and user.is_staff):

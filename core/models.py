@@ -178,7 +178,50 @@ class SiteConfiguration(models.Model):
     )
 
     # --- Auth -------------------------------------------------------------------
+    enable_accounts = models.BooleanField(
+        default=True,
+        help_text="Master switch. Off removes every trace of login/registration from the site: routes answer 404, navigation entries disappear.",
+    )
+    login_identifier_mode = models.CharField(
+        max_length=10,
+        choices=(("username", "Username"), ("email", "Email"), ("either", "Username or email")),
+        default="either",
+        help_text="Identifier accepted by the password and code logins.",
+    )
+    enable_login_password = models.BooleanField(default=True)
+    enable_login_email_otp = models.BooleanField(
+        default=False, help_text="Anti-enumeration: the same answer is shown whether or not the address exists."
+    )
+    enable_login_magic_link = models.BooleanField(
+        default=False, help_text="Anti-enumeration: the same answer is shown whether or not the address exists."
+    )
+    enable_login_anonymous = models.BooleanField(
+        default=False, help_text="Access-code accounts: a random string is the credential. No email, no password."
+    )
+    anonymous_token_length = models.PositiveIntegerField(default=20)
+    force_2fa_users = models.BooleanField(
+        default=False,
+        help_text="Every account (not only staff) must confirm a second factor. While on, the admin's own 2FA cannot be bypassed either.",
+    )
+    allow_avatar_upload = models.BooleanField(default=True)
+    avatar_max_kb = models.PositiveIntegerField(default=2048)
     enable_public_registration = models.BooleanField(default=True)
+    login_event_retention_days = models.PositiveIntegerField(
+        default=14,
+        help_text="Technical login traces (IP, agent, time) are kept at least this long and purged after.",
+    )
+    export_wait_minutes = models.PositiveIntegerField(
+        default=30, help_text="Data export: minutes between request and archive availability."
+    )
+    export_retention_days = models.PositiveIntegerField(
+        default=30, help_text="Data export: archives auto-delete this many days after they were requested."
+    )
+    export_cooldown_days = models.PositiveIntegerField(
+        default=28, help_text="Data export: minimum days between two requests per user."
+    )
+    deletion_delay_hours = models.PositiveIntegerField(
+        default=72, help_text="Deletion executions (data and account) wait this many hours, during which the account is suspended."
+    )
     enable_email_otp = models.BooleanField(
         default=False,
         help_text="Registration requires entering a one-time code sent by email before the account becomes active.",
@@ -462,6 +505,10 @@ class ArticleBlock(models.Model):
         ordering = ["sort_order", "pk"]
 
     def clean(self):
+        from core.sanitizers import clean_multiline
+
+        if self.text:
+            self.text = clean_multiline(self.text)
         errors = {}
         if self.kind in (self.KIND_HEADING, self.KIND_TEXT, self.KIND_QUOTE) and not self.text.strip():
             errors["text"] = "This block needs text."

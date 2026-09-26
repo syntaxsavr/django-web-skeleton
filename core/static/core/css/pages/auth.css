@@ -89,3 +89,101 @@
 .pw-field input {
   padding-right: 46px;
 }
+
+.method-alt {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+}
+.field-help {
+  color: var(--ink-40);
+  font-size: 0.82rem;
+  margin: 6px 0 0;
+}
+.account-links {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+.token-reveal {
+  border: 1px solid var(--ink);
+  background: var(--wash);
+  padding: 16px;
+  margin-bottom: 18px;
+}
+.token-value {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 8px 0 4px;
+  word-break: break-all;
+}
+.avatar-preview {
+  display: block;
+  border: 1px solid var(--ink);
+  margin-bottom: 10px;
+}
+.twofa-status p {
+  margin: 6px 0 0;
+}
+.login-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 18px;
+  font-size: 0.88rem;
+}
+.login-table th,
+.login-table td {
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+  padding: 8px 6px;
+}
+.login-table th {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+.privacy-block {
+  border-top: 1px solid var(--rule-strong);
+  padding-top: 18px;
+  margin-top: 26px;
+}
+.privacy-block h2 {
+  font-size: 1.3rem;
+  margin: 10px 0 8px;
+}
+.privacy-block .btn {
+  margin-top: 8px;
+}
+.confirm-phrase {
+  border: 1px dashed var(--ink);
+  background: var(--wash);
+  padding: 14px 16px;
+  font-size: 1.05rem;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  cursor: default;
+}
+.btn-danger {
+  background: #a02121;
+  border-color: #a02121;
+  color: #fcfcfa;
+}
+.btn-danger:hover {
+  background: transparent;
+  color: #a02121;
+}

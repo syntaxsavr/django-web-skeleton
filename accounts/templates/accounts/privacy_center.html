@@ -1,0 +1,48 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-account{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Privacy center</h1>
+    {% if messages %}<div role="alert">{% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}
+    {% if deletion_pending %}<p class="auth-note">A deletion is scheduled for this account. The account is suspended until it executes.</p>{% endif %}
+
+    <div class="privacy-block">
+      <span class="mono-label">Your data</span>
+      <h2>Download a copy</h2>
+      {% if latest_export and latest_export.status == 'ready' and not latest_export.is_expired %}
+      <p>An archive is ready. It stays downloadable until {{ latest_export.expires_at|date:"j F Y" }}, then it is deleted automatically.</p>
+      <a class="btn btn-primary" href="{% url 'export_download' latest_export.pk %}">Download data</a>
+      {% elif latest_export and latest_export.status == 'waiting' %}
+      <p>Your archive is being prepared. Be right back, this takes a bit. Come back in a few minutes; the download button appears here on its own.</p>
+      {% else %}
+      <p>Request a machine-readable copy of everything this site stores about you. Preparing it takes about {{ export_wait_minutes }} minutes; the archive then stays available for a month. You can request the next one after a cooling-off period.</p>
+      {% if can_request_export %}
+      <form method="post" action="{% url 'export_request' %}">{% csrf_token %}<button type="submit" class="btn btn-primary">Request my data</button></form>
+      {% else %}
+      <p>You can request again on {{ cooldown_until|date:"j F Y" }}.</p>
+      {% endif %}
+      {% endif %}
+    </div>
+
+    <div class="privacy-block">
+      <span class="mono-label">Least possible data</span>
+      <h2>Delete my data</h2>
+      <p>Removes profile details, consents and archives. Technical login traces remain for the retention window. The deletion executes after 72 hours; your account is suspended until then and resumes afterwards.</p>
+      <a class="btn btn-ghost" href="{% url 'data_deletion' %}">Delete my data</a>
+    </div>
+
+    <div class="privacy-block">
+      <span class="mono-label">Leaving</span>
+      <h2>Delete my account</h2>
+      <p>Everything is removed after 72 hours and the account is deactivated. This cannot be undone; coming back means registering again.</p>
+      <a class="btn btn-ghost" href="{% url 'account_deletion' %}">Delete my account</a>
+    </div>
+
+    <p class="auth-links"><a href="{% url 'account_dashboard' %}">Back to your account</a></p>
+  </div>
+</section>
+{% endblock %}

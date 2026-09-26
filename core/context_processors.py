@@ -46,6 +46,8 @@ NAVIGATION_ROUTES = {
 
 
 def _navigation_item_visible(item, config, request):
+    if item.page in (NavigationItem.PAGE_LOGIN, NavigationItem.PAGE_REGISTER, NavigationItem.PAGE_ACCOUNT, NavigationItem.PAGE_LOGOUT):
+        return config.enable_accounts and _auth_page_visible(item.page, config, request)
     if item.page == NavigationItem.PAGE_ARTICLES:
         return config.enable_articles
     if item.page == NavigationItem.PAGE_CONTACT:
@@ -55,6 +57,16 @@ def _navigation_item_visible(item, config, request):
     if item.page == NavigationItem.PAGE_LOGIN:
         return not request.user.is_authenticated
     if item.page in (NavigationItem.PAGE_ACCOUNT, NavigationItem.PAGE_LOGOUT):
+        return request.user.is_authenticated
+    return True
+
+
+def _auth_page_visible(page, config, request):
+    if page in (NavigationItem.PAGE_REGISTER,):
+        return config.enable_public_registration and not request.user.is_authenticated
+    if page in (NavigationItem.PAGE_LOGIN,):
+        return not request.user.is_authenticated
+    if page in (NavigationItem.PAGE_ACCOUNT, NavigationItem.PAGE_LOGOUT):
         return request.user.is_authenticated
     return True
 
@@ -100,6 +112,8 @@ def _footer_item_visible(item, config, request):
         return True
     if item.kind != FooterItem.KIND_LINK:
         return True
+    if item.page in (FooterItem.PAGE_LOGIN, FooterItem.PAGE_REGISTER, FooterItem.PAGE_ACCOUNT):
+        return config.enable_accounts and _footer_auth_visible(item.page, config, request)
     if item.page == FooterItem.PAGE_ARTICLES:
         return config.enable_articles
     if item.page == FooterItem.PAGE_CONTACT:
@@ -115,6 +129,14 @@ def _footer_item_visible(item, config, request):
     if item.page in (FooterItem.PAGE_LLMS, FooterItem.PAGE_LLMS_FULL):
         return config.enable_llms_txt
     return True
+
+
+def _footer_auth_visible(page, config, request):
+    if page == FooterItem.PAGE_REGISTER:
+        return config.enable_public_registration and not request.user.is_authenticated
+    if page == FooterItem.PAGE_LOGIN:
+        return not request.user.is_authenticated
+    return request.user.is_authenticated
 
 
 def _footer_item_url(item):

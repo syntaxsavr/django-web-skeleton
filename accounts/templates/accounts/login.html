@@ -1,0 +1,44 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Sign in</h1>
+    {% if messages %}<div role="alert">{% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}
+    {% if config.enable_login_password %}
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+      <div class="form-field">
+        <label for="id_identifier">{{ form.identifier.label }}</label>
+        <input type="text" name="identifier" id="id_identifier" autocomplete="username" required autofocus value="{{ form.identifier.value|default:'' }}">
+        {{ form.identifier.errors }}
+      </div>
+      <div class="form-field pw-field">
+        <label for="id_password">Password</label>
+        <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+        <button type="button" class="pw-eye" data-password-view="id_password" aria-label="Show or hide password" title="Show password"></button>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+    </form>
+    <p class="auth-links"><a href="{% url 'password_reset' %}">Forgot the password?</a></p>
+    {% endif %}
+    {% if config.enable_login_email_otp %}
+    <div class="method-alt"><span class="mono-label">Or</span><a class="btn btn-ghost btn-block" href="{% url 'login_code_start' %}">Sign in with an email code</a></div>
+    {% endif %}
+    {% if config.enable_login_magic_link %}
+    <div class="method-alt"><a class="btn btn-ghost btn-block" href="{% url 'login_magic_start' %}">Sign in with a magic link</a></div>
+    {% endif %}
+    {% if config.enable_login_anonymous %}
+    <div class="method-alt"><a class="btn btn-ghost btn-block" href="{% url 'login_token' %}">Enter an access code</a></div>
+    {% endif %}
+    {% if config.enable_public_registration %}
+    <p class="auth-links"><span>No account?</span> <a href="{% url 'register' %}">Register</a></p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}<script defer src="{% static 'core/js/password-toggle.js' %}"></script>{% endblock %}

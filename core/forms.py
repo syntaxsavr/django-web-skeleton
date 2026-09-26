@@ -6,6 +6,7 @@ from django import forms
 from django.contrib.auth.password_validation import validate_password
 
 from core.models import ContactMessage
+from core.sanitizers import clean_multiline, clean_text
 
 
 class ContactForm(forms.ModelForm):
@@ -26,6 +27,12 @@ class ContactForm(forms.ModelForm):
         widgets = {
             "message": forms.Textarea(attrs={"rows": 6}),
         }
+
+    def clean_name(self):
+        return clean_text(self.cleaned_data.get("name", ""))
+
+    def clean_message(self):
+        return clean_multiline(self.cleaned_data.get("message", ""))
 
     def clean_website(self):
         value = self.cleaned_data.get("website", "")

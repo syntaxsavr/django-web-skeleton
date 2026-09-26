@@ -137,12 +137,36 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Auth",
+            "Auth & login methods",
             {
+                "description": "Master switch off removes every trace of accounts from the site. Enable the login methods you want; code and magic-link logins never reveal whether an address exists.",
                 "fields": (
+                    "enable_accounts",
+                    "login_identifier_mode",
+                    "enable_login_password",
+                    "enable_login_email_otp",
+                    "enable_login_magic_link",
+                    "enable_login_anonymous",
+                    "anonymous_token_length",
+                    "force_2fa_users",
+                    "allow_avatar_upload",
+                    "avatar_max_kb",
                     "enable_public_registration",
                     "enable_email_otp",
                     "registration_requires_approval",
+                ),
+                "classes": ("wide",),
+            },
+        ),
+        (
+            "Retention & exports (GDPR)",
+            {
+                "fields": (
+                    "login_event_retention_days",
+                    "export_wait_minutes",
+                    "export_retention_days",
+                    "export_cooldown_days",
+                    "deletion_delay_hours",
                 )
             },
         ),

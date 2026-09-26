@@ -43,4 +43,11 @@ def purge_if_due() -> int:
     if cache.get(PURGE_LAST_RUN_KEY):
         return 0
     cache.set(PURGE_LAST_RUN_KEY, timezone.now().isoformat(), PURGE_LAST_RUN_TTL)
-    return purge_old_messages()
+    purged = purge_old_messages()
+    try:
+        from accounts.maintenance import run_all as accounts_run_all
+
+        accounts_run_all()
+    except Exception:
+        logger.exception("Accounts maintenance pass failed.")
+    return purged

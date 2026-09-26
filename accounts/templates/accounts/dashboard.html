@@ -1,0 +1,31 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-account{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Your account</h1>
+    {% if messages %}<div role="alert">{% for message in messages %}<p class="message message-{{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}
+    {% if new_token %}
+    <div class="token-reveal">
+      <span class="mono-label">Your new access code</span>
+      <p class="token-value">{{ new_token }}</p>
+      <p class="field-help">Store it now. It is shown only this once.</p>
+    </div>
+    {% endif %}
+    {% if missing_fields %}<p class="auth-note">Some details are still missing: {{ missing_fields|join:", " }}. <a href="{% url 'account_complete' %}">Fill them in</a>.</p>{% endif %}
+    <dl class="account-meta">
+      <dt>Signed in as</dt><dd>{{ user.username }}</dd>
+      {% if user.email %}<dt>Email</dt><dd>{{ user.email }}</dd>{% endif %}
+      <dt>Member since</dt><dd>{{ user.date_joined|date:"j F Y" }}</dd>
+    </dl>
+    <div class="account-links">
+      <a class="btn btn-ghost" href="{% url 'profile_settings' %}">Profile &amp; data</a>
+      <a class="btn btn-ghost" href="{% url 'profile_security' %}">Sign-in history &amp; 2FA</a>
+      <a class="btn btn-ghost" href="{% url 'privacy_center' %}">Privacy center</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

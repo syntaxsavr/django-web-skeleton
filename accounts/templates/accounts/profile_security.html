@@ -1,0 +1,36 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block body_class %}page-account{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'core/css/pages/auth.css' %}">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Sign-in history</h1>
+    <p class="section-lead">Technical traces of your logins. Kept for the site's retention window, then deleted.</p>
+    {% if devices %}
+    <div class="twofa-status"><span class="mono-label">Second factor</span><p>Active{% for d in devices %}{% if d.name %} · {{ d.name }}{% endif %}{% endfor %} — <a href="{% url 'two_factor_manage' %}">manage</a></p></div>
+    {% else %}
+    <div class="twofa-status"><span class="mono-label">Second factor</span><p>Not set up — <a href="{% url 'two_factor_setup' %}">add one</a></p></div>
+    {% endif %}
+    <table class="login-table">
+      <thead><tr><th scope="col">When</th><th scope="col">Method</th><th scope="col">IP</th></tr></thead>
+      <tbody>
+        {% for event in events %}
+        <tr><td>{{ event.created|date:"j M Y, H:i" }}</td><td>{{ event.get_method_display }}</td><td>{{ event.ip_address|default:"-" }}</td></tr>
+        {% empty %}
+        <tr><td colspan="3">No logins recorded yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if events.has_other_pages %}
+    <nav class="pagination" aria-label="Page">
+      {% if events.has_previous %}<a href="?page={{ events.previous_page_number }}">Newer</a>{% endif %}
+      <span>Page {{ events.number }} / {{ events.paginator.num_pages }}</span>
+      {% if events.has_next %}<a href="?page={{ events.next_page_number }}">Older</a>{% endif %}
+    </nav>
+    {% endif %}
+    <p class="auth-links"><a href="{% url 'account_dashboard' %}">Back to your account</a></p>
+  </div>
+</section>
+{% endblock %}
