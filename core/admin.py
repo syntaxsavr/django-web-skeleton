@@ -33,49 +33,128 @@ class NavigationItemInline(admin.TabularInline):
 class SiteConfigurationAdmin(admin.ModelAdmin):
     inlines = (NavigationItemInline,)
     fieldsets = (
+        # ------------------------------------------------------------------
+        # 1) THE SWITCH MAP: every on/off in one place, no keys, no texts.
+        # ------------------------------------------------------------------
         (
-            "Site identity",
+            "1 · Feature switches",
             {
-                "fields": (
-                    "site_name",
-                    "canonical_origin",
-                    "contact_email",
-                    "default_meta_description",
-                    "theme_color",
-                )
-            },
-        ),
-        (
-            "Header & navigation",
-            {
-                "description": "Upload the brand mark and edit ordered megamenu links below. Reuse a group name to place links in the same column.",
-                "fields": (
-                    "enable_header_logo",
-                    "header_logo",
-                    "header_logo_alt",
-                    "enable_megamenu",
-                    "navigation_menu_label",
-                    "enable_accessibility_panel",
-                ),
-            },
-        ),
-        (
-            "Announcement",
-            {
+                "description": "The main on/off map of the site. Turn features off and they disappear everywhere: routes, navigation, footer, sitemap, AI files. Fine-tuning for each lives in the collapsed groups below.",
                 "fields": (
                     "enable_announcement",
-                    "announcement_text",
-                    "announcement_url",
-                )
+                    "enable_header_logo",
+                    "enable_megamenu",
+                    "enable_accessibility_panel",
+                    "enable_footer",
+                    "enable_articles",
+                    "enable_contact_form",
+                    "enable_cookie_consent",
+                    "allow_avatar_upload",
+                    "enable_webp_conversion",
+                ),
+                "classes": ("wide",),
             },
         ),
         (
-            "Consent & tracking",
+            "2 · Accounts & signup switches",
             {
+                "description": "enable_accounts off removes every trace of accounts (login, register, account pages 404, links vanish). Enable the login methods you want - code and magic-link logins never reveal whether an address exists. With force 2FA on, every account (you included) must confirm a second factor before protected areas open.",
                 "fields": (
-                    "enable_cookie_consent",
+                    "enable_accounts",
+                    "enable_login_password",
+                    "enable_login_email_otp",
+                    "enable_login_magic_link",
+                    "enable_login_anonymous",
+                    "enable_public_registration",
+                    "enable_email_otp",
+                    "registration_requires_approval",
+                    "force_2fa_users",
+                ),
+                "classes": ("wide",),
+            },
+        ),
+        (
+            "3 · SEO switches",
+            {
+                "description": "Search-engine surfaces. Off = the route stops answering and the page drops out of sitemap, robots.txt references and llms.txt. The noindex kill switch is for staging: every page answers with noindex.",
+                "fields": (
+                    "enable_sitemap",
+                    "enable_robots_txt",
+                    "enable_llms_txt",
+                    "enable_jsonld",
+                    "enable_indexnow",
+                    "robots_noindex_whole_site",
+                ),
+                "classes": ("wide",),
+            },
+        ),
+        (
+            "4 · Protection & privacy switches",
+            {
+                "description": "Each toggle is one middleware behaviour: scraper blocking on legal pages, the Content-Security-Policy, the outbound-link snatcher (tagging + optional UTM and leave-site modal), message auto-deletion and the Turnstile challenge. Turning one off disables that layer only.",
+                "fields": (
+                    "enable_scraper_block",
+                    "enable_csp",
+                    "enable_external_link_handling",
+                    "external_link_utm",
+                    "external_link_modal",
+                    "enable_message_auto_delete",
+                    "enable_turnstile",
+                    "enable_calcom_embed",
+                    "enable_stripe_buy_button",
+                ),
+                "classes": ("wide",),
+            },
+        ),
+        (
+            "5 · Tracking switch",
+            {
+                "description": "Master switch for ALL measurement. Even when on, a tracker only loads after visitor consent AND when its ID is filled in below (collapsed group 'Tracking IDs').",
+                "fields": ("enable_tracking",),
+            },
+        ),
+        # ------------------------------------------------------------------
+        # 2) DETAILS: keys, texts and numbers. Collapsed so the switch map
+        #    stays the first thing you see.
+        # ------------------------------------------------------------------
+        (
+            "Site identity (rebranding)",
+            {
+                "description": "Canonical origin drives canonical URLs, hreflang, JSON-LD, sitemap and IndexNow - no trailing slash. Set this correctly before going live.",
+                "fields": ("site_name", "canonical_origin", "contact_email", "default_meta_description", "theme_color"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Header & navigation details",
+            {
+                "description": "Logo upload (fallback is the site name), megamenu label and the accessibility button switch. Megamenu LINKS live in their own admin section (Navigation items).",
+                "fields": ("header_logo", "header_logo_alt", "navigation_menu_label"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Announcement text",
+            {
+                "description": "The banner above the header. Only shown while the announcement switch (group 1) is on.",
+                "fields": ("announcement_text", "announcement_url"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Footer text",
+            {
+                "description": "Brand column text and the bottom bar strings. Footer COLUMNS and LINKS are separate rows under Footer sections.",
+                "fields": ("footer_note", "footer_bottom_left", "footer_bottom_right"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Tracking IDs",
+            {
+                "description": "One row per tracker. Paste the ID and the tracker is declared to the consent manager - empty ID means the tracker does not exist for the consent system at all.",
+                "fields": (
                     "consent_cookie_name",
-                    "enable_tracking",
                     "google_tag_manager_id",
                     "google_analytics_measurement_id",
                     "google_ads_id",
@@ -90,118 +169,69 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
                     "x_twitter_pixel_id",
                     "matomo_url",
                     "matomo_site_id",
-                )
+                ),
+                "classes": ("collapse",),
             },
         ),
         (
-            "SEO",
+            "SEO keys",
             {
+                "description": "Search-engine verification tokens render as meta tags when filled. The IndexNow key is served at /<key>.txt as proof and used by manage.py indexnow.",
                 "fields": (
-                    "enable_articles",
-                    "enable_sitemap",
-                    "enable_robots_txt",
-                    "enable_llms_txt",
-                    "enable_jsonld",
-                    "enable_indexnow",
                     "indexnow_key",
                     "google_site_verification",
                     "bing_site_verification",
                     "facebook_domain_verification",
                     "pinterest_domain_verification",
-                    "robots_noindex_whole_site",
-                )
-            },
-        ),
-        (
-            "Footer",
-            {
-                "description": "Footer columns and entries are edited under Footer sections. Do not edit the public template.",
-                "fields": (
-                    "enable_footer",
-                    "footer_note",
-                    "footer_bottom_left",
-                    "footer_bottom_right",
                 ),
+                "classes": ("collapse",),
             },
         ),
         (
-            "Forms & anti-spam",
+            "Turnstile & anti-spam details",
             {
-                "fields": (
-                    "enable_contact_form",
-                    "enable_turnstile",
-                    "turnstile_site_key",
-                    "turnstile_secret_key",
-                    "enable_honeypot",
-                    "form_min_seconds",
-                    "contact_rate_limit_seconds",
-                )
+                "description": "Cloudflare keys for the contact-form challenge (fail closed when enabled without a secret). Honeypot and time-trap run additionally; the cooldown is per session.",
+                "fields": ("turnstile_site_key", "turnstile_secret_key", "enable_honeypot", "form_min_seconds", "contact_rate_limit_seconds"),
+                "classes": ("collapse",),
             },
         ),
         (
-            "Auth & login methods",
+            "Login details",
             {
-                "description": "Master switch off removes every trace of accounts from the site. Enable the login methods you want; code and magic-link logins never reveal whether an address exists.",
-                "fields": (
-                    "enable_accounts",
-                    "login_identifier_mode",
-                    "enable_login_password",
-                    "enable_login_email_otp",
-                    "enable_login_magic_link",
-                    "enable_login_anonymous",
-                    "anonymous_token_length",
-                    "force_2fa_users",
-                    "allow_avatar_upload",
-                    "avatar_max_kb",
-                    "enable_public_registration",
-                    "enable_email_otp",
-                    "registration_requires_approval",
-                ),
-                "classes": ("wide",),
+                "description": "Which identifier the password login accepts, and the length of generated anonymous access codes.",
+                "fields": ("login_identifier_mode", "anonymous_token_length"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Embed keys",
+            {
+                "description": "Cal.com booking link and the shared Stripe publishable key. Individual products live under Stripe buttons.",
+                "fields": ("calcom_link", "stripe_publishable_key"),
+                "classes": ("collapse",),
             },
         ),
         (
             "Retention & exports (GDPR)",
             {
+                "description": "How long data is kept, with deliberate friction: contact messages and login traces auto-delete after their windows; exports wait out a waiting period, stay downloadable for their retention, then a cooldown applies before the next request; deletions execute after the delay and suspend the account until then.",
                 "fields": (
+                    "message_retention_days",
                     "login_event_retention_days",
                     "export_wait_minutes",
                     "export_retention_days",
                     "export_cooldown_days",
                     "deletion_delay_hours",
-                )
+                ),
+                "classes": ("collapse",),
             },
         ),
         (
-            "Embeds",
+            "Media details",
             {
-                "fields": (
-                    "enable_calcom_embed",
-                    "calcom_link",
-                    "enable_stripe_buy_button",
-                    "stripe_publishable_key",
-                )
-            },
-        ),
-        (
-            "Data minimisation",
-            {
-                "fields": (
-                    "enable_message_auto_delete",
-                    "message_retention_days",
-                )
-            },
-        ),
-        (
-            "Middleware switches",
-            {
-                "fields": (
-                    "enable_scraper_block",
-                    "enable_csp",
-                    "enable_external_link_handling",
-                    "external_link_utm",
-                    "external_link_modal",
-                )
+                "description": "WebP conversion quality for article images and the avatar upload size cap.",
+                "fields": ("webp_quality", "avatar_max_kb"),
+                "classes": ("collapse",),
             },
         ),
     )
