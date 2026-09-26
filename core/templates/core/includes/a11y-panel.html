@@ -3,20 +3,29 @@
     <h2 id="a11y-modal-title">Accessibility</h2>
     <p class="modal-note">Display options for this device. Saved locally, never sent anywhere.</p>
     <div class="a11y-options">
-      <button type="button" class="a11y-option" data-a11y-action="toggle-dark">
-        <span>Dark mode</span><small>Invert paper and ink.</small>
+      <button type="button" class="a11y-option" data-a11y-action="toggle-dark" aria-pressed="false">
+        <span class="a11y-option-text"><span>Dark mode</span><small>Invert paper and ink.</small></span>
+        <span class="a11y-state" data-a11y-state="toggle-dark">Off</span>
       </button>
-      <button type="button" class="a11y-option" data-a11y-action="toggle-contrast">
-        <span>High contrast</span><small>Stronger lines, harder text.</small>
+      <button type="button" class="a11y-option" data-a11y-action="toggle-contrast" aria-pressed="false">
+        <span class="a11y-option-text"><span>High contrast</span><small>Stronger lines, harder text.</small></span>
+        <span class="a11y-state" data-a11y-state="toggle-contrast">Off</span>
       </button>
-      <button type="button" class="a11y-option" data-a11y-action="toggle-text">
-        <span>Larger text</span><small>Cycle 100%, 110%, 125%.</small>
+      <button type="button" class="a11y-option" data-a11y-action="toggle-text" aria-pressed="false">
+        <span class="a11y-option-text"><span>Text size</span><small>Scale all text on the page.</small></span>
+        <span class="a11y-state" data-a11y-state="toggle-text">100%</span>
       </button>
-      <button type="button" class="a11y-option" data-a11y-action="toggle-motion">
-        <span>Reduce motion</span><small>Stop animations and reveals.</small>
+      <button type="button" class="a11y-option" data-a11y-action="toggle-motion" aria-pressed="false">
+        <span class="a11y-option-text"><span>Reduce motion</span><small>Stop animations and reveals.</small></span>
+        <span class="a11y-state" data-a11y-state="toggle-motion">Off</span>
       </button>
       <button type="button" class="a11y-option" data-a11y-action="print-page">
-        <span>Print page</span><small>Open the print edition.</small>
+        <span class="a11y-option-text"><span>Print page</span><small>Open the print edition.</small></span>
+        <span class="a11y-state a11y-state-neutral">Action</span>
+      </button>
+      <button type="button" class="a11y-option a11y-option-reset" data-a11y-action="a11y-reset">
+        <span class="a11y-option-text"><span>Reset</span><small>Back to the defaults.</small></span>
+        <span class="a11y-state a11y-state-neutral">Reset</span>
       </button>
     </div>
     <div class="modal-actions">

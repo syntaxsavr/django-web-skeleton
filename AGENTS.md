@@ -247,7 +247,8 @@ its own trusted inline scripts).
 | `data-external` (added by middleware) | external-link-modal.js | leave-site interception |
 | `data-consent-suppress` on `<body>` | klaro-bootstrap.js | never auto-open the banner (legal pages) |
 | `data-open-cookie-settings` | klaro-config.js | re-open the consent UI |
-| `data-a11y-action` | prefs.js | dark mode / text size / motion toggles |
+| `data-a11y-action` | prefs.js | dark mode / contrast / text size / motion / print / reset |
+| `data-a11y-state` | prefs.js | live state label for an option (On/Off, 100%/110%/125%); keep it inside the matching `data-a11y-action` button |
 | `data-nav-toggle` + `data-site-navigation` | topbar.js | megamenu and mobile navigation state |
 | `data-modal-open="<element-id>"` | modal.js | opens any dialog by id (accessibility button uses it) |
 

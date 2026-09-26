@@ -34,14 +34,14 @@
 <link rel="preload" href="{% static 'core/font/SpaceGrotesk-Variable.ttf' %}" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="{% static 'core/font/InstrumentSerif-Italic.ttf' %}" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="{% static 'core/css/base.css' %}">
-<link rel="stylesheet" href="{% static 'core/css/components.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/components.css' %}?v=2">
 <link rel="stylesheet" href="{% static 'core/css/lazy-sections.css' %}">
 <link rel="stylesheet" href="{% static 'core/css/hero-entrance.css' %}">
 {% if enable_consent %}
 <link rel="stylesheet" href="{% static 'core/vendor/klaro/klaro.css' %}">
 <link rel="stylesheet" href="{% static 'core/css/klaro-theme.css' %}">
 {% endif %}
-<link rel="stylesheet" href="{% static 'core/css/a11y.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/a11y.css' %}?v=2">
 <link rel="stylesheet" href="{% static 'core/css/print.css' %}">
 {% block page_css %}{% endblock %}
 {% block extra_css %}{% endblock %}
@@ -169,7 +169,7 @@
   </div>
 </div>
 {% endif %}
-<script defer src="{% static 'core/js/prefs.js' %}"></script>
+<script defer src="{% static 'core/js/prefs.js' %}?v=2"></script>
 <script defer src="{% static 'core/js/lazy-sections.js' %}"></script>
 <script defer src="{% static 'core/js/scroll-reveal.js' %}"></script>
 <script defer src="{% static 'core/js/lottie-mount.js' %}"></script>

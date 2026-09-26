@@ -25,6 +25,15 @@ html.a11y-reduce-motion *::after {
   scroll-behavior: auto !important;
 }
 
+/* Ink-only Lottie animations carry dark strokes; invert them so they stay
+   visible on dark paper (the figure background follows the tokens). */
+html.theme-dark [data-lottie] svg {
+  filter: invert(1);
+}
+html.theme-dark.a11y-contrast [data-lottie] svg {
+  filter: invert(1) contrast(1.15);
+}
+
 html.a11y-text-110 {
   font-size: 110%;
 }
