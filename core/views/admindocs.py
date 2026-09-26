@@ -1,7 +1,7 @@
 """Staff-only documentation page inside the admin: what to change where,
 plus the live ops queue. This is the map for admins AND coding agents."""
 
-from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib import admin
 from django.shortcuts import render
 
 from core.models import OpsLog
@@ -25,7 +25,7 @@ ROUTING = (
     (
         "New required database models or columns",
         "Code change: a normal Django migration (models.py + makemigrations)",
-        "This is the only safe way to change the core schema. The ops-file sandbox (ai_ tables) exists for autonomous runtime additions.",
+        "The only safe way to change the core schema. The ops-file sandbox (ai_ tables) exists for autonomous runtime additions.",
     ),
     (
         "Autonomous agent changes without a human present",
@@ -45,17 +45,17 @@ ROUTING = (
 )
 
 
-@staff_member_required
+@admin.site.admin_view
 def admin_docs(request):
     from core import opsmanager
 
-    return render(
-        request,
-        "core/admin_docs.html",
+    context = admin.site.each_context(request)
+    context.update(
         {
             "routing": ROUTING,
             "pending": sorted(opsmanager._pending_dir().glob("*.json")),
             "recent": OpsLog.objects.all()[:10],
             "title": "How to change things",
-        },
+        }
     )
+    return render(request, "core/admin_docs.html", context)
