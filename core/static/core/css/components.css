@@ -375,9 +375,16 @@ select {
 .a11y-option:hover {
   background: var(--wash);
 }
-.a11y-option:hover .a11y-state {
+/* Only recolor inactive pills on hover; an active (filled) pill keeps its
+   ink background, so ink hover text would be invisible on it. */
+.a11y-option:hover:not([aria-pressed="true"]) .a11y-state {
   border-color: var(--ink);
   color: var(--ink);
+}
+.a11y-option[aria-pressed="true"]:hover .a11y-state {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
 }
 .a11y-option-reset {
   border-style: dashed;
