@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
+from core.views.admindocs import admin_docs
 from core.views.machine import sitemap_xml
 
 handler400 = "core.views.errors.handler400"
@@ -12,6 +13,9 @@ handler404 = "core.views.errors.handler404"
 handler500 = "core.views.errors.handler500"
 
 urlpatterns = [
+    # Must be registered BEFORE the admin include: the admin consumes the
+    # /admin/ prefix and would 404 this route otherwise.
+    path("admin/docs/", admin_docs, name="admin_docs"),
     path("admin/", admin.site.urls),
     path("sitemap.xml", sitemap_xml, name="django.contrib.sitemaps.views.sitemap"),
     path("", include("core.urls")),
