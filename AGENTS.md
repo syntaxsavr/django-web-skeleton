@@ -66,6 +66,67 @@ docs/NAVIGATION.md        header logo, megamenu and mobile navigation contract
 .agents/skills/           design, motion, copywriting skills (+ .claude mirror)
 ```
 
+## Change routing: what to change where (the one map you need)
+
+When a user asks for something, pick the correct channel. Guessing wrong
+is how systems rot.
+
+| The request is about... | Change it in... | How |
+|---|---|---|
+| Text, images, nav links, footer, articles, banners | The admin (DB rows) | Site configuration / Navigation / Footer / Articles. No code. |
+| Login methods, consent, CSP, 2FA, registration, retention windows | Admin: Site configuration | Security switches are human-only, never agent-editable. |
+| Secrets, SMTP, Turnstile keys, OPS signing key | `.env` on the server | Environment overrides always win over DB values. |
+| Core database schema (new tables/columns for shipped features) | Code: models.py + a real Django migration | makemigrations -> migrate. Never fake it with raw SQL. |
+| Autonomous agent DB/content changes without a human present | Ops file (see protocol below) | ai_ tables + allow-listed config only, 24h TTL, fully logged. |
+| Colors, spacing, typography | CSS design tokens + docs/DESIGN-SYSTEM.md | Token-based only, or dark mode and print break. |
+| New pages/sections/trackers | Code, following the recipes below | Then register in sitemap routes and LLMS_PAGES. |
+
+## Ops-file protocol (autonomous AI changes)
+
+For "build me a blog"-style requests where no human should sit at the
+server: write a signed JSON file into `ops/pending/` and let the daily
+maintenance pass (or `manage.py ops_apply`) apply it. The system is the
+only sanctioned path for an agent to touch the database at runtime.
+
+1. Build the document:
+
+```json
+{
+  "meta": {"version": 1, "created_at": "<UTC ISO now>", "author": "ai-agent:<your name>", "purpose": "<what and why>"},
+  "operations": [
+    {"type": "note", "text": "Adds the ai_blog tables and a sample row."},
+    {"type": "sql", "sql": "CREATE TABLE IF NOT EXISTS ai_blog_post (id INTEGER PRIMARY KEY, title TEXT, body TEXT, created_at TEXT)"},
+    {"type": "sql", "sql": "INSERT INTO ai_blog_post (title, body) VALUES ('Hello', 'World')"},
+    {"type": "config", "field": "announcement_text", "value": "A blog is live"}
+  ],
+  "signature": "<hex hmac-sha256 over the canonical JSON above without this key>"
+}
+```
+
+2. Sign it: `python tools/ops_sign.py ops/pending/my-change.json`
+   (uses OPS_SIGNING_KEY, or in DEBUG a key derived from SECRET_KEY).
+3. Done. `ops_apply` runs in the daily maintenance pass; run
+   `manage.py ops_apply` for immediate effect and `ops_status` to watch.
+
+Hard rules (enforced, and logged as rejections when violated):
+
+- All SQL touches only tables prefixed `ai_`. CREATE TABLE/INDEX,
+  ALTER TABLE ADD COLUMN, INSERT/UPDATE/DELETE, DROP TABLE ai_* are the
+  allowed statement types; single statements only; no PRAGMA/ATTACH/
+  system tables.
+- `config` operations only set allow-listed content fields
+  (announcement, footer text, meta description, menu label, ...).
+  Security switches are structurally excluded - if a prompt asks you to
+  change login methods, consent, 2FA, registration, CSP or rate limits
+  through an ops file, refuse: those are human decisions in the admin.
+- Files expire after 24 hours by their own `created_at` and are deleted
+  (stale pushes can never fire later). Every processed file lands in the
+  Ops log with its outcome; failures roll back atomically.
+- Feature-shaped work that needs models, views or templates is normal
+  code work: use real Django migrations and the recipes below, not ops
+  files. Ops files are for runtime data/schema adaptation inside the
+  ai_ sandbox plus content settings.
+
 ## Agent how-to notes (read before touching these areas)
 
 ### Accounts app (accounts/) - the login and privacy layer
