@@ -294,6 +294,12 @@ if not DEBUG and SEED_ADMIN_PASSWORD in ("", "b_4sIcPW007"):
 # serves them.
 PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"
 
+# Ops-file system (autonomous AI changes). Pending signed files are read
+# from OPS_DIR/pending. Set OPS_SIGNING_KEY in production; in DEBUG a key
+# derived from SECRET_KEY is used so local vibecoding needs no setup.
+OPS_DIR = BASE_DIR / "ops"
+OPS_SIGNING_KEY = os.environ.get("OPS_SIGNING_KEY", "")
+
 # --- django-unfold admin theme ---------------------------------------------
 # Light theme, brand-matched. Input contrast is enforced in core/css/admin.css
 # (loaded only inside the admin via UNFOLD STYLES).
@@ -361,6 +367,14 @@ UNFOLD["SIDEBAR"]["navigation"] += (
             {"name": "Footer sections", "icon": "table_rows", "url": "/admin/core/footersection/"},
             {"name": "Stripe buttons", "icon": "payment", "url": "/admin/core/stripebutton/"},
             {"name": "Robots rules", "icon": "bug_report", "url": "/admin/core/robotsrule/"},
+        ),
+    },
+    {
+        "title": "Autonomy",
+        "separator": True,
+        "items": (
+            {"name": "How to change things", "icon": "auto_stories", "url": "/admin/docs/"},
+            {"name": "Ops log", "icon": "history", "url": "/admin/core/opslog/"},
         ),
     },
 )

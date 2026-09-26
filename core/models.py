@@ -328,6 +328,32 @@ class SiteConfiguration(models.Model):
         }
 
 
+class OpsLog(models.Model):
+    """Audit trail for the ops-file system: every processed AI change."""
+
+    class Status(models.TextChoices):
+        APPLIED = "applied", "Applied"
+        FAILED = "failed", "Failed"
+        EXPIRED = "expired", "Expired"
+        REJECTED = "rejected", "Rejected"
+
+    file_name = models.CharField(max_length=200)
+    status = models.CharField(max_length=10, choices=Status.choices)
+    author = models.CharField(max_length=120, blank=True)
+    purpose = models.CharField(max_length=300, blank=True)
+    created_at = models.CharField(max_length=60, blank=True, help_text="created_at as claimed by the file")
+    detail = models.TextField(blank=True)
+    processed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-processed_at"]
+        verbose_name = "Ops log entry"
+        verbose_name_plural = "Ops log"
+
+    def __str__(self) -> str:
+        return f"{self.file_name}: {self.status}"
+
+
 class ProtectedPage(models.Model):
     """Put a path behind login. Evaluated by core.middleware.ProtectedPageMiddleware."""
 

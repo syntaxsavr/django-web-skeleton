@@ -186,5 +186,11 @@ def run_all(force: bool = False) -> dict:
     results["exports_purged"] = purge_expired_exports()
     results["deletions"] = execute_due_deletions()
     results["login_events_purged"] = purge_login_events()
+    try:
+        from core import opsmanager
+
+        results["ops"] = opsmanager.process_pending()
+    except Exception:
+        logger.exception("Ops processing failed.")
     logger.info("accounts maintenance: %s", results)
     return results

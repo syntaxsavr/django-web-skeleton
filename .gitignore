@@ -15,3 +15,8 @@ public/*
 .coverage
 htmlcov/
 .pytest_cache/
+ops/pending/
+ops/archive/
+ops/failed/
+ops/expired/
+private_media/

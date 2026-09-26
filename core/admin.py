@@ -15,6 +15,7 @@ from core.models import (
     FooterSection,
     NavigationItem,
     ProtectedPage,
+    OpsLog,
     RobotsRule,
     SiteConfiguration,
     StripeButton,
@@ -335,6 +336,17 @@ class FooterSectionAdmin(admin.ModelAdmin):
 
     class Media:
         js = ("core/js/admin-image-drop.js",)
+
+
+@admin.register(OpsLog)
+class OpsLogAdmin(admin.ModelAdmin):
+    list_display = ("processed_at", "status", "file_name", "author", "purpose")
+    list_filter = ("status",)
+    readonly_fields = ("file_name", "status", "author", "purpose", "created_at", "detail", "processed_at")
+    ordering = ("-processed_at",)
+
+    def has_add_permission(self, request):
+        return False
 
 
 def badge_contact_messages(request):

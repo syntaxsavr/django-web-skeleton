@@ -1,0 +1,59 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div class="docs-block">
+  <h2>What do you want to change?</h2>
+  <p class="docs-lead">Every kind of change has exactly one home. Pick the row that matches your goal.</p>
+  <table class="docs-table">
+    <thead>
+      <tr><th scope="col">Goal</th><th scope="col">Where</th><th scope="col">Notes</th></tr>
+    </thead>
+    <tbody>
+      {% for goal, where, notes in routing %}
+      <tr>
+        <td>{{ goal }}</td>
+        <td><strong>{{ where }}</strong></td>
+        <td>{{ notes }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="docs-block">
+  <h2>The ops-file system (autonomous AI changes)</h2>
+  <p class="docs-lead">
+    A coding agent can request database and content changes without anyone at the
+    keyboard: it writes a signed JSON file into <code>ops/pending/</code>, the daily
+    maintenance pass (or <code>manage.py ops_apply</code>) validates and applies it.
+    Rules: <code>ai_</code>-prefixed tables only, allow-listed content settings only,
+    24-hour validity, every file logged below. Security switches (login methods,
+    consent, CSP, 2FA, registration) are never agent-editable. The full protocol is
+    in <code>AGENTS.md</code>; signing helper: <code>python tools/ops_sign.py &lt;file&gt;</code>.
+  </p>
+  <p class="docs-lead">
+    Pending files right now: <strong>{{ pending|length }}</strong>.
+  </p>
+</div>
+
+<div class="docs-block">
+  <h2>Recent ops log</h2>
+  {% if recent %}
+  <table class="docs-table">
+    <thead><tr><th scope="col">When</th><th scope="col">Status</th><th scope="col">File</th><th scope="col">Purpose</th></tr></thead>
+    <tbody>
+      {% for entry in recent %}
+      <tr>
+        <td>{{ entry.processed_at|date:"j M Y, H:i" }}</td>
+        <td>{{ entry.status }}</td>
+        <td>{{ entry.file_name }}</td>
+        <td>{{ entry.purpose|truncatechars:80 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="docs-lead">No ops files processed yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

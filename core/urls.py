@@ -2,6 +2,7 @@
 
 from django.urls import include, path, re_path
 
+from core.views import admindocs as admindocs_views
 from core.views import articles as article_views
 from core.views import auth as account_views
 from core.views import twofa as twofa_views
@@ -20,6 +21,7 @@ urlpatterns = [
     # --- Contact ---
     path("contact/", contact_views.contact, name="contact"),
     path("contact/thanks/", contact_views.contact_thanks, name="contact_thanks"),
+    path("admin/docs/", admindocs_views.admin_docs, name="admin_docs"),
     # --- Auth ---
         path("accounts/logout/", account_views.LogoutView.as_view(), name="logout"),
         path("accounts/register/confirm/", account_views.registration_otp, name="registration_otp"),
