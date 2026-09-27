@@ -65,19 +65,25 @@
   image-rendering: pixelated;
 }
 
-.pw-field {
+/* The eye is anchored to the input itself (.pw-box), never to the whole
+   field - label and error text above/below must not shift it. 44px hit
+   target per the accessibility rules. */
+.pw-box {
   position: relative;
+}
+.pw-box input {
+  padding-right: 52px;
 }
 .pw-eye {
   position: absolute;
-  right: 10px;
+  right: 2px;
   top: 50%;
   translate: 0 -50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border: 0;
   background: transparent;
   color: var(--ink-60);
@@ -85,9 +91,6 @@
 }
 .pw-eye:hover {
   color: var(--ink);
-}
-.pw-field input {
-  padding-right: 46px;
 }
 
 .method-alt {
