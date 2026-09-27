@@ -1,4 +1,5 @@
 {% extends "admin/change_list.html" %}
+{% load static %}
 
 {% block result_list %}
   {% if changelist_description %}
@@ -15,11 +16,13 @@
       <div class="admin-preview-bar">
         <span class="admin-preview-dot"></span><span class="admin-preview-dot"></span><span class="admin-preview-dot"></span>
         <span class="admin-preview-label">Live preview of the saved site</span>
+        <button type="button" class="admin-preview-open" data-preview-reload title="Reload the preview"><span class="material-symbols-outlined">undo</span></button>
         <a class="admin-preview-open" href="{{ changelist_preview_url }}" target="_blank" rel="noopener" title="Open the page in a new tab"><span class="material-symbols-outlined">open_in_new</span></a>
       </div>
-      <iframe class="admin-preview-frame" src="{{ changelist_preview_url }}" title="Live preview of {{ changelist_preview_url }}"></iframe>
+      <iframe class="admin-preview-frame" src="{{ changelist_preview_url }}" data-preview-base-src="{{ changelist_preview_url }}" title="Live preview of {{ changelist_preview_url }}"></iframe>
     </div>
   </div>
+  <script src="{% static 'core/js/admin/preview-reload.js' %}" defer></script>
   {% else %}
   {{ block.super }}
   {% endif %}

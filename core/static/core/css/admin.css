@@ -233,6 +233,21 @@ button:active {
   padding: 2px 7px;
   flex: none;
 }
+a.admin-preview-open {
+  display: inline-flex;
+  align-items: center;
+}
+button.admin-preview-open {
+  cursor: pointer;
+  background: #f3f3ee;
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+}
+.admin-preview-pane .material-symbols-outlined {
+  font-size: 14px;
+  line-height: 1;
+}
 .admin-preview-open:hover {
   background: #0a0a0a;
   color: #fff;

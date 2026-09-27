@@ -310,7 +310,7 @@ UNFOLD = {
     "SITE_HEADER": "django-skeleton",
     "SITE_SYMBOL": "page",
     "THEME": "light",
-    "STYLES": ["/static/core/css/admin.css?v=4"],
+    "STYLES": ["/static/core/css/admin.css?v=5"],
     "SIDEBAR": {
         "show_search": True,
         "navigation": (
