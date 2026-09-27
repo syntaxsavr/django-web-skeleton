@@ -238,7 +238,9 @@ if not DEBUG:
 
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = "DENY"
+# SAMEORIGIN (not DENY): the admin's live-preview pane frames the site it
+# manages. Cross-origin framing stays blocked (CSP frame-ancestors 'self').
+X_FRAME_OPTIONS = "SAMEORIGIN"
 # Contact/quiz fetch() calls read the token from JS
 CSRF_COOKIE_HTTPONLY = False
 # CSRF failures render through the uniform error page (404 in production)
@@ -308,7 +310,7 @@ UNFOLD = {
     "SITE_HEADER": "django-skeleton",
     "SITE_SYMBOL": "page",
     "THEME": "light",
-    "STYLES": ["/static/core/css/admin.css"],
+    "STYLES": ["/static/core/css/admin.css?v=4"],
     "SIDEBAR": {
         "show_search": True,
         "navigation": (

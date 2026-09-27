@@ -220,7 +220,9 @@ class ContentSecurityPolicyMiddleware:
             f"connect-src {' '.join(collect(cls.CONNECT_HOSTS))}",
             "font-src 'self'",
             f"frame-src {' '.join(collect(cls.FRAME_HOSTS))}",
-            "frame-ancestors 'none'",
+            # 'self' (not 'none') so the admin's live-preview pane can frame
+            # the site it manages; cross-origin framing stays blocked.
+            "frame-ancestors 'self'",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'"

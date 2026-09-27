@@ -9,6 +9,9 @@ Add/delete stay disabled everywhere so the singleton stays a singleton.
 from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from unfold.admin import ModelAdmin as UnfoldModelAdmin
+from unfold.admin import StackedInline as UnfoldStackedInline
+from unfold.admin import TabularInline as UnfoldTabularInline
 
 from core.admin_mixins import DescribedAdminMixin
 from core.middleware import ProtectedPageMiddleware
@@ -41,7 +44,7 @@ from core.models import (
 )
 
 
-class SettingsPageAdmin(admin.ModelAdmin):
+class SettingsPageAdmin(UnfoldModelAdmin):
     """Base admin for every settings page: a focused window onto the one
     SiteConfiguration row. There is no changelist to browse - visiting it
     redirects straight to the row's change form."""
@@ -423,14 +426,17 @@ class RetentionSettingsAdmin(SettingsPageAdmin):
 
 
 @admin.register(NavigationItem)
-class NavigationItemAdmin(DescribedAdminMixin, admin.ModelAdmin):
+class NavigationItemAdmin(DescribedAdminMixin, UnfoldModelAdmin):
     changelist_description = (
         "Megamenu groups and links - one row per entry; rows with the same group name form one "
-        "megamenu column. The switches that make entries appear live in the Configuration section: "
-        "the megamenu itself in Header & navigation settings, and feature-bound destinations in "
-        "their settings page (Articles settings, Accounts & login settings). A destination whose "
-        "feature is switched off disappears from the menu automatically."
+        "megamenu column. Drag the handle (or edit Sort order) to rearrange, then save. The live "
+        "preview on the right shows the saved header. The switches that make entries appear live "
+        "in the Configuration section: the megamenu itself in Header & navigation settings, and "
+        "feature-bound destinations in their settings page (Articles settings, Accounts & login "
+        "settings). A destination whose feature is switched off disappears from the menu automatically."
     )
+    changelist_preview_url = "/"
+    ordering_field = "sort_order"
     list_display = ("group", "label", "description", "page", "url", "sort_order", "active")
     list_editable = ("sort_order", "active")
     list_filter = ("active", "group")
@@ -439,7 +445,7 @@ class NavigationItemAdmin(DescribedAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(ProtectedPage)
-class ProtectedPageAdmin(DescribedAdminMixin, admin.ModelAdmin):
+class ProtectedPageAdmin(DescribedAdminMixin, UnfoldModelAdmin):
     changelist_description = (
         "Login-wall rules: every active row puts a path (or everything below a prefix) behind login. "
         "Anonymous visitors are redirected to the sign-in page. Use this for member areas, reports, downloads - "
@@ -464,7 +470,7 @@ class ProtectedPageAdmin(DescribedAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(ContactMessage)
-class ContactMessageAdmin(DescribedAdminMixin, admin.ModelAdmin):
+class ContactMessageAdmin(DescribedAdminMixin, UnfoldModelAdmin):
     changelist_description = (
         "Inbound messages from the contact form. Data minimisation: they are DELETED automatically after the retention "
         "window in Configuration: Privacy & retention (GDPR) - do not use this list as a long-term archive; move anything "
@@ -480,13 +486,13 @@ class ContactMessageAdmin(DescribedAdminMixin, admin.ModelAdmin):
         return False
 
 
-class ArticleImageInline(admin.StackedInline):
+class ArticleImageInline(UnfoldStackedInline):
     model = ArticleImage
     extra = 1
     fields = ("image", "alt_text", "caption", "credit", "sort_order")
 
 
-class ArticleBlockInline(admin.StackedInline):
+class ArticleBlockInline(UnfoldStackedInline):
     model = ArticleBlock
     extra = 1
     classes = ("article-blocks",)
@@ -499,19 +505,20 @@ class ArticleBlockInline(admin.StackedInline):
 
 
 @admin.register(StripeButton)
-class StripeButtonAdmin(DescribedAdminMixin, admin.ModelAdmin):
+class StripeButtonAdmin(DescribedAdminMixin, UnfoldModelAdmin):
     changelist_description = (
         "Reusable Stripe Buy Buttons. Create one row per product (the buy-button-id comes from Stripe's Buy Button "
         "code), then attach it to any article as a 'Stripe buy button' block. Buttons render only when the master "
         "switch (Configuration: Stripe settings) is on AND the visitor consents to the Stripe service."
     )
+    ordering_field = "sort_order"
     list_display = ("label", "buy_button_id", "active", "sort_order")
     list_editable = ("active", "sort_order")
     ordering = ("sort_order", "pk")
 
 
 @admin.register(Article)
-class ArticleAdmin(DescribedAdminMixin, admin.ModelAdmin):
+class ArticleAdmin(DescribedAdminMixin, UnfoldModelAdmin):
     changelist_description = (
         "Editorial content. Build articles from blocks (heading, text, quote, image, video, buy button, divider) - "
         "the Preview button renders your current editor state without saving. Untick 'Published' to hide an article "
@@ -539,11 +546,12 @@ class ArticleAdmin(DescribedAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(RobotsRule)
-class RobotsRuleAdmin(DescribedAdminMixin, admin.ModelAdmin):
+class RobotsRuleAdmin(DescribedAdminMixin, UnfoldModelAdmin):
     changelist_description = (
         "Rules for robots.txt: search engines are told which paths to skip. A path covers everything below it. "
         "This is advisory only - well-behaved crawlers obey, so keep truly private material behind the login wall instead."
     )
+    ordering_field = "sort_order"
     list_display = ("path", "directive", "active", "sort_order", "note")
     list_editable = ("directive", "active", "sort_order")
     list_filter = ("active", "directive")
@@ -551,7 +559,7 @@ class RobotsRuleAdmin(DescribedAdminMixin, admin.ModelAdmin):
     ordering = ("sort_order", "path")
 
 
-class FooterItemInline(admin.TabularInline):
+class FooterItemInline(UnfoldTabularInline):
     model = FooterItem
     extra = 1
     fields = (
@@ -570,11 +578,23 @@ class FooterItemInline(admin.TabularInline):
 
 
 @admin.register(FooterSection)
-class FooterSectionAdmin(admin.ModelAdmin):
+class FooterSectionAdmin(DescribedAdminMixin, UnfoldModelAdmin):
+    changelist_description = (
+        "The footer's columns - add as many as you like, the footer grid grows with them. Each "
+        "column holds any mix of links, text blocks, images and action buttons (add them with the "
+        "plus on this row). Drag the handle to rearrange columns, then save; the live preview on "
+        "the right shows the saved footer as visitors see it. The footer itself switches on and "
+        "off in Configuration: Footer settings."
+    )
+    changelist_preview_url = "/"
+    ordering_field = "sort_order"
     list_display = ("title", "sort_order", "active")
     list_editable = ("sort_order", "active")
     ordering = ("sort_order",)
     inlines = (FooterItemInline,)
+
+    class Media:
+        js = ("core/js/admin-image-drop.js",)
 
     class Media:
         js = ("core/js/admin-image-drop.js",)

@@ -174,3 +174,85 @@ button:active {
   text-transform: uppercase;
   margin-bottom: 4px;
 }
+
+/* Live preview pane next to row lists (Navigation items, Footer sections):
+   edit rows on the left, see the saved public page on the right. */
+.admin-preview-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.admin-preview-results {
+  min-width: 0;
+}
+.admin-preview-pane {
+  position: sticky;
+  top: 12px;
+  border: 1px solid #0a0a0a;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+.admin-preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f3f3ee;
+  border-bottom: 1px solid #d8d8d0;
+}
+.admin-preview-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c9c9c0;
+  flex: none;
+}
+.admin-preview-label {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #55554e;
+  margin-left: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-preview-open {
+  margin-left: auto;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #0a0a0a;
+  border: 1px solid #0a0a0a;
+  border-radius: 4px;
+  padding: 2px 7px;
+  flex: none;
+}
+.admin-preview-open:hover {
+  background: #0a0a0a;
+  color: #fff;
+}
+.admin-preview-frame {
+  display: block;
+  width: 100%;
+  height: clamp(420px, 74vh, 900px);
+  border: 0;
+  background: #fff;
+}
+@media (max-width: 1180px) {
+  .admin-preview-split {
+    grid-template-columns: 1fr;
+  }
+  .admin-preview-pane {
+    position: static;
+  }
+  .admin-preview-frame {
+    height: 520px;
+  }
+}
+

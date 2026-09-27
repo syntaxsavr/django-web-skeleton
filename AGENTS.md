@@ -52,6 +52,8 @@ core/models.py            SiteConfiguration (one row, presented as focused
                           settings-page proxies at the bottom of the file),
                           Article, ArticleImage, RobotsRule, NavigationItem,
                           FooterSection, FooterItem, ProtectedPage, ContactMessage
+core/admin.py             settings-page admins, row tables, drag ordering, live previews
+core/admin_mixins.py      DescribedAdminMixin: banner text + preview pane
 core/bootstrap.py         first-run admin, robots, footer and protected-page data
 core/middleware.py        the stack; read the module docstring for ordering
 core/views/               focused HTTP modules; one feature area per file
@@ -81,6 +83,51 @@ is how systems rot.
 | Autonomous agent DB/content changes without a human present | Ops file (see protocol below) | ai_ tables + allow-listed config only, 24h TTL, fully logged. |
 | Colors, spacing, typography | CSS design tokens + docs/DESIGN-SYSTEM.md | Token-based only, or dark mode and print break. |
 | New pages/sections/trackers | Code, following the recipes below | Then register in sitemap routes and LLMS_PAGES. |
+
+## Admin architecture (django-unfold): how the control panel is built
+
+The admin is part of the product, not an afterthought - and it doubles as
+documentation for whoever (or whatever) opens it. Know these contracts
+before touching it:
+
+1. **One row, many settings pages.** All site settings live in the single
+   `SiteConfiguration` row (pk=1). The admin shows it as focused pages
+   through the proxy models at the bottom of `core/models.py`
+   (GeneralSettings, ArticlesSettings, TrackingSettings, ...). Every page:
+   master switch at the top, details below, a `change_form_description`
+   banner explaining what the page is for and what switching off removes.
+   `SettingsPageAdmin` (core/admin.py) owns the mechanics: no add/delete,
+   `get_object` pins pk=1, the changelist URL redirects to the change form.
+2. **Adding a setting** = add the field to `SiteConfiguration`, add it to
+   exactly ONE proxy's fieldsets, done. **Adding a settings page** = new
+   proxy model + a `SettingsPageAdmin` subclass + one sidebar entry. Both
+   need no other wiring; the tests in `SettingsPagesAdminTests` pin this
+   contract (page isolation: saving one page must never touch another
+   page's fields).
+3. **Unfold base classes are mandatory.** Every ModelAdmin must inherit
+   `unfold.admin.ModelAdmin` (inlines: `unfold.admin.TabularInline` /
+   `StackedInline`), NOT `django.contrib.admin.ModelAdmin`. Unfold's
+   templates read `show_add_link` and friends off its own base class; with
+   Django's base the Add button silently disappears.
+4. **Sidebar entries live in skeleton/settings.py** (`UNFOLD["SIDEBAR"]`).
+   Item keys are `title` and `link` - unfold drops entries silently if you
+   write `name`/`url`. Icons are Material Symbols LIGATURES rendered from
+   the bundled subset font
+   (`unfold/static/unfold/fonts/material-symbols/`); if a ligature is not
+   in that subset, the raw word renders over the label (this happened with
+   `captcha`). Verify a new icon against the subset before committing it.
+5. **Row tables explain and visualize themselves.** List admins mix in
+   `DescribedAdminMixin` and set `changelist_description` (the "What is
+   this?" banner). Where rows map to something visual, set
+   `changelist_preview_url` (Navigation items, Footer sections) to render
+   the saved public page in a live pane next to the list. Ordered models
+   (NavigationItem, FooterSection, FooterItem, StripeButton, RobotsRule)
+   set `ordering_field = "sort_order"` - unfold renders drag handles and
+   persists the order through the list_editable form.
+6. **The public site frames itself for previews**: CSP
+   `frame-ancestors 'self'` and `X_FRAME_OPTIONS = "SAMEORIGIN"` are
+   deliberate (admin live preview). Do not tighten them without removing
+   the preview, and do not loosen them further.
 
 ## Ops-file protocol (autonomous AI changes)
 
@@ -494,7 +541,9 @@ own family.
 panel switch (both states), CSP dynamic host extension, scraper block,
 protected pages, registration toggles, contact defenses (honeypot,
 time-trap, rate limit, Turnstile accept/reject), outbound link rewriting,
-seed idempotency. When you add a switch, add a test that proves both
+seed idempotency, and the settings-page contract (every Configuration
+page opens onto its own form; saving one page never touches another
+page's fields - SettingsPagesAdminTests). When you add a switch, add a test that proves both
 states.
 
 Tests inherit `ConfigIsolatedTestCase` when they touch the control panel:

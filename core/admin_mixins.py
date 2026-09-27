@@ -11,14 +11,21 @@ from django.contrib import admin
 
 class DescribedAdminMixin:
     """Set `changelist_description` on the ModelAdmin; the banner renders
-    above the results (and above the empty-state message)."""
+    above the results (and above the empty-state message). Optionally set
+    `changelist_preview_url` to render the public page in a live preview
+    pane next to the list, so editors see the saved result immediately."""
 
     change_list_template = "admin/changelist_description.html"
     changelist_description = ""
+    changelist_preview_url = ""
 
     def changelist_view(self, request, extra_context=None):
         return super().changelist_view(
-            request, extra_context={"changelist_description": self.changelist_description}
+            request,
+            extra_context={
+                "changelist_description": self.changelist_description,
+                "changelist_preview_url": self.changelist_preview_url,
+            },
         )
 
 
