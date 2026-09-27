@@ -23,13 +23,15 @@ The first migration creates that superuser if it does not exist. Set `SEED_ADMIN
 
 ## A quick gallery
 
+Click any picture to explore it full size.
+
 | | |
 |---|---|
-| ![Admin dashboard with the Configuration section](docs/images/admin-dashboard.png) | ![A focused settings page](docs/images/admin-settings-page.png) |
+| [![Admin dashboard with the Configuration section](docs/images/admin-dashboard.png)](docs/images/admin-dashboard.png) | [![A focused settings page](docs/images/admin-settings-page.png)](docs/images/admin-settings-page.png) |
 | _The admin menu: every on/off lives under **Configuration**, one page per domain. Content rows live under **Content**._ | _Every settings page explains itself in a banner and leads with its master switch - accounts, in this case._ |
-| ![Navigation items with live preview](docs/images/admin-navigation-preview.png) | ![Footer sections with live preview](docs/images/admin-footer-preview.png) |
+| [![Navigation items with live preview](docs/images/admin-navigation-preview.png)](docs/images/admin-navigation-preview.png) | [![Footer sections with live preview](docs/images/admin-footer-preview.png)](docs/images/admin-footer-preview.png) |
 | _Megamenu links and footer columns: drag the handle to reorder, see the saved site in the live preview pane._ | _The footer grows with your columns - links, text blocks, images and action buttons per column._ |
-| ![Home with a Lottie hero](docs/images/public-homepage.png) | ![The footer grid on a public page](docs/images/public-footer-grid.png) |
+| [![Home with a Lottie hero](docs/images/public-homepage.png)](docs/images/public-homepage.png) | [![The footer grid on a public page](docs/images/public-footer-grid.png)](docs/images/public-footer-grid.png) |
 | _The public site: one big letter, lazy sections, consent everywhere._ | _Footer as a data-driven grid: brand column plus any number of sections._ |
 
 More pictures live in [docs/images](docs/images). The article block editor and the consent-gated media placeholders are shown on the Demo page and in [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md).
