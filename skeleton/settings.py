@@ -331,7 +331,7 @@ UNFOLD = {
                     {"title": "SEO settings", "icon": "search", "link": "/admin/core/seosettings/1/change/"},
                     {"title": "Tracking & consent settings", "icon": "ads_click", "link": "/admin/core/trackingsettings/1/change/"},
                     {"title": "Contact form settings", "icon": "contact_mail", "link": "/admin/core/contactformsettings/1/change/"},
-                    {"title": "Cloudflare Turnstile", "icon": "captcha", "link": "/admin/core/turnstilesettings/1/change/"},
+                    {"title": "Cloudflare Turnstile", "icon": "gpp_good", "link": "/admin/core/turnstilesettings/1/change/"},
                     {"title": "Stripe settings", "icon": "payment", "link": "/admin/core/stripesettings/1/change/"},
                     {"title": "Cal.com embed", "icon": "event", "link": "/admin/core/calcomsettings/1/change/"},
                     {"title": "Accounts & login settings", "icon": "group", "link": "/admin/core/accountssettings/1/change/"},
