@@ -310,7 +310,7 @@ UNFOLD = {
     "SITE_HEADER": "django-skeleton",
     "SITE_SYMBOL": "page",
     "THEME": "light",
-    "STYLES": ["/static/core/css/admin.css?v=5"],
+    "STYLES": ["/static/core/css/admin.css?v=6"],
     "SIDEBAR": {
         "show_search": True,
         "navigation": (
@@ -318,6 +318,7 @@ UNFOLD = {
                 # Every on/off lives here, one focused page per domain, its
                 # master switch at the top. The pages are proxy models over
                 # the one SiteConfiguration row (core/models.py, bottom).
+                # Labels stay short: the section name already says the rest.
                 "title": "Configuration",
                 "separator": True,
                 "items": (
@@ -327,18 +328,18 @@ UNFOLD = {
                         "link": "/admin/core/generalsettings/1/change/",
                         "badge": "core.admin.badge_config_changed",
                     },
-                    {"title": "Header & navigation settings", "icon": "toolbar", "link": "/admin/core/headersettings/1/change/"},
-                    {"title": "Footer settings", "icon": "call_to_action", "link": "/admin/core/footersettings/1/change/"},
-                    {"title": "Articles settings", "icon": "article", "link": "/admin/core/articlessettings/1/change/"},
-                    {"title": "SEO settings", "icon": "search", "link": "/admin/core/seosettings/1/change/"},
-                    {"title": "Tracking & consent settings", "icon": "ads_click", "link": "/admin/core/trackingsettings/1/change/"},
-                    {"title": "Contact form settings", "icon": "contact_mail", "link": "/admin/core/contactformsettings/1/change/"},
-                    {"title": "Cloudflare Turnstile", "icon": "gpp_good", "link": "/admin/core/turnstilesettings/1/change/"},
-                    {"title": "Stripe settings", "icon": "payment", "link": "/admin/core/stripesettings/1/change/"},
-                    {"title": "Cal.com embed", "icon": "event", "link": "/admin/core/calcomsettings/1/change/"},
-                    {"title": "Accounts & login settings", "icon": "group", "link": "/admin/core/accountssettings/1/change/"},
+                    {"title": "Header & navigation", "icon": "toolbar", "link": "/admin/core/headersettings/1/change/"},
+                    {"title": "Footer", "icon": "call_to_action", "link": "/admin/core/footersettings/1/change/"},
+                    {"title": "Articles", "icon": "article", "link": "/admin/core/articlessettings/1/change/"},
+                    {"title": "SEO", "icon": "search", "link": "/admin/core/seosettings/1/change/"},
+                    {"title": "Tracking & consent", "icon": "ads_click", "link": "/admin/core/trackingsettings/1/change/"},
+                    {"title": "Contact form", "icon": "contact_mail", "link": "/admin/core/contactformsettings/1/change/"},
+                    {"title": "Turnstile", "icon": "gpp_good", "link": "/admin/core/turnstilesettings/1/change/"},
+                    {"title": "Stripe", "icon": "payment", "link": "/admin/core/stripesettings/1/change/"},
+                    {"title": "Cal.com", "icon": "event", "link": "/admin/core/calcomsettings/1/change/"},
+                    {"title": "Accounts & login", "icon": "group", "link": "/admin/core/accountssettings/1/change/"},
                     {"title": "Security & protection", "icon": "shield", "link": "/admin/core/protectionsettings/1/change/"},
-                    {"title": "Privacy & retention (GDPR)", "icon": "auto_delete", "link": "/admin/core/retentionsettings/1/change/"},
+                    {"title": "Privacy & retention", "icon": "auto_delete", "link": "/admin/core/retentionsettings/1/change/"},
                 ),
             },
         ),
@@ -347,7 +348,9 @@ UNFOLD = {
 
 # Sidebar groups (unfold renders these under the app sections). Keeping the
 # group list here instead of per-model Meta keeps the admin overview in one
-# place; every model still belongs to its app.
+# place; every model still belongs to its app. Four sections, one glance:
+# Configuration (switches), Content (rows), People (records about people),
+# System (plumbing).
 UNFOLD["SIDEBAR"]["navigation"] += (
     {
         "title": "Content",
@@ -361,7 +364,7 @@ UNFOLD["SIDEBAR"]["navigation"] += (
         ),
     },
     {
-        "title": "Communication",
+        "title": "People",
         "separator": True,
         "items": (
             {
@@ -370,36 +373,18 @@ UNFOLD["SIDEBAR"]["navigation"] += (
                 "link": "/admin/core/contactmessage/",
                 "badge": "core.admin.badge_contact_messages",
             },
-        ),
-    },
-    {
-        "title": "Access & protection",
-        "separator": True,
-        "items": (
-            {"title": "Protected pages", "icon": "lock", "link": "/admin/core/protectedpage/"},
-        ),
-    },
-    {
-        "title": "Signup form",
-        "separator": True,
-        "items": (
             {"title": "Signup fields", "icon": "edit_note", "link": "/admin/accounts/registrationfield/"},
             {"title": "Consent texts", "icon": "fact_check", "link": "/admin/accounts/consenttext/"},
-        ),
-    },
-    {
-        "title": "Privacy",
-        "separator": True,
-        "items": (
             {"title": "Login traces", "icon": "fingerprint", "link": "/admin/accounts/loginevent/"},
             {"title": "Data export requests", "icon": "download", "link": "/admin/accounts/dataexportrequest/"},
             {"title": "Consent acceptances", "icon": "verified_user", "link": "/admin/accounts/userconsent/"},
         ),
     },
     {
-        "title": "Autonomy",
+        "title": "System",
         "separator": True,
         "items": (
+            {"title": "Protected pages", "icon": "lock", "link": "/admin/core/protectedpage/"},
             {"title": "How to change things", "icon": "auto_stories", "link": "/admin/docs/"},
             {"title": "Ops log", "icon": "history", "link": "/admin/core/opslog/"},
         ),

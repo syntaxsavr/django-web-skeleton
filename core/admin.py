@@ -431,9 +431,9 @@ class NavigationItemAdmin(DescribedAdminMixin, UnfoldModelAdmin):
         "Megamenu groups and links - one row per entry; rows with the same group name form one "
         "megamenu column. Drag the handle (or edit Sort order) to rearrange, then save. The live "
         "preview on the right shows the saved header. The switches that make entries appear live "
-        "in the Configuration section: the megamenu itself in Header & navigation settings, and "
-        "feature-bound destinations in their settings page (Articles settings, Accounts & login "
-        "settings). A destination whose feature is switched off disappears from the menu automatically."
+        "in the Configuration section: the megamenu itself in Header & navigation, and "
+        "feature-bound destinations in their settings page (Articles, Accounts & login). "
+        "A destination whose feature is switched off disappears from the menu automatically."
     )
     changelist_preview_url = "/"
     ordering_field = "sort_order"
@@ -473,7 +473,7 @@ class ProtectedPageAdmin(DescribedAdminMixin, UnfoldModelAdmin):
 class ContactMessageAdmin(DescribedAdminMixin, UnfoldModelAdmin):
     changelist_description = (
         "Inbound messages from the contact form. Data minimisation: they are DELETED automatically after the retention "
-        "window in Configuration: Privacy & retention (GDPR) - do not use this list as a long-term archive; move anything "
+        "window in Configuration: Privacy & retention - do not use this list as a long-term archive; move anything "
         "worth keeping into your CRM. 'Responded' is your personal to-do flag."
     )
     list_display = ("created", "name", "email", "preference", "responded")
@@ -509,7 +509,7 @@ class StripeButtonAdmin(DescribedAdminMixin, UnfoldModelAdmin):
     changelist_description = (
         "Reusable Stripe Buy Buttons. Create one row per product (the buy-button-id comes from Stripe's Buy Button "
         "code), then attach it to any article as a 'Stripe buy button' block. Buttons render only when the master "
-        "switch (Configuration: Stripe settings) is on AND the visitor consents to the Stripe service."
+        "switch (Configuration: Stripe) is on AND the visitor consents to the Stripe service."
     )
     ordering_field = "sort_order"
     list_display = ("label", "buy_button_id", "active", "sort_order")
@@ -584,7 +584,7 @@ class FooterSectionAdmin(DescribedAdminMixin, UnfoldModelAdmin):
         "column holds any mix of links, text blocks, images and action buttons (add them with the "
         "plus on this row). Drag the handle to rearrange columns, then save; the live preview on "
         "the right shows the saved footer as visitors see it. The footer itself switches on and "
-        "off in Configuration: Footer settings."
+        "off in Configuration: Footer."
     )
     changelist_preview_url = "/"
     ordering_field = "sort_order"

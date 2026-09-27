@@ -14,7 +14,7 @@ ROUTING = (
     ),
     (
         "New login method, consent, CSP, scraper rules, 2FA, retention windows",
-        "Admin: Configuration - Accounts & login settings, Security & protection, Privacy & retention (GDPR)",
+        "Admin: Configuration - Accounts & login, Security & protection, Privacy & retention",
         "Security-relevant switches are deliberately NOT agent-editable. Only people change them.",
     ),
     (

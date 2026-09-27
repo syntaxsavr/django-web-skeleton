@@ -95,7 +95,7 @@ before touching it:
    through the proxy models at the bottom of `core/models.py`
    (GeneralSettings, ArticlesSettings, TrackingSettings, ...). Every page:
    master switch at the top, details below, a `change_form_description`
-   banner explaining what the page is for and what switching off removes.
+   line explaining what the page is for and what switching off removes.
    `SettingsPageAdmin` (core/admin.py) owns the mechanics: no add/delete,
    `get_object` pins pk=1, the changelist URL redirects to the change form.
 2. **Adding a setting** = add the field to `SiteConfiguration`, add it to
@@ -376,7 +376,7 @@ step after the first production login; that is by design.
 
 Everything below is editable in the admin while the site is live:
 - Navigation items (megamenu groups) and footer sections/entries
-- Announcement banner: Configuration > Header & navigation settings
+- Announcement banner: Configuration > Header & navigation
 - Header logo, menu label, accessibility panel on/off
 - Articles, contact form, consent, trackers, SEO routes - each with its own
   Configuration page whose master switch sits at the top
@@ -444,7 +444,7 @@ Follow `docs/PAGE-BUILDING.md`. The short version:
 ### Add or change navigation
 
 Read `docs/NAVIGATION.md`. Editors manage the logo, megamenu switch and
-trigger label in Configuration > Header & navigation settings; groups and
+trigger label in Configuration > Header & navigation; groups and
 links live on the Navigation items page. Code changes are needed
 only when a new automatic page destination is introduced.
 

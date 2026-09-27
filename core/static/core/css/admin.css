@@ -155,24 +155,22 @@ button:active {
 }
 
 
-/* Explanatory banner above changelists */
+/* Description above lists and forms. Design system: typography is the
+   design, borders not boxes, no decorative labels. One quiet paragraph,
+   separated by a hairline, nothing more. */
 .admin-help-banner {
-  margin: 0 0 14px;
-  padding: 12px 16px;
-  border: 1px solid #0a0a0a;
-  background: #f3f3ee;
-  color: #0a0a0a;
-  font-size: 0.92rem;
-  line-height: 1.5;
-  max-width: 72ch;
+  margin: 0 0 16px;
+  padding: 0 0 12px;
+  border: 0;
+  border-bottom: 1px solid rgba(10, 10, 10, 0.14);
+  background: transparent;
+  color: #575752;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  max-width: 78ch;
 }
 .admin-help-banner strong {
-  display: block;
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 4px;
+  display: none;
 }
 
 /* Live preview pane next to row lists (Navigation items, Footer sections):
@@ -189,49 +187,40 @@ button:active {
 .admin-preview-pane {
   position: sticky;
   top: 12px;
-  border: 1px solid #0a0a0a;
-  border-radius: 6px;
+  border: 1px solid rgba(10, 10, 10, 0.3);
+  border-radius: 0;
   overflow: hidden;
   background: #fff;
 }
 .admin-preview-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: #f3f3ee;
-  border-bottom: 1px solid #d8d8d0;
-}
-.admin-preview-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #c9c9c0;
-  flex: none;
+  gap: 8px;
+  padding: 7px 12px;
+  background: #fcfcfa;
+  border-bottom: 1px solid rgba(10, 10, 10, 0.14);
 }
 .admin-preview-label {
   font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #55554e;
-  margin-left: 6px;
+  color: #8a8a84;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-right: auto;
 }
 .admin-preview-open {
-  margin-left: auto;
   font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.72rem;
   text-decoration: none;
   color: #0a0a0a;
-  border: 1px solid #0a0a0a;
-  border-radius: 4px;
-  padding: 2px 7px;
+  border: 1px solid rgba(10, 10, 10, 0.3);
+  border-radius: 0;
+  padding: 3px 7px;
   flex: none;
+  line-height: 1.2;
 }
 a.admin-preview-open {
   display: inline-flex;
@@ -239,18 +228,18 @@ a.admin-preview-open {
 }
 button.admin-preview-open {
   cursor: pointer;
-  background: #f3f3ee;
+  background: transparent;
   display: inline-flex;
   align-items: center;
-  margin-left: auto;
 }
 .admin-preview-pane .material-symbols-outlined {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1;
 }
 .admin-preview-open:hover {
   background: #0a0a0a;
   color: #fff;
+  border-color: #0a0a0a;
 }
 .admin-preview-frame {
   display: block;

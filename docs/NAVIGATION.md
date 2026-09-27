@@ -6,7 +6,7 @@ template.
 
 ## Use the control panel
 
-Open **Configuration > Header & navigation settings** in the admin. The
+Open **Configuration > Header & navigation** in the admin. The
 switches sit at the top, logo and label below.
 
 - **Enable header logo** switches the uploaded mark on or off. When it is off,

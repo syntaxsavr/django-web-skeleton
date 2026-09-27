@@ -3,9 +3,7 @@
 
 {% block result_list %}
   {% if changelist_description %}
-  <div class="admin-help-banner">
-    <strong>What is this?</strong> {{ changelist_description }}
-  </div>
+  <div class="admin-help-banner">{{ changelist_description }}</div>
   {% endif %}
   {% if changelist_preview_url %}
   <div class="admin-preview-split">
@@ -14,8 +12,7 @@
     </div>
     <div class="admin-preview-pane">
       <div class="admin-preview-bar">
-        <span class="admin-preview-dot"></span><span class="admin-preview-dot"></span><span class="admin-preview-dot"></span>
-        <span class="admin-preview-label">Live preview of the saved site</span>
+        <span class="admin-preview-label">Live preview</span>
         <button type="button" class="admin-preview-open" data-preview-reload title="Reload the preview"><span class="material-symbols-outlined">undo</span></button>
         <a class="admin-preview-open" href="{{ changelist_preview_url }}" target="_blank" rel="noopener" title="Open the page in a new tab"><span class="material-symbols-outlined">open_in_new</span></a>
       </div>

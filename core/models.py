@@ -836,8 +836,8 @@ class HeaderSettings(SiteConfiguration):
 
     class Meta:
         proxy = True
-        verbose_name = "Header & navigation settings"
-        verbose_name_plural = "Header & navigation settings"
+        verbose_name = "Header & navigation"
+        verbose_name_plural = "Header & navigation"
 
 
 class FooterSettings(SiteConfiguration):
@@ -845,8 +845,8 @@ class FooterSettings(SiteConfiguration):
 
     class Meta:
         proxy = True
-        verbose_name = "Footer settings"
-        verbose_name_plural = "Footer settings"
+        verbose_name = "Footer"
+        verbose_name_plural = "Footer"
 
 
 class ArticlesSettings(SiteConfiguration):
@@ -854,8 +854,8 @@ class ArticlesSettings(SiteConfiguration):
 
     class Meta:
         proxy = True
-        verbose_name = "Articles settings"
-        verbose_name_plural = "Articles settings"
+        verbose_name = "Articles"
+        verbose_name_plural = "Articles"
 
 
 class SeoSettings(SiteConfiguration):
@@ -863,8 +863,8 @@ class SeoSettings(SiteConfiguration):
 
     class Meta:
         proxy = True
-        verbose_name = "SEO settings"
-        verbose_name_plural = "SEO settings"
+        verbose_name = "SEO"
+        verbose_name_plural = "SEO"
 
 
 class TrackingSettings(SiteConfiguration):
@@ -872,8 +872,8 @@ class TrackingSettings(SiteConfiguration):
 
     class Meta:
         proxy = True
-        verbose_name = "Tracking & consent settings"
-        verbose_name_plural = "Tracking & consent settings"
+        verbose_name = "Tracking & consent"
+        verbose_name_plural = "Tracking & consent"
 
 
 class ContactFormSettings(SiteConfiguration):
@@ -881,8 +881,8 @@ class ContactFormSettings(SiteConfiguration):
 
     class Meta:
         proxy = True
-        verbose_name = "Contact form settings"
-        verbose_name_plural = "Contact form settings"
+        verbose_name = "Contact form"
+        verbose_name_plural = "Contact form"
 
 
 class TurnstileSettings(SiteConfiguration):
@@ -890,8 +890,8 @@ class TurnstileSettings(SiteConfiguration):
 
     class Meta:
         proxy = True
-        verbose_name = "Cloudflare Turnstile"
-        verbose_name_plural = "Cloudflare Turnstile"
+        verbose_name = "Turnstile"
+        verbose_name_plural = "Turnstile"
 
 
 class StripeSettings(SiteConfiguration):
@@ -899,8 +899,8 @@ class StripeSettings(SiteConfiguration):
 
     class Meta:
         proxy = True
-        verbose_name = "Stripe settings"
-        verbose_name_plural = "Stripe settings"
+        verbose_name = "Stripe"
+        verbose_name_plural = "Stripe"
 
 
 class CalcomSettings(SiteConfiguration):
@@ -908,8 +908,8 @@ class CalcomSettings(SiteConfiguration):
 
     class Meta:
         proxy = True
-        verbose_name = "Cal.com embed"
-        verbose_name_plural = "Cal.com embed"
+        verbose_name = "Cal.com"
+        verbose_name_plural = "Cal.com"
 
 
 class AccountsSettings(SiteConfiguration):
@@ -917,8 +917,8 @@ class AccountsSettings(SiteConfiguration):
 
     class Meta:
         proxy = True
-        verbose_name = "Accounts & login settings"
-        verbose_name_plural = "Accounts & login settings"
+        verbose_name = "Accounts & login"
+        verbose_name_plural = "Accounts & login"
 
 
 class ProtectionSettings(SiteConfiguration):
@@ -935,5 +935,5 @@ class RetentionSettings(SiteConfiguration):
 
     class Meta:
         proxy = True
-        verbose_name = "Privacy & retention (GDPR)"
-        verbose_name_plural = "Privacy & retention (GDPR)"
+        verbose_name = "Privacy & retention"
+        verbose_name_plural = "Privacy & retention"

@@ -1,5 +1,3 @@
 {% if adminform.model_admin.change_form_description %}
-  <div class="admin-help-banner">
-    <strong>What is this?</strong> {{ adminform.model_admin.change_form_description }}
-  </div>
+  <div class="admin-help-banner">{{ adminform.model_admin.change_form_description }}</div>
 {% endif %}
