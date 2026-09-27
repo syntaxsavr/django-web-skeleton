@@ -1,82 +1,190 @@
-"""Admin wiring. django-unfold provides the skin; the interesting part is
-the SiteConfiguration control panel: one row, grouped fieldsets, no add or
-delete so the singleton stays a singleton."""
+"""Admin wiring. django-unfold provides the skin.
+
+The control panel is ONE SiteConfiguration row (pk=1) presented as several
+focused settings pages through the proxy models in core/models.py: one page
+per domain, its master switch always at the top, details collapsed below.
+Add/delete stay disabled everywhere so the singleton stays a singleton.
+"""
 
 from django.contrib import admin
-from django.core.cache import cache
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 from core.admin_mixins import DescribedAdminMixin
 from core.middleware import ProtectedPageMiddleware
 from core.models import (
+    AccountsSettings,
     Article,
     ArticleBlock,
     ArticleImage,
+    ArticlesSettings,
+    CalcomSettings,
+    ContactFormSettings,
     ContactMessage,
     FooterItem,
     FooterSection,
+    FooterSettings,
+    GeneralSettings,
+    HeaderSettings,
     NavigationItem,
-    ProtectedPage,
     OpsLog,
+    ProtectedPage,
+    ProtectionSettings,
+    RetentionSettings,
     RobotsRule,
+    SeoSettings,
     SiteConfiguration,
     StripeButton,
+    StripeSettings,
+    TrackingSettings,
+    TurnstileSettings,
 )
 
 
-class NavigationItemInline(admin.TabularInline):
-    model = NavigationItem
-    extra = 1
-    fields = ("sort_order", "active", "group", "label", "description", "page", "url")
+class SettingsPageAdmin(admin.ModelAdmin):
+    """Base admin for every settings page: a focused window onto the one
+    SiteConfiguration row. There is no changelist to browse - visiting it
+    redirects straight to the row's change form."""
+
+    change_form_before_template = "admin/change_form_description.html"
+    change_form_description = ""
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(pk=1)
+
+    def get_object(self, request, object_id, from_field=None):
+        if str(object_id) != "1":
+            return None
+        return self.model.objects.get_or_create(pk=1)[0]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        config, _created = self.model.objects.get_or_create(pk=1)
+        return HttpResponseRedirect(
+            reverse(f"admin:core_{self.model._meta.model_name}_change", args=(config.pk,))
+        )
 
 
-@admin.register(SiteConfiguration)
-class SiteConfigurationAdmin(admin.ModelAdmin):
-    inlines = (NavigationItemInline,)
+@admin.register(GeneralSettings)
+class GeneralSettingsAdmin(SettingsPageAdmin):
+    changelist_description = ""
+    change_form_description = (
+        "The identity of the site. The canonical origin (no trailing slash) drives canonical "
+        "URLs, hreflang, JSON-LD, the sitemap and IndexNow - set it correctly before going live."
+    )
     fieldsets = (
-        # ------------------------------------------------------------------
-        # 1) THE SWITCH MAP: every on/off in one place, no keys, no texts.
-        # ------------------------------------------------------------------
         (
-            "1 · Feature switches",
+            "Identity",
             {
-                "description": "The main on/off map of the site. Turn features off and they disappear everywhere: routes, navigation, footer, sitemap, AI files. Fine-tuning for each lives in the collapsed groups below.",
-                "fields": (
-                    "enable_announcement",
-                    "enable_header_logo",
-                    "enable_megamenu",
-                    "enable_accessibility_panel",
-                    "enable_footer",
-                    "enable_articles",
-                    "enable_contact_form",
-                    "enable_cookie_consent",
-                    "allow_avatar_upload",
-                    "enable_webp_conversion",
-                ),
+                "description": "The name is shown in the header when no logo is uploaded, and in machine files (llms.txt, security.txt).",
+                "fields": ("site_name", "canonical_origin"),
                 "classes": ("wide",),
             },
         ),
         (
-            "2 · Accounts & signup switches",
+            "Contact & metadata",
             {
-                "description": "enable_accounts off removes every trace of accounts (login, register, account pages 404, links vanish). Enable the login methods you want - code and magic-link logins never reveal whether an address exists. With force 2FA on, every account (you included) must confirm a second factor before protected areas open.",
-                "fields": (
-                    "enable_accounts",
-                    "enable_login_password",
-                    "enable_login_email_otp",
-                    "enable_login_magic_link",
-                    "enable_login_anonymous",
-                    "enable_public_registration",
-                    "enable_email_otp",
-                    "registration_requires_approval",
-                    "force_2fa_users",
-                ),
+                "description": "The contact email powers the contact form replies and security.txt. The default meta description is used on pages without their own.",
+                "fields": ("contact_email", "default_meta_description", "theme_color"),
+                "classes": ("wide",),
+            },
+        ),
+    )
+
+
+@admin.register(HeaderSettings)
+class HeaderSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "Everything above the page content. Flip the switches first; the details sit underneath. "
+        "Megamenu LINKS are separate rows: see Navigation items under Content. The announcement "
+        "banner stays hidden while its switch is off or its text is empty."
+    )
+    fieldsets = (
+        (
+            "Switches",
+            {
+                "description": "One switch per header feature. Logo off falls back to the site name; megamenu off shows the compact default navigation.",
+                "fields": ("enable_header_logo", "enable_megamenu", "enable_accessibility_panel", "enable_announcement"),
                 "classes": ("wide",),
             },
         ),
         (
-            "3 · SEO switches",
+            "Logo & labels",
             {
-                "description": "Search-engine surfaces. Off = the route stops answering and the page drops out of sitemap, robots.txt references and llms.txt. The noindex kill switch is for staging: every page answers with noindex.",
+                "description": "Without an uploaded logo the site name is shown. The alt text is required with a logo.",
+                "fields": ("header_logo", "header_logo_alt", "navigation_menu_label"),
+                "classes": ("wide",),
+            },
+        ),
+        (
+            "Announcement banner text",
+            {
+                "description": "Short banner above the header. Rendered only while the announcement switch is on and text is set.",
+                "fields": ("announcement_text", "announcement_url"),
+                "classes": ("wide",),
+            },
+        ),
+    )
+
+    class Media:
+        js = ("core/js/admin-image-drop.js",)
+
+
+@admin.register(FooterSettings)
+class FooterSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "The page footer. Switch it off and it disappears everywhere. Columns and links are "
+        "separate rows: see Footer sections under Content."
+    )
+    fieldsets = (
+        ("Switch", {"fields": ("enable_footer",), "classes": ("wide",)}),
+        (
+            "Footer texts",
+            {
+                "description": "Brand column text and the two bottom-bar strings.",
+                "fields": ("footer_note", "footer_bottom_left", "footer_bottom_right"),
+                "classes": ("wide",),
+            },
+        ),
+    )
+
+
+@admin.register(ArticlesSettings)
+class ArticlesSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "Master switch for the editorial section. Off: article pages answer 404 and article links "
+        "vanish from navigation, footer, sitemap and llms.txt. WebP conversion applies to newly "
+        "uploaded article images only; existing files are left as they are."
+    )
+    fieldsets = (
+        ("Switch", {"fields": ("enable_articles",), "classes": ("wide",)}),
+        (
+            "Article images",
+            {
+                "description": "Automatic WebP conversion for uploaded article images, and its quality (higher = better, larger).",
+                "fields": ("enable_webp_conversion", "webp_quality"),
+                "classes": ("wide",),
+            },
+        ),
+    )
+
+
+@admin.register(SeoSettings)
+class SeoSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "Search-engine surfaces. Off = the route stops answering and the page drops out of "
+        "sitemap, robots.txt references and llms.txt. The noindex kill switch is for staging: "
+        "every page answers with X-Robots-Tag noindex until you turn it off again."
+    )
+    fieldsets = (
+        (
+            "Switches",
+            {
                 "fields": (
                     "enable_sitemap",
                     "enable_robots_txt",
@@ -89,72 +197,42 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "4 · Protection & privacy switches",
+            "Keys & verification",
             {
-                "description": "Each toggle is one middleware behaviour: scraper blocking on legal pages, the Content-Security-Policy, the outbound-link snatcher (tagging + optional UTM and leave-site modal), message auto-deletion and the Turnstile challenge. Turning one off disables that layer only.",
+                "description": "Verification tokens render as meta tags when filled. The IndexNow key is served at /<key>.txt as proof and used by manage.py indexnow.",
                 "fields": (
-                    "enable_scraper_block",
-                    "enable_csp",
-                    "enable_external_link_handling",
-                    "external_link_utm",
-                    "external_link_modal",
-                    "enable_message_auto_delete",
-                    "enable_turnstile",
-                    "enable_calcom_embed",
-                    "enable_stripe_buy_button",
+                    "indexnow_key",
+                    "google_site_verification",
+                    "bing_site_verification",
+                    "facebook_domain_verification",
+                    "pinterest_domain_verification",
                 ),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+
+@admin.register(TrackingSettings)
+class TrackingSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "Master switch for ALL measurement. Even when tracking is on, a tracker loads only after "
+        "the visitor consents AND its ID is filled in below - an empty ID means the tracker does "
+        "not exist for the consent system at all. Consent manager off removes the banner and the gate."
+    )
+    fieldsets = (
+        (
+            "Switches",
+            {
+                "fields": ("enable_tracking", "enable_cookie_consent", "consent_cookie_name"),
                 "classes": ("wide",),
             },
         ),
         (
-            "5 · Tracking switch",
+            "Tracker IDs",
             {
-                "description": "Master switch for ALL measurement. Even when on, a tracker only loads after visitor consent AND when its ID is filled in below (collapsed group 'Tracking IDs').",
-                "fields": ("enable_tracking",),
-            },
-        ),
-        # ------------------------------------------------------------------
-        # 2) DETAILS: keys, texts and numbers. Collapsed so the switch map
-        #    stays the first thing you see.
-        # ------------------------------------------------------------------
-        (
-            "Site identity (rebranding)",
-            {
-                "description": "Canonical origin drives canonical URLs, hreflang, JSON-LD, sitemap and IndexNow - no trailing slash. Set this correctly before going live.",
-                "fields": ("site_name", "canonical_origin", "contact_email", "default_meta_description", "theme_color"),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Header & navigation details",
-            {
-                "description": "Logo upload (fallback is the site name), megamenu label and the accessibility button switch. Megamenu LINKS live in their own admin section (Navigation items).",
-                "fields": ("header_logo", "header_logo_alt", "navigation_menu_label"),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Announcement text",
-            {
-                "description": "The banner above the header. Only shown while the announcement switch (group 1) is on.",
-                "fields": ("announcement_text", "announcement_url"),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Footer text",
-            {
-                "description": "Brand column text and the bottom bar strings. Footer COLUMNS and LINKS are separate rows under Footer sections.",
-                "fields": ("footer_note", "footer_bottom_left", "footer_bottom_right"),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Tracking IDs",
-            {
-                "description": "One row per tracker. Paste the ID and the tracker is declared to the consent manager - empty ID means the tracker does not exist for the consent system at all.",
+                "description": "One row per tracker. Paste the ID and the tracker is declared to the consent manager; leave it empty and it does not exist.",
                 "fields": (
-                    "consent_cookie_name",
                     "google_tag_manager_id",
                     "google_analytics_measurement_id",
                     "google_ads_id",
@@ -173,82 +251,191 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
                 "classes": ("collapse",),
             },
         ),
+    )
+
+
+@admin.register(ContactFormSettings)
+class ContactFormSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "The public contact form and its bot defenses. The Cloudflare Turnstile challenge lives on "
+        "its own page; how long submitted messages are kept is under Privacy & retention (GDPR)."
+    )
+    fieldsets = (
         (
-            "SEO keys",
+            "Switch & defenses",
             {
-                "description": "Search-engine verification tokens render as meta tags when filled. The IndexNow key is served at /<key>.txt as proof and used by manage.py indexnow.",
+                "description": "Honeypot and the signed time-trap silently discard bots; the cooldown applies per session. All work without any external service.",
+                "fields": ("enable_contact_form", "enable_honeypot", "form_min_seconds", "contact_rate_limit_seconds"),
+                "classes": ("wide",),
+            },
+        ),
+    )
+
+
+@admin.register(TurnstileSettings)
+class TurnstileSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "Cloudflare Turnstile on the contact form. Keys from the environment "
+        "(TURNSTILE_SITE_KEY / TURNSTILE_SECRET_KEY) always win over the fields below. It fails "
+        "closed: enabled without a working secret, the form blocks legitimate submissions too."
+    )
+    fieldsets = (
+        (
+            "Switch & keys",
+            {"fields": ("enable_turnstile", "turnstile_site_key", "turnstile_secret_key"), "classes": ("wide",)},
+        ),
+    )
+
+
+@admin.register(StripeSettings)
+class StripeSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "Master switch for commerce. Off: buy buttons never render, even where articles reference "
+        "them. On: they render per article and additionally wait for the visitor's Stripe consent. "
+        "Products are separate rows: see Stripe buttons under Content."
+    )
+    fieldsets = (
+        (
+            "Switch & key",
+            {
+                "description": "The publishable key is shared by every buy button; it may contain no secret.",
+                "fields": ("enable_stripe_buy_button", "stripe_publishable_key"),
+                "classes": ("wide",),
+            },
+        ),
+    )
+
+
+@admin.register(CalcomSettings)
+class CalcomSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "Cal.com booking embed. Loads only after the visitor consents to the Cal.com service in "
+        "the consent manager."
+    )
+    fieldsets = (
+        ("Switch & link", {"fields": ("enable_calcom_embed", "calcom_link"), "classes": ("wide",)}),
+    )
+
+
+@admin.register(AccountsSettings)
+class AccountsSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "Master switch: off removes every trace of accounts - login, registration and account "
+        "pages answer 404 and their links vanish. Code and magic-link logins never reveal whether "
+        "an address exists. Force 2FA applies to every account, yours included."
+    )
+    fieldsets = (
+        ("Master switch", {"fields": ("enable_accounts",), "classes": ("wide",)}),
+        (
+            "Login methods",
+            {
+                "description": "Enable the ways people sign in. Anonymous login means access-code accounts: a random string is the credential, no email, no password.",
                 "fields": (
-                    "indexnow_key",
-                    "google_site_verification",
-                    "bing_site_verification",
-                    "facebook_domain_verification",
-                    "pinterest_domain_verification",
+                    "enable_login_password",
+                    "enable_login_email_otp",
+                    "enable_login_magic_link",
+                    "enable_login_anonymous",
                 ),
-                "classes": ("collapse",),
+                "classes": ("wide",),
             },
         ),
         (
-            "Turnstile & anti-spam details",
+            "Registration",
             {
-                "description": "Cloudflare keys for the contact-form challenge (fail closed when enabled without a secret). Honeypot and time-trap run additionally; the cooldown is per session.",
-                "fields": ("turnstile_site_key", "turnstile_secret_key", "enable_honeypot", "form_min_seconds", "contact_rate_limit_seconds"),
-                "classes": ("collapse",),
+                "description": "Email OTP makes registration confirm the address with a one-time code; approval creates new users inactive until an admin activates them.",
+                "fields": ("enable_public_registration", "enable_email_otp", "registration_requires_approval"),
+                "classes": ("wide",),
             },
         ),
         (
-            "Login details",
+            "Second factor",
             {
-                "description": "Which identifier the password login accepts, and the length of generated anonymous access codes.",
-                "fields": ("login_identifier_mode", "anonymous_token_length"),
-                "classes": ("collapse",),
+                "description": "While on, every account (not only staff) must confirm a second factor before protected areas open.",
+                "fields": ("force_2fa_users",),
+                "classes": ("wide",),
             },
         ),
         (
-            "Embed keys",
+            "Details",
             {
-                "description": "Cal.com booking link and the shared Stripe publishable key. Individual products live under Stripe buttons.",
-                "fields": ("calcom_link", "stripe_publishable_key"),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Retention & exports (GDPR)",
-            {
-                "description": "How long data is kept, with deliberate friction: contact messages and login traces auto-delete after their windows; exports wait out a waiting period, stay downloadable for their retention, then a cooldown applies before the next request; deletions execute after the delay and suspend the account until then.",
-                "fields": (
-                    "message_retention_days",
-                    "login_event_retention_days",
-                    "export_wait_minutes",
-                    "export_retention_days",
-                    "export_cooldown_days",
-                    "deletion_delay_hours",
-                ),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Media details",
-            {
-                "description": "WebP conversion quality for article images and the avatar upload size cap.",
-                "fields": ("webp_quality", "avatar_max_kb"),
+                "description": "Which identifier the password login accepts, the length of generated access codes, and avatar uploads.",
+                "fields": ("login_identifier_mode", "anonymous_token_length", "allow_avatar_upload", "avatar_max_kb"),
                 "classes": ("collapse",),
             },
         ),
     )
 
-    def has_add_permission(self, request):
-        return not SiteConfiguration.objects.exists()
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+@admin.register(ProtectionSettings)
+class ProtectionSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "Each switch is one middleware layer; turning one off disables that layer only. The "
+        "scraper block 403s known scraper agents on legal and personal-data pages, the CSP is "
+        "skipped on /admin/, and the outbound-link snatcher tags external anchors."
+    )
+    fieldsets = (
+        (
+            "Switches",
+            {"fields": ("enable_scraper_block", "enable_csp", "enable_external_link_handling"), "classes": ("wide",)},
+        ),
+        (
+            "Outbound link behaviour",
+            {
+                "description": "Sub-switches of the outbound-link snatcher: append utm_source=<your host>, and show the leave-site confirmation modal.",
+                "fields": ("external_link_utm", "external_link_modal"),
+                "classes": ("wide",),
+            },
+        ),
+    )
 
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        cache.delete("core:site_configuration:solo")
-        ProtectedPageMiddleware.invalidate_cache()
 
-    class Media:
-        js = ("core/js/admin-image-drop.js",)
+@admin.register(RetentionSettings)
+class RetentionSettingsAdmin(SettingsPageAdmin):
+    change_form_description = (
+        "How long personal data is kept, with deliberate friction: contact messages and login "
+        "traces auto-delete after their windows; data exports wait out a waiting period, stay "
+        "downloadable for their retention, then a cooldown applies before the next request; "
+        "deletions execute after the delay, suspending the account until then."
+    )
+    fieldsets = (
+        (
+            "Contact messages",
+            {"fields": ("enable_message_auto_delete", "message_retention_days"), "classes": ("wide",)},
+        ),
+        ("Login traces", {"fields": ("login_event_retention_days",), "classes": ("wide",)}),
+        (
+            "Data exports",
+            {
+                "description": "Wait time between request and download, how long the archive survives, and the minimum days between two requests per user.",
+                "fields": ("export_wait_minutes", "export_retention_days", "export_cooldown_days"),
+                "classes": ("wide",),
+            },
+        ),
+        (
+            "Account deletion",
+            {
+                "description": "Deletions wait this many hours, during which the account is suspended.",
+                "fields": ("deletion_delay_hours",),
+                "classes": ("wide",),
+            },
+        ),
+    )
+
+
+@admin.register(NavigationItem)
+class NavigationItemAdmin(DescribedAdminMixin, admin.ModelAdmin):
+    changelist_description = (
+        "Megamenu groups and links - one row per entry; rows with the same group name form one "
+        "megamenu column. The switches that make entries appear live in the Configuration section: "
+        "the megamenu itself in Header & navigation settings, and feature-bound destinations in "
+        "their settings page (Articles settings, Accounts & login settings). A destination whose "
+        "feature is switched off disappears from the menu automatically."
+    )
+    list_display = ("group", "label", "description", "page", "url", "sort_order", "active")
+    list_editable = ("sort_order", "active")
+    list_filter = ("active", "group")
+    search_fields = ("group", "label", "description", "url")
+    ordering = ("sort_order", "pk")
 
 
 @admin.register(ProtectedPage)
@@ -280,7 +467,7 @@ class ProtectedPageAdmin(DescribedAdminMixin, admin.ModelAdmin):
 class ContactMessageAdmin(DescribedAdminMixin, admin.ModelAdmin):
     changelist_description = (
         "Inbound messages from the contact form. Data minimisation: they are DELETED automatically after the retention "
-        "window in Site configuration (Data minimisation) - do not use this list as a long-term archive; move anything "
+        "window in Configuration: Privacy & retention (GDPR) - do not use this list as a long-term archive; move anything "
         "worth keeping into your CRM. 'Responded' is your personal to-do flag."
     )
     list_display = ("created", "name", "email", "preference", "responded")
@@ -316,7 +503,7 @@ class StripeButtonAdmin(DescribedAdminMixin, admin.ModelAdmin):
     changelist_description = (
         "Reusable Stripe Buy Buttons. Create one row per product (the buy-button-id comes from Stripe's Buy Button "
         "code), then attach it to any article as a 'Stripe buy button' block. Buttons render only when the master "
-        "switch is on AND the visitor consents to the Stripe service."
+        "switch (Configuration: Stripe settings) is on AND the visitor consents to the Stripe service."
     )
     list_display = ("label", "buy_button_id", "active", "sort_order")
     list_editable = ("active", "sort_order")

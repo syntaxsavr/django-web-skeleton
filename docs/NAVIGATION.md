@@ -6,7 +6,8 @@ template.
 
 ## Use the control panel
 
-Open **Site core > Site configuration** in the admin.
+Open **Configuration > Header & navigation settings** in the admin. The
+switches sit at the top, logo and label below.
 
 - **Enable header logo** switches the uploaded mark on or off. When it is off,
   or no file is uploaded, the site name is shown as text.
@@ -16,9 +17,10 @@ Open **Site core > Site configuration** in the admin.
   compact built-in navigation.
 - **Navigation menu label** names the trigger for desktop and assistive
   technology. Keep it short, such as “Menu” or “Explore”.
-- **Navigation items** are edited inline on the same screen. Items with the
-  same group name form one megamenu column. `sort_order` controls both column
-  discovery and link order.
+
+The links themselves are rows: open **Content > Navigation items**. Items with
+the same group name form one megamenu column. `sort_order` controls both column
+discovery and link order.
 
 Choose an automatic page when the link points to a route owned by the
 skeleton. Automatic items inherit feature visibility. For example, an Articles

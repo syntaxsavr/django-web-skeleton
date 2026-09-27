@@ -34,7 +34,7 @@ and its own deletion rule. Do not delete it before the initialisation succeeds.
    llms page lists. Do not leave dead links or promotional references.
 7. **Never hardcode navigation or footer content.** `base.html` only renders
    `NavigationItem`, `FooterSection` and `FooterItem` records. Add megamenu
-   links and groups through the Site configuration inline. Add footer links,
+   links and groups on the Navigation items page. Add footer links,
    categories, actions, text and logos through the footer models.
 8. **Keep views feature-owned.** Never recreate `core/views.py` or place
    behaviour in `core/views/__init__.py`. Add a focused module under
@@ -48,9 +48,10 @@ and its own deletion rule. Do not delete it before the initialisation succeeds.
 ```
 skeleton/settings.py      debug/prod switch, middleware order, unfold theme
 skeleton/urls.py          admin + sitemap + core include + error handlers
-core/models.py            SiteConfiguration, Article, ArticleImage,
-                          RobotsRule, NavigationItem, FooterSection, FooterItem,
-                          ProtectedPage, ContactMessage
+core/models.py            SiteConfiguration (one row, presented as focused
+                          settings-page proxies at the bottom of the file),
+                          Article, ArticleImage, RobotsRule, NavigationItem,
+                          FooterSection, FooterItem, ProtectedPage, ContactMessage
 core/bootstrap.py         first-run admin, robots, footer and protected-page data
 core/middleware.py        the stack; read the module docstring for ordering
 core/views/               focused HTTP modules; one feature area per file
@@ -73,8 +74,8 @@ is how systems rot.
 
 | The request is about... | Change it in... | How |
 |---|---|---|
-| Text, images, nav links, footer, articles, banners | The admin (DB rows) | Site configuration / Navigation / Footer / Articles. No code. |
-| Login methods, consent, CSP, 2FA, registration, retention windows | Admin: Site configuration | Security switches are human-only, never agent-editable. |
+| Text, images, nav links, footer, articles, banners | The admin (DB rows) | Configuration pages (switches) + Navigation / Footer / Articles rows. No code. |
+| Login methods, consent, CSP, 2FA, registration, retention windows | Admin: Configuration section | One page per domain, master switch at the top. Security switches are human-only, never agent-editable. |
 | Secrets, SMTP, Turnstile keys, OPS signing key | `.env` on the server | Environment overrides always win over DB values. |
 | Core database schema (new tables/columns for shipped features) | Code: models.py + a real Django migration | makemigrations -> migrate. Never fake it with raw SQL. |
 | Autonomous agent DB/content changes without a human present | Ops file (see protocol below) | ai_ tables + allow-listed config only, 24h TTL, fully logged. |
@@ -328,9 +329,10 @@ step after the first production login; that is by design.
 
 Everything below is editable in the admin while the site is live:
 - Navigation items (megamenu groups) and footer sections/entries
-- Announcement banner: Site configuration, "Announcement" fieldset
+- Announcement banner: Configuration > Header & navigation settings
 - Header logo, menu label, accessibility panel on/off
-- Articles, contact form, consent, trackers, SEO routes
+- Articles, contact form, consent, trackers, SEO routes - each with its own
+  Configuration page whose master switch sits at the top
 Prefer extending these systems over new hardcoded templates when the
 change is content-shaped.
 
@@ -394,8 +396,9 @@ Follow `docs/PAGE-BUILDING.md`. The short version:
 
 ### Add or change navigation
 
-Read `docs/NAVIGATION.md`. Editors manage the logo, megamenu switch, trigger
-label, groups and links inside Site configuration. Code changes are needed
+Read `docs/NAVIGATION.md`. Editors manage the logo, megamenu switch and
+trigger label in Configuration > Header & navigation settings; groups and
+links live on the Navigation items page. Code changes are needed
 only when a new automatic page destination is introduced.
 
 1. Add the destination to `NavigationItem.PAGE_CHOICES`.

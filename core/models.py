@@ -805,3 +805,135 @@ class FooterItem(models.Model):
 
     def __str__(self) -> str:
         return self.label or self.get_kind_display()
+
+
+# ---------------------------------------------------------------------------
+# Settings pages (admin proxies over the one SiteConfiguration row)
+# ---------------------------------------------------------------------------
+# One SiteConfiguration row (pk=1) still drives the whole site, but a single
+# admin page with sixty fields is where clarity goes to die. These proxy
+# models expose the SAME row as separate, focused settings pages: one page
+# per domain, its master switch always at the top. Saving one page writes
+# only that page's fields; everything else is left untouched.
+#
+# Contract for new settings: add the field to SiteConfiguration, then add it
+# to exactly ONE proxy's fieldsets below and one sidebar entry in
+# skeleton/settings.py (UNFOLD SIDEBAR "Configuration"). Nothing else.
+# ---------------------------------------------------------------------------
+
+
+class GeneralSettings(SiteConfiguration):
+    """Admin: identity and metadata of the site."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Skeleton configuration"
+        verbose_name_plural = "Skeleton configuration"
+
+
+class HeaderSettings(SiteConfiguration):
+    """Admin: header features, logo, labels, announcement banner."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Header & navigation settings"
+        verbose_name_plural = "Header & navigation settings"
+
+
+class FooterSettings(SiteConfiguration):
+    """Admin: footer master switch and footer texts."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Footer settings"
+        verbose_name_plural = "Footer settings"
+
+
+class ArticlesSettings(SiteConfiguration):
+    """Admin: article master switch and article image handling."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Articles settings"
+        verbose_name_plural = "Articles settings"
+
+
+class SeoSettings(SiteConfiguration):
+    """Admin: search-engine surfaces and verification keys."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "SEO settings"
+        verbose_name_plural = "SEO settings"
+
+
+class TrackingSettings(SiteConfiguration):
+    """Admin: tracking master switch, consent manager, tracker IDs."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Tracking & consent settings"
+        verbose_name_plural = "Tracking & consent settings"
+
+
+class ContactFormSettings(SiteConfiguration):
+    """Admin: contact form switch and bot defenses."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Contact form settings"
+        verbose_name_plural = "Contact form settings"
+
+
+class TurnstileSettings(SiteConfiguration):
+    """Admin: Cloudflare Turnstile switch and keys."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Cloudflare Turnstile"
+        verbose_name_plural = "Cloudflare Turnstile"
+
+
+class StripeSettings(SiteConfiguration):
+    """Admin: Stripe master switch and publishable key."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Stripe settings"
+        verbose_name_plural = "Stripe settings"
+
+
+class CalcomSettings(SiteConfiguration):
+    """Admin: Cal.com booking embed switch and link."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Cal.com embed"
+        verbose_name_plural = "Cal.com embed"
+
+
+class AccountsSettings(SiteConfiguration):
+    """Admin: accounts master switch, login methods, registration, 2FA."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Accounts & login settings"
+        verbose_name_plural = "Accounts & login settings"
+
+
+class ProtectionSettings(SiteConfiguration):
+    """Admin: middleware protection layers."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Security & protection"
+        verbose_name_plural = "Security & protection"
+
+
+class RetentionSettings(SiteConfiguration):
+    """Admin: GDPR retention windows and export friction."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Privacy & retention (GDPR)"
+        verbose_name_plural = "Privacy & retention (GDPR)"

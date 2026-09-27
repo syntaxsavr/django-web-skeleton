@@ -9,12 +9,12 @@ from core.models import OpsLog
 ROUTING = (
     (
         "Words and images on existing pages",
-        "Admin: Site configuration, Navigation items, Footer sections, Articles",
-        "No code. Everything is a row in the admin and takes effect immediately.",
+        "Admin: Configuration pages + Content rows (Navigation items, Footer sections, Articles)",
+        "No code. Every switch lives in the Configuration section - one page per domain, its master switch at the top. Rows live under Content.",
     ),
     (
         "New login method, consent, CSP, scraper rules, 2FA, retention windows",
-        "Admin: Site configuration (Auth & login methods, Retention & exports, Middleware switches)",
+        "Admin: Configuration - Accounts & login settings, Security & protection, Privacy & retention (GDPR)",
         "Security-relevant switches are deliberately NOT agent-editable. Only people change them.",
     ),
     (

@@ -430,19 +430,90 @@ class HeaderNavigationTests(ConfigIsolatedTestCase):
         fresh_config(enable_articles=False)
         self.assertNotContains(self.client.get("/"), 'href="/articles/"')
 
-    def test_site_configuration_admin_contains_logo_and_navigation_editor(self):
-        admin, _created = User.objects.get_or_create(
-            username="admin",
-            defaults={"is_staff": True, "is_superuser": True, "email": "a@example.com"},
+    def test_navigation_items_page_lists_editor_columns(self):
+        _admin_login(self.client)
+        response = self.client.get("/admin/core/navigationitem/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "megamenu")
+
+
+def _admin_login(client):
+    admin, created = User.objects.get_or_create(
+        username="admin",
+        defaults={"is_staff": True, "is_superuser": True, "email": "a@example.com"},
+    )
+    if created:
+        admin.set_password("S3cure!pass")
+        admin.save()
+    client.force_login(admin)
+
+
+class SettingsPagesAdminTests(ConfigIsolatedTestCase):
+    """The Configuration section: one focused settings page per domain, all
+    proxying the single SiteConfiguration row. These tests pin the contract:
+    every page opens straight onto its change form, a page shows only its own
+    fields, and saving one page never touches the other domains' values."""
+
+    SETTINGS_PAGES = (
+        "generalsettings",
+        "headersettings",
+        "footersettings",
+        "articlessettings",
+        "seosettings",
+        "trackingsettings",
+        "contactformsettings",
+        "turnstilesettings",
+        "stripesettings",
+        "calcomsettings",
+        "accountssettings",
+        "protectionsettings",
+        "retentionsettings",
+    )
+
+    def setUp(self):
+        super().setUp()
+        _admin_login(self.client)
+
+    def test_every_settings_page_redirects_to_its_change_form(self):
+        for page in self.SETTINGS_PAGES:
+            with self.subTest(page=page):
+                response = self.client.get(f"/admin/core/{page}/")
+                self.assertRedirects(
+                    response, f"/admin/core/{page}/1/change/", fetch_redirect_response=False
+                )
+                change = self.client.get(f"/admin/core/{page}/1/change/")
+                self.assertEqual(change.status_code, 200, page)
+
+    def test_header_page_shows_only_its_own_domain(self):
+        html = self.client.get("/admin/core/headersettings/1/change/").content.decode()
+        self.assertIn('name="enable_header_logo"', html)
+        self.assertIn('name="enable_megamenu"', html)
+        self.assertIn('name="header_logo"', html)
+        self.assertNotIn('name="enable_stripe_buy_button"', html)
+        self.assertNotIn('name="enable_tracking"', html)
+
+    def test_saving_one_page_leaves_other_domains_alone(self):
+        config = fresh_config(site_name="Original", canonical_origin="https://example.com")
+        response = self.client.post(
+            "/admin/core/articlessettings/1/change/",
+            # enable_articles stays unchecked -> False; everything else on the
+            # site must keep its value.
+            {"enable_webp_conversion": "on", "webp_quality": "60"},
         )
-        if _created:
-            admin.set_password("S3cure!pass")
-            admin.save()
-        self.client.force_login(admin)
-        response = self.client.get("/admin/core/siteconfiguration/1/change/")
-        self.assertContains(response, 'name="header_logo"')
-        self.assertContains(response, 'name="enable_megamenu"')
-        self.assertContains(response, "Navigation items")
+        self.assertEqual(response.status_code, 302)
+        config = SiteConfiguration.get_solo()
+        self.assertFalse(config.enable_articles)
+        self.assertTrue(config.enable_webp_conversion)
+        self.assertEqual(config.webp_quality, 60)
+        self.assertEqual(config.site_name, "Original")
+        self.assertEqual(config.canonical_origin, "https://example.com")
+        self.assertTrue(config.enable_accounts)
+        self.assertTrue(config.enable_contact_form)
+
+    def test_singleton_cannot_be_added(self):
+        # The add view raises PermissionDenied; in production mode every
+        # error deliberately renders as 404 (see core/views/errors.py).
+        self.assertEqual(self.client.get("/admin/core/generalsettings/add/").status_code, 404)
 
 
 class ExternalLinkMiddlewareTests(ConfigIsolatedTestCase):
