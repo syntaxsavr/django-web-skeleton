@@ -13,7 +13,13 @@ from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from accounts.authhelpers import hash_code, issue_user_code, resend_throttled, send_site_mail
+from accounts.authhelpers import (
+    code_attempt,
+    hash_code,
+    issue_user_code,
+    resend_throttled,
+    send_site_mail,
+)
 from accounts.forms import CodeForm
 from accounts.models import DataExportRequest, UserProfile
 from core.models import SiteConfiguration
@@ -154,6 +160,9 @@ def _handle_confirmation_post(request, purpose: str, success_redirect: str):
         if request.user.profile.mailhashed or not request.user.email:
             messages.error(request, "This account has no usable email address. An administrator has to help you.")
             return redirect("privacy_center")
+        if resend_throttled("gdpr_%d_%s" % (request.user.pk, purpose)):
+            messages.error(request, "A code was just sent. Please wait a minute before requesting another.")
+            return redirect(request.path)
         code = issue_user_code(request.user, purpose)
         send_site_mail(
             request,
@@ -167,11 +176,17 @@ def _handle_confirmation_post(request, purpose: str, success_redirect: str):
         from accounts.views.auth import _consume_user_code
 
         if _consume_user_code(request.user, purpose, request.POST.get("code", "")):
+            code_attempt("gdpr_%d_%s" % (request.user.pk, purpose), True)
             request.session["confirmed_" + purpose] = timezone.now().isoformat()
             request.session.pop("phrase_" + purpose, None)
             request.session.pop("code_sent_" + purpose, None)
             return redirect(request.path)
-        cache.set(attempt_key, attempts + 1, 16 * 60)
+        if not code_attempt("gdpr_%d_%s" % (request.user.pk, purpose), False):
+            messages.error(
+                request,
+                "Too many wrong codes - the code is invalidated. Request a new one.",
+            )
+            return redirect(request.path)
         messages.error(request, "That code is wrong or expired.")
         return redirect(request.path)
     if request.POST.get("action") == "confirm_phrase":

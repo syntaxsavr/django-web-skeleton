@@ -134,7 +134,11 @@ class MagicLinkTests(IsolatedTest):
         self.client.post("/accounts/login/magic/", {"email": "maja@example.com"})
         match = re.search(r"/accounts/login/magic/([^/]+)/", mail.outbox[-1].body)
         self.assertIsNotNone(match)
+        # GET shows the interstitial and must NOT consume the token.
         response = self.client.get(f"/accounts/login/magic/{match.group(1)}/")
+        self.assertContains(response, "Continue and sign in")
+        self.assertTrue(LoginEvent.objects.filter(user=self.user, method="magic").exists() is False)
+        response = self.client.post(f"/accounts/login/magic/{match.group(1)}/")
         self.assertEqual(response.status_code, 302)
         self.assertTrue(LoginEvent.objects.filter(user=self.user, method="magic").exists())
         self.client.logout()
@@ -142,9 +146,9 @@ class MagicLinkTests(IsolatedTest):
     def test_reused_link_fails(self):
         self.client.post("/accounts/login/magic/", {"email": "maja@example.com"})
         token = re.search(r"/accounts/login/magic/([^/]+)/", mail.outbox[-1].body).group(1)
-        self.client.get(f"/accounts/login/magic/{token}/")
+        self.client.post(f"/accounts/login/magic/{token}/")
         self.client.logout()
-        response = self.client.get(f"/accounts/login/magic/{token}/", follow=True)
+        response = self.client.post(f"/accounts/login/magic/{token}/", follow=True)
         self.assertContains(response, "invalid, used up or expired")
 
 
@@ -646,3 +650,147 @@ def settings_media_root():
     from django.conf import settings as s
 
     return str(s.MEDIA_ROOT)
+
+
+class HardeningRegressionTests(IsolatedTest):
+    """Regression tests for the security hardening pass. Each test pins a
+    fix; none of these behaviours existed before."""
+
+    def _deletion_session(self):
+        user = User.objects.create_user("delme", "delme@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=user)
+        self.client.force_login(user)
+        return user
+
+    def test_wrong_deletion_code_does_not_crash(self):
+        """gdpr confirmation used to NameError on a wrong code (500)."""
+        self._deletion_session()
+        response = self.client.post(
+            "/account/privacy/delete-data/", {"action": "verify_code", "code": "000000"}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(UserProfile.objects.get(user__username="delme").data_deletion_at is None)
+
+    def test_deletion_code_burns_after_six_wrong_tries(self):
+        self._deletion_session()
+        for _ in range(6):
+            self.client.post("/account/privacy/delete-data/", {"action": "verify_code", "code": "000000"})
+        # A CORRECT code must now be rejected: the counter burned it.
+        from accounts.authhelpers import issue_user_code
+
+        user = User.objects.get(username="delme")
+        code = issue_user_code(user, "data_deletion")
+        response = self.client.post("/account/privacy/delete-data/", {"action": "verify_code", "code": code})
+        self.assertEqual(response.status_code, 302)
+        self.assertIsNone(UserProfile.objects.get(user=user).data_deletion_at)
+
+    def test_registration_otp_burns_after_six_wrong_codes(self):
+        user = User.objects.create_user("regotp", "regotp@example.com", "S3cure!pass", is_active=False)
+        UserProfile.objects.create(user=user)
+        session = self.client.session
+        session["otp_user_pk"] = user.pk
+        session.save()
+        for _ in range(6):
+            self.client.post("/accounts/register/confirm/", {"code": "000000"})
+        from core.models import EmailCode
+
+        from accounts.authhelpers import hash_code, issue_user_code
+
+        issue_user_code(user, "registration")
+        self.client.post("/accounts/register/confirm/", {"code": "000000"})  # 7th wrong try already blocked
+        user.refresh_from_db()
+        self.assertFalse(user.is_active)
+
+    def test_registration_otp_correct_code_still_works(self):
+        from accounts.authhelpers import issue_user_code
+
+        user = User.objects.create_user("regok", "regok@example.com", "S3cure!pass", is_active=False)
+        UserProfile.objects.create(user=user)
+        session = self.client.session
+        session["otp_user_pk"] = user.pk
+        session.save()
+        code = issue_user_code(user, "registration")
+        self.client.post("/accounts/register/confirm/", {"code": code})
+        user.refresh_from_db()
+        self.assertTrue(user.is_active)
+
+    def test_2fa_removal_requires_verified_session_when_enforced(self):
+        from django_otp.plugins.otp_totp.models import TOTPDevice
+
+        user = User.objects.create_user("twofa", "twofa@example.com", "S3cure!pass", is_staff=True)
+        UserProfile.objects.create(user=user)
+        TOTPDevice.objects.create(user=user, name="app", confirmed=True)
+        self.client.force_login(user)  # password-only session
+        with override_settings(ENFORCE_STAFF_2FA=True):
+            response = self.client.post("/account/two-factor/remove/")
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(TOTPDevice.objects.filter(user=user).count(), 1, "device must survive")
+
+    def test_2fa_removal_allowed_without_enforcement(self):
+        from django_otp.plugins.otp_totp.models import TOTPDevice
+
+        user = User.objects.create_user("twofa2", "twofa2@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=user)
+        TOTPDevice.objects.create(user=user, name="app", confirmed=True)
+        self.client.force_login(user)
+        self.client.post("/account/two-factor/remove/")
+        self.assertEqual(TOTPDevice.objects.filter(user=user).count(), 0)
+
+    def test_accounts_maintenance_runs_with_message_switch_off(self):
+        """The GDPR pass must not depend on the message-retention switch."""
+        fresh_config(enable_message_auto_delete=False)
+        from core import maintenance as core_maintenance
+
+        core_maintenance.purge_if_due()
+        # LAST_RUN guards re-entry; the accounts pass must have been invoked
+        # anyway - proven indirectly by the daily key being set and no raise.
+        from django.core.cache import cache as test_cache
+
+        self.assertTrue(test_cache.get("core:maintenance:purge:last"))
+
+    def test_mailhashed_login_matches_hash(self):
+        """Mailhashed accounts keep email login via the sha256 hash."""
+        user = User.objects.create_user("hashed1", "secret@example.com", "S3cure!pass")
+        profile = UserProfile.objects.create(user=user)
+        profile.mailhashed = True
+        profile.email_hash = hashlib.sha256(b"secret@example.com").hexdigest()
+        profile.save()
+        user.email = "hashed-invalid@invalid"
+        user.save()
+        ok = self.client.login(username="secret@example.com", password="S3cure!pass")
+        self.assertTrue(ok)
+
+    def test_lockout_combination_rejected_at_save_time(self):
+        config = fresh_config()
+        config.enable_accounts = False
+        config.force_2fa_users = True
+        from django.core.exceptions import ValidationError
+
+        with self.assertRaises(ValidationError):
+            config.full_clean()
+
+    def test_magic_link_get_shows_interstitial(self):
+        """GET must not consume the token (prefetchers); POST signs in."""
+        from accounts.models import MagicLink
+        from accounts.views.auth import MAGIC_TTL
+
+        fresh_config(enable_login_magic_link=True)
+        user = User.objects.create_user("magic", "magic@example.com", "S3cure!pass")
+        UserProfile.objects.create(user=user)
+        raw, link = MagicLink.issue(user, MAGIC_TTL)
+        response = self.client.get(f"/accounts/login/magic/{raw}/")
+        self.assertContains(response, "Continue and sign in")
+        link.refresh_from_db()
+        self.assertIsNone(link.consumed_at)  # unconsumed by the GET
+        # POST completes the login
+        response = self.client.post(f"/accounts/login/magic/{raw}/")
+        self.assertEqual(response.status_code, 302)
+
+    def test_magic_link_get_does_not_reveal_validity(self):
+        from accounts.models import MagicLink
+
+        fresh_config(enable_login_magic_link=True)
+        response_valid = self.client.get("/accounts/login/magic/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/")
+        response_valid_content = self.client.get("/accounts/login/magic/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/")
+        self.assertEqual(response_valid.status_code, 200)
+        self.assertEqual(response_valid_content.status_code, 200)

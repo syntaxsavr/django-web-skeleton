@@ -17,6 +17,21 @@ from core.models import SiteConfiguration
 
 OTP_TTL_MINUTES = 15
 RESEND_COOLDOWN = 60
+OTP_MAX_ATTEMPTS = 6
+
+
+def code_attempt(key: str, ok: bool) -> bool:
+    """Count failed six-digit-code verifications; burn the code after
+    OTP_MAX_ATTEMPTS failures so guessing is pointless. Call with ok=True
+    on success (clears the counter), ok=False on every wrong try. Returns
+    True while verification is still allowed."""
+    cache_key = "otp_attempts_" + key
+    if ok:
+        cache.delete(cache_key)
+        return True
+    attempts = cache.get(cache_key, 0) + 1
+    cache.set(cache_key, attempts, OTP_TTL_MINUTES * 60 + 60)
+    return attempts < OTP_MAX_ATTEMPTS
 
 
 def pending_profile_gate(request, user) -> bool:

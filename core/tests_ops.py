@@ -168,3 +168,40 @@ class OpsExecutionTests(TestCase):
         summary = opsmanager.process_pending()
         self.assertEqual(summary["rejected"], 1)
         self.assertEqual(OpsLog.objects.filter(status=OpsLog.Status.REJECTED).count(), 1)
+
+
+class OpsSandboxHardeningTests(TestCase):
+    """The sandbox must catch reads of protected tables, not only writes."""
+
+    def test_select_from_protected_table_rejected(self):
+        from core.opsmanager import validate_sql
+
+        for sql in (
+            "INSERT INTO ai_x SELECT * FROM auth_user",
+            "CREATE TABLE ai_x AS SELECT * FROM auth_user",
+            "UPDATE ai_x SET a = (SELECT b FROM core_contactmessage)",
+            "DELETE FROM auth_user",
+            "INSERT INTO ai_x SELECT id FROM accounts_userprofile",
+        ):
+            with self.subTest(sql=sql):
+                ok, reason = validate_sql(sql)
+                self.assertFalse(ok, reason)
+
+    def test_ai_to_ai_reads_still_allowed(self):
+        from core.opsmanager import validate_sql
+
+        for sql in (
+            "INSERT INTO ai_x SELECT id, name FROM ai_y",
+            "UPDATE ai_x SET a = (SELECT b FROM ai_y WHERE ai_y.id = ai_x.id)",
+        ):
+            with self.subTest(sql=sql):
+                ok, reason = validate_sql(sql)
+                self.assertTrue(ok, reason)
+
+    def test_rename_must_stay_in_sandbox(self):
+        from core.opsmanager import validate_sql
+
+        ok, reason = validate_sql("ALTER TABLE ai_x RENAME TO users")
+        self.assertFalse(ok, reason)
+        ok, _reason = validate_sql("ALTER TABLE ai_x RENAME TO ai_y")
+        self.assertTrue(ok)

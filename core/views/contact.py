@@ -11,7 +11,6 @@ from django.core.mail import send_mail
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
 
 from core.forms import ContactForm
 from core.views.helpers import site_config
@@ -69,7 +68,7 @@ def contact(request):
         if remaining > 0:
             minutes, seconds = divmod(remaining, 60)
             wait = f"{minutes}m {seconds}s" if minutes else f"{seconds}s"
-            messages.error(request, mark_safe(f"You can send another message in {wait}."))
+            messages.error(request, f"You can send another message in {wait}.")
             return redirect("contact")
 
     if request.method == "POST":
@@ -83,7 +82,14 @@ def contact(request):
         if not traps_ok:
             return redirect("contact_thanks")
 
-        if form.is_valid() and _turnstile_ok(request, config):
+        turnstile_ok = _turnstile_ok(request, config)
+        if form.is_valid() and not turnstile_ok and config.enable_turnstile:
+            messages.error(
+                request,
+                "The anti-robot check did not pass. Please reload the page and try again.",
+            )
+            return redirect("contact")
+        if form.is_valid() and turnstile_ok:
             entry = form.save(commit=False)
             if request.user.is_authenticated:
                 # ownership for the data export: set ONLY for authenticated

@@ -52,12 +52,6 @@ def _navigation_item_visible(item, config, request):
         return config.enable_articles
     if item.page == NavigationItem.PAGE_CONTACT:
         return config.enable_contact_form
-    if item.page == NavigationItem.PAGE_REGISTER:
-        return config.enable_public_registration and not request.user.is_authenticated
-    if item.page == NavigationItem.PAGE_LOGIN:
-        return not request.user.is_authenticated
-    if item.page in (NavigationItem.PAGE_ACCOUNT, NavigationItem.PAGE_LOGOUT):
-        return request.user.is_authenticated
     return True
 
 
@@ -118,10 +112,6 @@ def _footer_item_visible(item, config, request):
         return config.enable_articles
     if item.page == FooterItem.PAGE_CONTACT:
         return config.enable_contact_form
-    if item.page == FooterItem.PAGE_REGISTER:
-        return config.enable_public_registration and not request.user.is_authenticated
-    if item.page == FooterItem.PAGE_LOGIN:
-        return not request.user.is_authenticated
     if item.page == FooterItem.PAGE_ROBOTS:
         return config.enable_robots_txt
     if item.page == FooterItem.PAGE_SITEMAP:

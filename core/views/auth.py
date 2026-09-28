@@ -1,6 +1,10 @@
-"""Authentication, registration, account and email-OTP views."""
+"""Password reset, logout and the registration email-OTP confirmation.
 
-import hashlib
+The login and registration VIEWS live in the accounts app (accounts/views);
+this module only owns the flows the core app registers itself: the Django
+auth views for password reset, logout, and confirming a registration code.
+"""
+
 import secrets
 from datetime import timedelta
 
@@ -8,30 +12,18 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth import views as auth_views
-from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.mail import send_mail
-from django.http import Http404
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
 from django.utils import timezone
-from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 
-from core.forms import RegistrationForm
+from accounts.authhelpers import code_attempt
 from core.models import EmailCode
 from core.views.helpers import site_config
 
 OTP_TTL_MINUTES = 15
 OTP_RESEND_COOLDOWN = 60
-
-
-def _generate_code() -> str:
-    return f"{secrets.randbelow(1000000):06d}"
-
-
-def _hash_code(code: str) -> str:
-    return hashlib.sha256(code.encode()).hexdigest()
 
 
 def _send_otp(request, user, code: str) -> None:
@@ -50,29 +42,16 @@ def _send_otp(request, user, code: str) -> None:
 
 
 def _issue_otp(request, user) -> None:
-    code = _generate_code()
+    from accounts.authhelpers import generate_code, hash_code
+
+    code = generate_code()
     EmailCode.objects.create(
         user=user,
-        code_hash=_hash_code(code),
+        code_hash=hash_code(code),
         purpose="registration",
         expires=timezone.now() + timedelta(minutes=OTP_TTL_MINUTES),
     )
     _send_otp(request, user, code)
-
-
-def _too_many_requests(request):
-    return render(request, "core/404.html", {"error_code": 429}, status=429)
-
-
-class RateLimitedLoginView(auth_views.LoginView):
-    template_name = "core/account/login.html"
-    redirect_authenticated_user = True
-
-    @method_decorator(ratelimit(key="ip", rate=settings.LOGIN_RATELIMIT, block=False))
-    def dispatch(self, request, *args, **kwargs):
-        if getattr(request, "limited", False):
-            return _too_many_requests(request)
-        return super().dispatch(request, *args, **kwargs)
 
 
 class LogoutView(auth_views.LogoutView):
@@ -95,55 +74,6 @@ class PasswordResetCompleteView(auth_views.PasswordResetCompleteView):
     template_name = "core/account/password_reset_complete.html"
 
 
-@ratelimit(key="ip", rate=settings.REGISTER_RATELIMIT, block=False)
-def register(request):
-    config = site_config(request)
-    if getattr(request, "limited", False):
-        return _too_many_requests(request)
-    if not config.enable_public_registration:
-        raise Http404
-    if request.method == "POST":
-        form = RegistrationForm(request.POST)
-        if form.is_valid():
-            User = get_user_model()
-            if User.objects.filter(username=form.cleaned_data["username"]).exists():
-                form.add_error("username", "This username is taken.")
-            else:
-                user = User.objects.create_user(
-                    username=form.cleaned_data["username"],
-                    email=form.cleaned_data["email"],
-                    password=form.cleaned_data["password1"],
-                )
-                if config.enable_email_otp:
-                    user.is_active = False
-                    user.save()
-                    _issue_otp(request, user)
-                    request.session["otp_user_pk"] = user.pk
-                    messages.info(
-                        request,
-                        "We sent a six-digit code to your email address. Enter it below to activate your account.",
-                    )
-                    return redirect("registration_otp")
-                if config.registration_requires_approval:
-                    user.is_active = False
-                    user.save()
-                    messages.info(
-                        request,
-                        "Account created. An administrator has to activate it before you can sign in.",
-                    )
-                    return redirect("login")
-                login(request, user)
-                return redirect("account_dashboard")
-    else:
-        form = RegistrationForm()
-    return render(request, "core/account/register.html", {"form": form, "page_title": "Create account"})
-
-
-@login_required(login_url=reverse_lazy("login"))
-def account_dashboard(request):
-    return render(request, "core/account/dashboard.html", {"page_title": "Your account"})
-
-
 def _otp_user(request):
     pk = request.session.get("otp_user_pk")
     if not pk:
@@ -154,31 +84,47 @@ def _otp_user(request):
     return user
 
 
+@ratelimit(key="ip", rate=settings.REGISTER_RATELIMIT, block=False)
 def registration_otp(request):
     user = _otp_user(request)
     if user is None:
         return redirect("register")
     if request.method == "POST":
+        if getattr(request, "limited", False):
+            messages.error(request, "Too many attempts. Wait a few minutes and try again.")
+            return redirect("registration_otp")
         code = (request.POST.get("code") or "").strip()
         entry = (
             EmailCode.objects.filter(user=user, purpose="registration", expires__gte=timezone.now())
             .order_by("-created")
             .first()
         )
-        if entry and secrets.compare_digest(_hash_code(code), entry.code_hash):
-            user.is_active = True
-            user.save(update_fields=["is_active"])
+        if entry:
+            from accounts.authhelpers import hash_code
+
+            if secrets.compare_digest(hash_code(code), entry.code_hash):
+                code_attempt("registration_%d" % user.pk, True)
+                user.is_active = True
+                user.save(update_fields=["is_active"])
+                EmailCode.objects.filter(user=user, purpose="registration").delete()
+                request.session.pop("otp_user_pk", None)
+                config = site_config(request)
+                if config.registration_requires_approval:
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    messages.info(request, "Email confirmed. An administrator has to activate your account.")
+                    return redirect("login")
+                login(request, user)
+                messages.success(request, "Email confirmed. Welcome aboard!")
+                return redirect("account_dashboard")
+        # Burn the code after too many wrong guesses (shared counter).
+        if not code_attempt("registration_%d" % user.pk, False):
             EmailCode.objects.filter(user=user, purpose="registration").delete()
             request.session.pop("otp_user_pk", None)
-            config = site_config(request)
-            if config.registration_requires_approval:
-                user.is_active = False
-                user.save(update_fields=["is_active"])
-                messages.info(request, "Email confirmed. An administrator has to activate your account.")
-                return redirect("login")
-            login(request, user)
-            messages.success(request, "Email confirmed. Welcome aboard!")
-            return redirect("account_dashboard")
+            messages.error(
+                request, "Too many wrong codes. The code is invalidated - start the registration again."
+            )
+            return redirect("register")
         messages.error(request, "That code is wrong or expired. Request a new one below.")
     return render(request, "core/account/register_confirm.html", {"page_title": "Confirm your email"})
 

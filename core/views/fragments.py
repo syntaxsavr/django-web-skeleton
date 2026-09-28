@@ -17,7 +17,21 @@ def _fragment_names(name):
     return unique
 
 
-@cache_page(60 * 60 * 12)
+def _cache_lazy_section(view_func):
+    """Cache the fragment ONLY for anonymous visitors. Fragments are shared
+    markup; if one ever reads request.user, the cached copy must not leak
+    between users - so authenticated requests always render fresh."""
+    cached = cache_page(60 * 60 * 12)(view_func)
+
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return view_func(request, *args, **kwargs)
+        return cached(request, *args, **kwargs)
+
+    return wrapper
+
+
+@_cache_lazy_section
 @require_http_methods(["GET"])
 def lazy_section(request, name):
     for template_name in _fragment_names(name):

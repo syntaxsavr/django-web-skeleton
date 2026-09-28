@@ -35,15 +35,15 @@ def purge_old_messages(days=None) -> int:
 
 
 def purge_if_due() -> int:
-    """Daily lazy trigger: purges only when the retention switch is on and
-    the last run is more than a day old."""
-    config = SiteConfiguration.get_solo()
-    if not config.enable_message_auto_delete:
-        return 0
+    """Daily lazy trigger. Runs at most once a day REGARDLESS of switches:
+    the accounts pass (exports, GDPR deletions, login-trace retention) is a
+    compliance obligation and must not depend on the unrelated
+    message-retention switch. Only the message purge honours its switch."""
     if cache.get(PURGE_LAST_RUN_KEY):
         return 0
     cache.set(PURGE_LAST_RUN_KEY, timezone.now().isoformat(), PURGE_LAST_RUN_TTL)
-    purged = purge_old_messages()
+    config = SiteConfiguration.get_solo()
+    purged = purge_old_messages() if config.enable_message_auto_delete else 0
     try:
         from accounts.maintenance import run_all as accounts_run_all
 

@@ -269,6 +269,9 @@ CONTACT_RATE_LIMIT_SECONDS = int(os.environ.get("CONTACT_RATE_LIMIT_SECONDS", "3
 
 # django-ratelimit windows for auth views (constant by design: brute force
 # protection should not be accidentally disableable from the DB).
+# Mailhashed accounts log in by sha256 of the address (accounts/backends.py)
+AUTHENTICATION_BACKENDS = ["accounts.backends.HashedEmailBackend"]
+
 LOGIN_RATELIMIT = "10/m"
 REGISTER_RATELIMIT = "3/m"
 CODE_START_RATELIMIT = "5/15m"

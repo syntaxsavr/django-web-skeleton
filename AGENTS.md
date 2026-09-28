@@ -155,6 +155,11 @@ only sanctioned path for an agent to touch the database at runtime.
    (uses OPS_SIGNING_KEY, or in DEBUG a key derived from SECRET_KEY).
 3. Done. `ops_apply` runs in the daily maintenance pass; run
    `manage.py ops_apply` for immediate effect and `ops_status` to watch.
+   The daily pass is `manage.py daily_maintenance`, scheduled via
+   `deploy/skeleton-daily.timer` (systemd) or `deploy/skeleton-daily.cron`.
+   Ops SQL is sandboxed on writes AND reads: every referenced table
+   (write target, FROM/JOIN source, rename target) must carry the `ai_`
+   prefix, so a signed file cannot copy protected data into its sandbox.
 
 Hard rules (enforced, and logged as rejections when violated):
 

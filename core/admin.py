@@ -373,8 +373,9 @@ class AccountsSettingsAdmin(SettingsPageAdmin):
 class ProtectionSettingsAdmin(SettingsPageAdmin):
     change_form_description = (
         "Each switch is one middleware layer; turning one off disables that layer only. The "
-        "scraper block 403s known scraper agents on legal and personal-data pages, the CSP is "
-        "skipped on /admin/, and the outbound-link snatcher tags external anchors."
+        "scraper block is best-effort deterrence (user agents are client-supplied - not access "
+        "control; use the login wall for that), the CSP is skipped on /admin/, and the "
+        "outbound-link snatcher tags external anchors."
     )
     fieldsets = (
         (

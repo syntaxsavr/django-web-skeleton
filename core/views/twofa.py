@@ -2,6 +2,16 @@
 
 Staff enforcement lives in core.middleware.Staff2FAMiddleware; these views
 implement the flows it redirects to. Non-staff users can enroll voluntarily.
+
+Security notes:
+- Every token check (setup and verify) counts failures per user; after
+  MAX_TOKEN_ATTEMPTS wrong tokens the account is locked out of token checks
+  for LOCKOUT_SECONDS, so six-digit guessing is pointless even though TOTP
+  tokens rotate.
+- Removing a device requires a VERIFIED session (a session that passed the
+  second factor) whenever 2FA is enforced for the account. Otherwise a
+  password-only session (e.g. a stolen cookie) could delete the victim's
+  devices and enroll its own - bypassing the enforcement entirely.
 """
 
 import base64
@@ -13,16 +23,18 @@ import qrcode
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from core.views.helpers import site_config
+MAX_TOKEN_ATTEMPTS = 6
+LOCKOUT_SECONDS = 15 * 60
 
 
 def _safe_next(request, fallback):
-    candidate = request.POST.get("next") or request.GET.get("next") or ""
+    candidate = request.POST.get("next") or request.GET.get("next", "")
     if candidate and url_has_allowed_host_and_scheme(
         candidate, allowed_hosts={request.get_host()}, require_https=request.is_secure()
     ):
@@ -35,6 +47,30 @@ def _confirmed_device(user):
         if device.confirmed:
             return device
     return None
+
+
+def _token_attempt(user, ok: bool) -> bool:
+    """Burn-after-N counter for TOTP tokens, shared by setup and verify.
+    Returns True while a token check is allowed."""
+    key = "totp_attempts_%d" % user.pk
+    if ok:
+        cache.delete(key)
+        return True
+    attempts = cache.get(key, 0) + 1
+    cache.set(key, attempts, LOCKOUT_SECONDS)
+    return attempts < MAX_TOKEN_ATTEMPTS
+
+
+def _token_locked(user) -> bool:
+    return bool(cache.get("totp_attempts_%d" % user.pk, 0) >= MAX_TOKEN_ATTEMPTS)
+
+
+def _2fa_enforced(user) -> bool:
+    if user.is_staff and getattr(settings, "ENFORCE_STAFF_2FA", False):
+        return True
+    from core.models import SiteConfiguration
+
+    return SiteConfiguration.get_solo().force_2fa_users
 
 
 def _qr_data_uri(text: str) -> str:
@@ -69,7 +105,7 @@ def pending_redirect(request):
 @login_required
 def two_factor_manage(request):
     device = _confirmed_device(request.user)
-    enforced = getattr(settings, "ENFORCE_STAFF_2FA", False) and request.user.is_staff
+    enforced = _2fa_enforced(request.user)
     return render(
         request,
         "core/account/twofa_manage.html",
@@ -95,7 +131,11 @@ def two_factor_setup(request):
 
     if request.method == "POST":
         token = request.POST.get("token", "").strip()
-        if token and device.verify_token(token):
+        if _token_locked(request.user):
+            messages.error(
+                request, "Too many wrong codes. Token checks are paused for 15 minutes; try again later."
+            )
+        elif token and device.verify_token(token) and _token_attempt(request.user, True):
             device.confirmed = True
             device.save(update_fields=["confirmed"])
             django_otp.login(request, device)
@@ -103,7 +143,17 @@ def two_factor_setup(request):
             if request.user.is_staff and getattr(settings, "ENFORCE_STAFF_2FA", False):
                 return redirect(_pending_target(request))
             return redirect(_safe_next(request, reverse("two_factor_manage")))
-        messages.error(request, "That code did not match. Codes rotate every 30 seconds; try the next one.")
+        else:
+            allowed = _token_attempt(request.user, False)
+            if not allowed:
+                messages.error(
+                    request,
+                    "Too many wrong codes. Token checks are paused for 15 minutes; try again later.",
+                )
+            else:
+                messages.error(
+                    request, "That code did not match. Codes rotate every 30 seconds; try the next one."
+                )
 
     return render(
         request,
@@ -129,13 +179,27 @@ def two_factor_verify(request):
 
     if request.method == "POST":
         token = request.POST.get("token", "").strip()
-        if token and device.verify_token(token):
+        if _token_locked(request.user):
+            messages.error(
+                request, "Too many wrong codes. Token checks are paused for 15 minutes; try again later."
+            )
+        elif token and device.verify_token(token) and _token_attempt(request.user, True):
             django_otp.login(request, device)
             messages.success(request, "Second factor verified.")
             if request.user.is_staff and getattr(settings, "ENFORCE_STAFF_2FA", False):
                 return redirect(_pending_target(request))
             return redirect(_safe_next(request, reverse("account_dashboard")))
-        messages.error(request, "That code did not match. Codes rotate every 30 seconds; try the next one.")
+        else:
+            allowed = _token_attempt(request.user, False)
+            if not allowed:
+                messages.error(
+                    request,
+                    "Too many wrong codes. Token checks are paused for 15 minutes; try again later.",
+                )
+            else:
+                messages.error(
+                    request, "That code did not match. Codes rotate every 30 seconds; try the next one."
+                )
 
     return render(
         request,
@@ -152,12 +216,22 @@ def two_factor_verify(request):
 def two_factor_remove(request):
     if request.method != "POST":
         return redirect("two_factor_manage")
+    # Step-up: when 2FA is enforced for this account, removal requires a
+    # session that has passed the second factor - otherwise a password-only
+    # session could delete devices and enroll its own, bypassing enforcement.
+    if _2fa_enforced(request.user) and not getattr(request.user, "is_verified", lambda: False)():
+        messages.error(
+            request,
+            "Removing the second factor requires a verified session. "
+            "Verify a code first, then remove the device.",
+        )
+        return redirect("two_factor_verify")
     deleted, _count = django_otp.plugins.otp_totp.models.TOTPDevice.objects.filter(user=request.user).delete()
     if deleted:
         messages.info(request, "Two-factor authentication removed from your account.")
     else:
         messages.info(request, "No second factor was configured.")
-    if request.user.is_staff and getattr(settings, "ENFORCE_STAFF_2FA", False):
+    if _2fa_enforced(request.user):
         request.session["two_factor_next"] = "/admin/"
         return redirect("two_factor_setup")
     return redirect("two_factor_manage")

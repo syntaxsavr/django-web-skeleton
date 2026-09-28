@@ -14,11 +14,16 @@ Public output therefore carries no source comments.
 Maintained by syntaxsavr.
 """
 
+import logging
+
 from django.core.files.base import ContentFile
 
 import rcssmin
 import rjsmin
 from whitenoise.storage import CompressedManifestStaticFilesStorage
+
+
+logger = logging.getLogger(__name__)
 
 
 class MinifyingManifestStaticFilesStorage(CompressedManifestStaticFilesStorage):
@@ -44,6 +49,7 @@ class MinifyingManifestStaticFilesStorage(CompressedManifestStaticFilesStorage):
                 try:
                     return minify(raw.decode("utf-8")).encode("utf-8")
                 except Exception:
+                    logger.warning("Minify failed for %s; shipping the original bytes.", name, exc_info=True)
                     return raw
         return raw
 

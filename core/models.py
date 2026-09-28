@@ -242,7 +242,8 @@ class SiteConfiguration(models.Model):
 
     # --- Middleware switches ---------------------------------------------------------
     enable_scraper_block = models.BooleanField(
-        default=True, help_text="403 known scraper user agents on legal/personal-data pages."
+        default=True,
+        help_text="Best-effort only: 403s known scraper user agents on legal/personal-data pages. User agents are client-supplied, so this deters casual scraping - it is not access control. Real protection comes from the login wall."
     )
     enable_csp = models.BooleanField(default=True, help_text="Content-Security-Policy header (skipped on /admin/).")
     enable_external_link_handling = models.BooleanField(
@@ -274,6 +275,16 @@ class SiteConfiguration(models.Model):
     def clean(self):
         if self.header_logo and not self.header_logo_alt.strip():
             raise ValidationError({"header_logo_alt": "Describe the uploaded logo."})
+        if not self.enable_accounts and self.force_2fa_users:
+            raise ValidationError(
+                {
+                    "force_2fa_users": (
+                        "Forced 2FA with accounts switched off locks every staff member out of "
+                        "the admin (the 2FA flows live under the switched-off accounts section). "
+                        "Switch accounts on, or turn forced 2FA off."
+                    )
+                }
+            )
 
     @classmethod
     def get_solo(cls) -> "SiteConfiguration":

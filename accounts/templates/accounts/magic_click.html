@@ -1,0 +1,16 @@
+{% extends "core/base.html" %}
+{% block body_class %}page-auth{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block content %}
+<section class="section auth-section">
+  <div class="shell shell-narrow auth-card">
+    <h1>Sign in</h1>
+    <p class="auth-note">You followed a one-time sign-in link. Confirm to continue; the link works once and expires on its own.</p>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="btn btn-primary btn-block">Continue and sign in</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

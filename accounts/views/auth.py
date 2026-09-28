@@ -23,6 +23,7 @@ from django.views.decorators.http import require_http_methods
 from django_ratelimit.decorators import ratelimit
 
 from accounts.authhelpers import (
+    code_attempt,
     generate_code,
     hash_code,
     issue_session_code,
@@ -56,20 +57,8 @@ def _safe_next(request, fallback="/account/"):
 
 
 def _register_code_attempt(request, key: str, ok: bool) -> bool:
-    """Count failed code verifications; invalidate the code after too many
-    failures so six-digit guessing is pointless. Returns True when allowed."""
-    from django.core.cache import cache
-
-    cache_key = "otp_attempts_" + key
-    if ok:
-        cache.delete(cache_key)
-        return True
-    attempts = cache.get(cache_key, 0) + 1
-    cache.set(cache_key, attempts, OTP_TTL_MINUTES * 60 + 60)
-    if attempts >= OTP_MAX_ATTEMPTS:
-        cache.delete(cache_key)
-        return False
-    return True
+    """Shared burn-after-N counter (accounts.authhelpers.code_attempt)."""
+    return code_attempt(key, ok)
 
 
 def _config(request):
@@ -85,11 +74,25 @@ def _user_by_identifier(config, identifier: str):
     User = get_user_model()
     mode = config.login_identifier_mode
     queryset = User.objects.all()
+    user = None
     if mode == "email":
-        return queryset.filter(email__iexact=identifier).first()
-    if mode == "username":
-        return queryset.filter(username__iexact=identifier).first()
-    return queryset.filter(models_q_email_or_username(identifier)).first()
+        user = queryset.filter(email__iexact=identifier).first()
+    elif mode == "username":
+        user = queryset.filter(username__iexact=identifier).first()
+    else:
+        user = queryset.filter(models_q_email_or_username(identifier)).first()
+    if user is None and mode in ("email", "either"):
+        # Mailhashed accounts: the plain address is gone; match its hash.
+        import hashlib as _hashlib
+
+        from accounts.models import UserProfile
+
+        digest = _hashlib.sha256(identifier.strip().lower().encode()).hexdigest()
+        profile = (
+            UserProfile.objects.filter(mailhashed=True, email_hash=digest).select_related("user").first()
+        )
+        return profile.user if profile else None
+    return user
 
 
 def models_q_email_or_username(identifier: str):
@@ -232,7 +235,8 @@ def login_code_verify(request):
             elif not user:
                 consumed = _consume_session_code(request, "login", code)
             if consumed and _register_code_attempt(request, attempt_key, True):
-                login(request, user) if user else None
+                if user:
+                    login(request, user)
                 request.session.pop("code_login_email", None)
                 if user:
                     gate = pending_profile_gate(request, user)
@@ -298,6 +302,9 @@ def login_magic_start(request):
 
 
 def login_magic_click(request, token):
+    """Two-step consumption: GET shows a confirmation page, POST signs in.
+    Mail scanners and link prefetchers issue plain GETs; they must not burn
+    the single-use token before the human arrives."""
     config = _config(request)
     _accounts_available(config)
     if not config.enable_login_magic_link:
@@ -305,7 +312,15 @@ def login_magic_click(request, token):
     token_hash = hashlib.sha256(token.encode()).hexdigest()
     link = MagicLink.objects.filter(token_hash=token_hash).first()
     user = link.user if link else None
-    if user and _login_eligible(user) and link.consume():
+    if request.method == "GET":
+        # Render the interstitial regardless of token validity: whether the
+        # page renders must not reveal whether the token is good.
+        return render(
+            request,
+            "accounts/magic_click.html",
+            {"page_title": "Sign in", "token": token, "next": request.GET.get("next", "")},
+        )
+    if request.method == "POST" and user and _login_eligible(user) and link.consume():
         login(request, user)
         gate = pending_profile_gate(request, user)
         if gate:

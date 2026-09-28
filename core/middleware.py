@@ -35,6 +35,7 @@ from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.core.cache import cache
+from django.shortcuts import redirect
 from django.utils.deprecation import MiddlewareMixin
 
 from core.models import ProtectedPage, SiteConfiguration
@@ -229,6 +230,9 @@ class ContentSecurityPolicyMiddleware:
             + (" https://checkout.stripe.com" if "stripe" in enabled else ""),
             "upgrade-insecure-requests",
         ]
+        report_uri = getattr(settings, "CSP_REPORT_URI", "")
+        if report_uri:
+            parts.append(f"report-uri {report_uri}")
         return "; ".join(parts)
 
     def __call__(self, request):
@@ -314,6 +318,21 @@ class Staff2FAMiddleware:
             return None
         if getattr(user, "otp_device", None) is not None:
             return None
+        if not config.enable_accounts:
+            # Guard against the lockout combination (blocked at save time
+            # too): the 2FA flows live under /account/, which 404s when
+            # accounts are off. Redirecting there would bounce staff into a
+            # redirect-to-404 loop, so log them out with a message instead.
+            from django.contrib import messages
+            from django.contrib.auth import logout
+
+            logout(request)
+            messages.error(
+                request,
+                "Accounts are switched off, so the two-factor login flow is unavailable. "
+                "Switch accounts on in the configuration to sign in with 2FA.",
+            )
+            return redirect("/admin/login/")
         from core.views.twofa import pending_redirect
 
         return pending_redirect(request)

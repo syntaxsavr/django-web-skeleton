@@ -138,9 +138,22 @@ SQL_PATTERNS = (
     (re.compile(r"^DROP\s+TABLE\s+(IF\s+EXISTS\s+)?([a-zA-Z_][\w]*)", re.I), 2),
 )
 
+# Every table a statement READS from (FROM x / JOIN x) - the write target
+# alone is not enough: INSERT INTO ai_x SELECT * FROM auth_user would copy
+# protected data into the agent-readable sandbox.
+SQL_READ_PATTERN = re.compile(r"\b(?:FROM|JOIN)\s+([a-zA-Z_][\w]*)", re.I)
+# ALTER TABLE x RENAME TO y - the new name must stay inside the sandbox.
+SQL_RENAME_PATTERN = re.compile(r"\bRENAME\s+TO\s+([a-zA-Z_][\w]*)", re.I)
+
 
 def validate_sql(sql: str) -> tuple[bool, str]:
-    """Validate one SQL statement against the ai_ sandbox."""
+    """Validate one SQL statement against the ai_ sandbox.
+
+    Two independent checks: (1) every table the statement writes to, reads
+    from or renames to must carry the ai_ prefix (and never match the
+    protected prefixes), and (2) only allow-listed statement types. A
+    signed file can therefore copy content between its own tables but can
+    never read protected data out of them."""
     statement = sql.strip().rstrip(";").strip()
     lowered = statement.lower()
     if not statement:
@@ -149,18 +162,33 @@ def validate_sql(sql: str) -> tuple[bool, str]:
         return False, "forbidden token (pragma/attach/system tables)"
     if ";" in statement:
         return False, "multiple statements are not allowed"
+
+    def _table_ok(name: str) -> str | None:
+        if PROTECTED_TABLE_PATTERN.match(name):
+            return f"table '{name}' is protected and out of reach for ops files"
+        if not name.startswith(AI_TABLE_PREFIX):
+            return f"table '{name}' is outside the ai_ sandbox; AI-created tables must start with {AI_TABLE_PREFIX}"
+        return None
+
+    rename = SQL_RENAME_PATTERN.search(statement)
+    if rename:
+        problem = _table_ok(rename.group(1))
+        if problem:
+            return False, "rename: " + problem
+    for match in SQL_READ_PATTERN.finditer(statement):
+        problem = _table_ok(match.group(1))
+        if problem:
+            return False, "read: " + problem
+
     for pattern, group in SQL_PATTERNS:
         match = pattern.match(statement)
         if match:
-            table = _table_from_sql(statement, pattern, group)
-            target = match.group(group)
-            if target is None or table is None:
+            target = match.group(group).strip("`\"'[] ")
+            if not target:
                 return False, "could not determine the target table"
-            if not target.startswith(AI_TABLE_PREFIX):
-                return (
-                    False,
-                    f"table '{target}' is outside the ai_ sandbox; AI-created tables must start with {AI_TABLE_PREFIX}",
-                )
+            problem = _table_ok(target)
+            if problem:
+                return False, problem
             return True, ""
     return False, "statement type not allowed (use CREATE/ALTER/INSERT/UPDATE/DELETE/DROP on ai_ tables)"
 

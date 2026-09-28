@@ -1,0 +1,12 @@
+# systemd service: run the skeleton's daily maintenance pass.
+# Install to /etc/systemd/system/, adjust the paths and user, then:
+#   systemctl enable --now skeleton-daily.timer
+[Unit]
+Description=django-web-skeleton daily maintenance (retention, GDPR, ops files)
+After=network.target
+
+[Service]
+Type=oneshot
+User=www-data
+WorkingDirectory=/srv/skeleton
+ExecStart=/srv/skeleton/venv/bin/python manage.py daily_maintenance
